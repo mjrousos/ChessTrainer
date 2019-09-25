@@ -1,0 +1,13 @@
+<Project>
+  <!-- Common properties regarding language version, CA rulesets, output paths, etc. -->
+  <PropertyGroup>
+    <LangVersion>8.0</LangVersion>
+    <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)\rules.ruleset</CodeAnalysisRuleSet>
+    <OutputPathBase Condition=" '$(OutputPathBase)' == '' ">$(MSBuildThisFileDirectory)bin\$(Configuration)\</OutputPathBase>
+    <OutputPath>$(OutputPathBase)\$(MSBuildProjectName)\</OutputPath>
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+</Project>

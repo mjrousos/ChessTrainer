@@ -1,0 +1,9 @@
+{
+    "sdk": {
+      "version": "3.0.100",
+      "rollforward": "major"
+    },
+    "tools": {
+      "dotnet": "3.0.100"
+    }
+}
