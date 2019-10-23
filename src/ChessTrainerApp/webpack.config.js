@@ -1,0 +1,61 @@
+const path = require('path');
+
+function getStyleUse(bundleFilename) {
+    return [
+        {
+            loader: 'file-loader',
+            options: {
+                name: bundleFilename,
+            },
+        },
+        { loader: 'extract-loader' },
+        { loader: 'css-loader' },
+        { loader: 'sass-loader',
+            options: {
+                implementation: require('dart-sass')
+            }
+        },
+    ];
+}
+
+module.exports = [
+    {
+        entry: { 'styles': './app/site.css' },
+        output: {
+            // This is necessary for webpack to compile, but we never reference this js file.
+            path: path.resolve(__dirname, 'wwwroot/dist'),
+            filename: 'style.bundle.js',
+            publicPath: '/'
+        },
+        module: {
+            rules: [{
+                test: /\.css$/,
+                use: getStyleUse('app.bundle.css')
+            }]
+        }
+    },
+    {
+        entry: { 'main': './app/app.js' },
+        output: {
+            path: path.resolve(__dirname, 'wwwroot/dist'),
+            filename: 'app.bundle.js',
+            publicPath: '/'
+        },
+        module: {
+            rules: [
+                {
+                    test: /\.js$/,
+                    loader: 'babel-loader',
+                    query: { presets: ['env'] }
+                },
+                {
+                    test: /\.jpe?g$|\.ico$/,
+                    loader: 'file-loader',
+                    options: {
+                        name: '[name].[ext]'
+                    }
+                }
+            ]
+        },
+    }
+];

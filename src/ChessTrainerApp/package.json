@@ -1,0 +1,28 @@
+{
+  "name": "chesstrainerapp",
+  "version": "1.0.0",
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/core": "^7.6.4",
+    "babel-core": "^6.26.3",
+    "babel-loader": "^8.0.6",
+    "babel-preset-env": "^1.7.0",
+    "css-loader": "^3.2.0",
+    "dart-sass": "^1.23.0",
+    "extract-loader": "^3.1.0",
+    "file-loader": "^4.2.0",
+    "node-sass": "^4.12.0",
+    "sass": "^1.23.0",
+    "sass-loader": "^8.0.0",
+    "style-loader": "^1.0.0",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.9"
+  },
+  "scripts": {
+    "watch": "webpack --mode=development -w",
+    "webpack-dev": "webpack --mode=development",
+    "webpack-prod": "webpack --mode=production"
+  },
+  "author": "Mike Rousos",
+  "license": "MIT"
+}
