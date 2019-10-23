@@ -12,6 +12,9 @@ function getStyleUse(bundleFilename) {
         { loader: 'css-loader' },
         { loader: 'sass-loader',
             options: {
+                sassOptions: {
+                    includePaths: ['./node_modules']
+                },
                 implementation: require('dart-sass')
             }
         },
@@ -20,7 +23,7 @@ function getStyleUse(bundleFilename) {
 
 module.exports = [
     {
-        entry: { 'styles': './app/site.css' },
+        entry: { 'styles': './app/site.scss' },
         output: {
             // This is necessary for webpack to compile, but we never reference this js file.
             path: path.resolve(__dirname, 'wwwroot/dist'),
@@ -29,7 +32,7 @@ module.exports = [
         },
         module: {
             rules: [{
-                test: /\.css$/,
+                test: [/\.scss$/, /\.css$/],
                 use: getStyleUse('app.bundle.css')
             }]
         }

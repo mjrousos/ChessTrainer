@@ -1,11 +1,13 @@
 {
   "name": "chesstrainerapp",
   "version": "1.0.0",
-  "dependencies": {},
+  "dependencies": {
+    "material-components-web": "^3.2.0"
+  },
   "devDependencies": {
     "@babel/core": "^7.6.4",
-    "babel-core": "^6.26.3",
-    "babel-loader": "^8.0.6",
+    "babel-core": "^6.22.1",
+    "babel-loader": "7.0.0",
     "babel-preset-env": "^1.7.0",
     "css-loader": "^3.2.0",
     "dart-sass": "^1.23.0",

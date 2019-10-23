@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -15,6 +16,8 @@ namespace ChessTrainerApp
 {
     public class Startup
     {
+        private const string EnableCompressionKey = "EnableResponseCompression";
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -28,11 +31,17 @@ namespace ChessTrainerApp
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
+            services.AddResponseCompression(options =>
+            {
+                options.Providers.Add<BrotliCompressionProvider>();
+                options.Providers.Add<GzipCompressionProvider>();
+                options.MimeTypes = ResponseCompressionDefaults.MimeTypes;
+            });
             services.AddSingleton<WeatherForecastService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public static void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -47,6 +56,11 @@ namespace ChessTrainerApp
             }
 
             app.UseHttpsRedirection();
+            if (bool.TryParse(Configuration[EnableCompressionKey], out var useResponseCompression) && useResponseCompression)
+            {
+                app.UseResponseCompression();
+            }
+
             app.UseStaticFiles();
 
             app.UseRouting();

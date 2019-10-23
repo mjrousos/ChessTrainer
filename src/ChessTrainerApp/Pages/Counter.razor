@@ -1,10 +1,26 @@
 ﻿@page "/counter"
+@inherits MaterialDesignComponentBase
 
 <h1>Counter</h1>
 
 <p>Current count: @currentCount</p>
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+<button class="mdc-button mdc-button--raised" @onclick="IncrementCount">
+    <span class="mdc-button__label">
+        Click me
+    </span>
+</button>
+<button class="mdc-button" @onclick="IncrementCount">
+    <i class="material-icons mdc-button__icon" aria-hidden="true">build</i>
+    <span class="mdc-button__label">
+        Click me too
+    </span>
+</button>
+<div class="mdc-text-field">
+    <input type="text" class="mdc-text-field__input" id="username-input" name="username" />
+    <label class="mdc-floating-label" for="username-input">Username</label>
+    <div class="mdc-line-ripple"></div>
+</div>
 
 @code {
     int currentCount = 0;
