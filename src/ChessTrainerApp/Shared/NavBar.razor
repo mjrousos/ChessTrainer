@@ -1,0 +1,55 @@
+﻿@inherits MaterialDesignComponentBase
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavManager
+
+<header class="mdc-top-app-bar mdc-top-app-bar--fixed">
+    <div class="mdc-top-app-bar__row">
+        <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+            <button class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button" @onclick="ToggleMainMenuDrawer">menu</button>
+            <span class="mdc-top-app-bar__title link" @onclick="NavigateHome">Chess Trainer</span>
+            @*<span class="mdc-top-app-bar__title">Chess Trainer</span>*@
+        </section>
+        <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
+            <button class="mdc-top-app-bar__action-item mdc-button" aria-label="Sign in">Sign in</button>
+        </section>
+    </div>
+</header>
+<aside id="mainMenuDrawer" class="mdc-drawer mdc-drawer--dismissible mdc-top-app-bar--fixed-adjust">
+    <div class="mdc-drawer__content">
+        <nav class="mdc-list">
+            <a class="mdc-list-item mdc-list-item--activated" href="" aria-current="page">
+                <i class="fas fa-chess-king fa-fw fa-lg mdc-list-item__graphic"></i>
+                <span class="mdc-list-item__text">Train</span>
+            </a>
+            <a class="mdc-list-item" href="counter">
+                <i class="material-icons mdc-list-item__graphic" aria-hidden="true">history</i>
+                <span class="mdc-list-item__text">History</span>
+            </a>
+            <a class="mdc-list-item" href="about">
+                <i class="fas fa-question fa-fw fa-lg mdc-list-item__graphic"></i>
+                <span class="mdc-list-item__text">About</span>
+            </a>
+            <hr class="mdc-list-divider">
+            <a class="mdc-list-item" href="counter">
+                <i class="material-icons mdc-list-item__graphic" aria-hidden="true">plus_one</i>
+                <span class="mdc-list-item__text">Counter</span>
+            </a>
+            <a class="mdc-list-item" href="fetchdata">
+                <i class="material-icons mdc-list-item__graphic" aria-hidden="true">wb_sunny</i>
+                <span class="mdc-list-item__text">Weather</span>
+            </a>
+        </nav>
+    </div>
+</aside>
+
+@code {
+    async Task ToggleMainMenuDrawer()
+    {
+        await JSRuntime.InvokeVoidAsync("toggleDrawer", "mainMenuDrawer");
+    }
+
+    void NavigateHome()
+    {
+        NavManager.NavigateTo("");
+    }
+}

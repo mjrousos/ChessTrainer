@@ -21,7 +21,7 @@ namespace ChessTrainerApp
 
         private async Task OnPageLoad()
         {
-            var ret = await JSRuntime.InvokeAsync<string>("AttachMDC");
+            await JSRuntime.InvokeVoidAsync("attachMDC");
         }
     }
 }
