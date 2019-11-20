@@ -1,9 +1,17 @@
 ﻿@inherits LayoutComponentBase
 
-<NavBar />
+<NavBar>
+    @NavCommandButtons
+</NavBar>
 
 <div class="mdc-drawer-app-content mdc-top-app-bar--fixed-adjust main">
     <div class="main-content">
         @Body
     </div>
 </div>
+
+@code {
+    // Custom child content for the nav bar which can vary by page
+    [Parameter]
+    public RenderFragment NavCommandButtons { get; set; }
+}

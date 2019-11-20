@@ -1,5 +1,27 @@
 ﻿@page "/"
 
+@using  ChessTrainerApp.Components;
+
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
+
+@code {
+    public static Dictionary<string, object> GetLayoutParameters() =>
+        new Dictionary<string, object>()
+        {
+            { "NavCommandButtons", NavCommandButtons }
+        };
+
+    public static RenderFragment NavCommandButtons
+    {
+        get
+        {
+            return new RenderFragment(builder =>
+            {
+                builder.OpenComponent<MainCommandButtons>(0);
+                builder.CloseComponent();
+            });
+        }
+    }
+}
