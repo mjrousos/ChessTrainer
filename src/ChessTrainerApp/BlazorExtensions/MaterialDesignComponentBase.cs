@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
-namespace ChessTrainerApp
+namespace ChessTrainerApp.BlazorExtensions
 {
     public class MaterialDesignComponentBase : ComponentBase
     {
@@ -13,13 +13,13 @@ namespace ChessTrainerApp
         {
             if (firstRender)
             {
-                await OnPageLoad();
+                await AttachMDCAsync();
             }
 
             await base.OnAfterRenderAsync(firstRender);
         }
 
-        private async Task OnPageLoad()
+        private async Task AttachMDCAsync()
         {
             await JSRuntime.InvokeVoidAsync("attachMDC");
         }
