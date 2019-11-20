@@ -1,4 +1,3 @@
-import './favicon.ico';
 import { MDCRipple, MDCRippleFoundation, util } from '@material/ripple';
 import { MDCTextField } from '@material/textfield';
 import { MDCTopAppBar } from '@material/top-app-bar';

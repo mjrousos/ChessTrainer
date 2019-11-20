@@ -1,4 +1,5 @@
 const path = require('path');
+const CopyPlugin = require('copy-webpack-plugin');
 
 function getStyleUse(bundleFilename) {
     return [
@@ -35,7 +36,13 @@ module.exports = [
                 test: [/\.scss$/, /\.css$/],
                 use: getStyleUse('app.bundle.css')
             }]
-        }
+        },
+        plugins: [
+            new CopyPlugin([
+                { from: 'app/images', to: 'images' },
+                { from: 'app/favicon.ico', to: 'favicon.ico' },
+            ]),
+        ]
     },
     {
         entry: { 'main': './app/app.js' },
