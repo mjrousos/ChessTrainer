@@ -1,0 +1,9 @@
+﻿@inherits ChessBoardBase
+
+<div class="boardContainer">
+    <img class="board" src="images/board.svg" />
+    @foreach (var piece in Pieces)
+    {
+        <ChessPiece File="piece.File" Rank="piece.Rank" PieceType="piece.PieceType" />
+    }
+</div>

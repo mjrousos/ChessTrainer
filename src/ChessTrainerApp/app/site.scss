@@ -55,7 +55,99 @@ html, body {
     color: red;
 }
 
+.boardContainer {
+    width: 100%;
+    height: auto;
+    position: relative;
+}
+
 .board {
     width: 100%;
     height: auto;
+    z-index: 0;
+}
+
+.piece {
+    width: 12.5%;
+    height: 12.5%;
+    position: absolute;
+    z-index: 2;
+    top: 0px;
+    left: 0px;
+}
+
+.a1 { top: 87.5%; left: 0%;}
+.a2 { top: 75%; left: 0%;}
+.a3 { top: 62.5%; left: 0%;}
+.a4 { top: 50%; left: 0%;}
+.a5 { top: 37.5%; left: 0%;}
+.a6 { top: 25%; left: 0%;}
+.a7 { top: 12.5%; left: 0%;}
+.a8 { top: 0%; left: 0%;}
+
+.b1 { top: 87.5%; left: 12.5%;}
+.b2 { top: 75%; left: 12.5%;}
+.b3 { top: 62.5%; left: 12.5%;}
+.b4 { top: 50%; left: 12.5%;}
+.b5 { top: 37.5%; left: 12.5%;}
+.b6 { top: 25%; left: 12.5%;}
+.b7 { top: 12.5%; left: 12.5%;}
+.b8 { top: 0%; left: 12.5%;}
+
+.c1 { top: 87.5%; left: 25%;}
+.c2 { top: 75%; left: 25%;}
+.c3 { top: 62.5%; left: 25%;}
+.c4 { top: 50%; left: 25%;}
+.c5 { top: 37.5%; left: 25%;}
+.c6 { top: 25%; left: 25%;}
+.c7 { top: 12.5%; left: 25%;}
+.c8 { top: 0%; left: 25%;}
+
+.d1 { top: 87.5%; left: 37.5%;}
+.d2 { top: 75%; left: 37.5%;}
+.d3 { top: 62.5%; left: 37.5%;}
+.d4 { top: 50%; left: 37.5%;}
+.d5 { top: 37.5%; left: 37.5%;}
+.d6 { top: 25%; left: 37.5%;}
+.d7 { top: 12.5%; left: 37.5%;}
+.d8 { top: 0%; left: 37.5%;}
+
+.e1 { top: 87.5%; left: 50%;}
+.e2 { top: 75%; left: 50%;}
+.e3 { top: 62.5%; left: 50%;}
+.e4 { top: 50%; left: 50%;}
+.e5 { top: 37.5%; left: 50%;}
+.e6 { top: 25%; left: 50%;}
+.e7 { top: 12.5%; left: 50%;}
+.e8 { top: 0%; left: 50%;}
+
+.f1 { top: 87.5%; left: 62.5%;}
+.f2 { top: 75%; left: 62.5%;}
+.f3 { top: 62.5%; left: 62.5%;}
+.f4 { top: 50%; left: 62.5%;}
+.f5 { top: 37.5%; left: 62.5%;}
+.f6 { top: 25%; left: 62.5%;}
+.f7 { top: 12.5%; left: 62.5%;}
+.f8 { top: 0%; left: 62.5%;}
+
+.g1 { top: 87.5%; left: 75%;}
+.g2 { top: 75%; left: 75%;}
+.g3 { top: 62.5%; left: 75%;}
+.g4 { top: 50%; left: 75%;}
+.g5 { top: 37.5%; left: 75%;}
+.g6 { top: 25%; left: 75%;}
+.g7 { top: 12.5%; left: 75%;}
+.g8 { top: 0%; left: 75%;}
+
+.h1 { top: 87.5%; left: 87.5%;}
+.h2 { top: 75%; left: 87.5%;}
+.h3 { top: 62.5%; left: 87.5%;}
+.h4 { top: 50%; left: 87.5%;}
+.h5 { top: 37.5%; left: 87.5%;}
+.h6 { top: 25%; left: 87.5%;}
+.h7 { top: 12.5%; left: 87.5%;}
+.h8 { top: 0%; left: 87.5%;}
+
+.unplaced {
+    visibility: hidden;
 }
