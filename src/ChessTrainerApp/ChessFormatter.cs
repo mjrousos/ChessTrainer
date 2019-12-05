@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 
 namespace ChessTrainerApp
@@ -9,6 +10,16 @@ namespace ChessTrainerApp
     /// </summary>
     public static class ChessFormatter
     {
+        public static ChessPieces[] WhitePieces => new[]
+        {
+            ChessPieces.WhiteKing,
+            ChessPieces.WhiteQueen,
+            ChessPieces.WhiteRook,
+            ChessPieces.WhiteBishop,
+            ChessPieces.WhiteKnight,
+            ChessPieces.WhitePawn
+        };
+
         public static string RankToString(int rank) => $"{rank + 1}";
 
         public static int RankFromString(string rank) => int.Parse(rank, CultureInfo.InvariantCulture) - 1;
@@ -138,5 +149,7 @@ namespace ChessTrainerApp
 
             return output.ToString();
         }
+
+        public static bool IsPieceWhite(ChessPieces piece) => WhitePieces.Contains(piece);
     }
 }
