@@ -34,4 +34,25 @@ window.attachMDC = () => {
 window.toggleDrawer = (drawerName) => {
     var drawer = MDCDrawer.attachTo(document.querySelector('#' + drawerName));
     drawer.open = !drawer.open;
-}
+};
+
+window.getBoundingRectangle = (componentId) => {
+    var element = document.getElementById(componentId);
+    if (element) {
+        console.log(element.getBoundingClientRect());
+        var rect = element.getBoundingClientRect();
+        return {
+            // `| 0` truncates to int
+            top: rect.top | 0,
+            y: rect.top | 0,
+            left: rect.left | 0,
+            x: rect.left | 0,
+            width: rect.width | 0,
+            height: rect.height | 0,
+            bottom: rect.bottom | 0,
+            right: rect.right | 0
+        };
+    } else {
+        return null;
+    }
+};

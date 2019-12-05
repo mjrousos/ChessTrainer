@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 
 namespace ChessTrainerApp.Components
 {
@@ -10,7 +15,11 @@ namespace ChessTrainerApp.Components
     /// </summary>
     public class ChessBoardBase : ComponentBase
     {
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; }
+
         private const int BoardSize = 8;
+        protected const string ElementName = "ChessBoard";
         private const string InitialGameFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
         // Stores which piece (if any) is on each board space
@@ -20,6 +29,8 @@ namespace ChessTrainerApp.Components
         /// Gets or sets moves since initial position.
         /// </summary>
         public IList<Move> Moves { get; set; }
+
+        public IEnumerable<Move> LegalMovesForSelectedPiece { get; set; }
 
         /// <summary>
         /// Gets pieces currently on the board.
@@ -76,10 +87,24 @@ namespace ChessTrainerApp.Components
         /// </summary>
         public (int, int)? EnPassantTarget { get; set; }
 
+        private ChessPiece selectedPiece;
+
         /// <summary>
         /// Gets or sets the piece the user currently has selected.
         /// </summary>
-        public ChessPiece SelectedPiece { get; set; }
+        public ChessPiece SelectedPiece
+        {
+            get
+            {
+                return selectedPiece;
+            }
+
+            set
+            {
+                selectedPiece = value;
+                LegalMovesForSelectedPiece = GetLegalMoves(selectedPiece);
+            }
+        }
 
         /// <summary>
         /// Gets or sets the number of half moves since a pawn was moved or a piece was captured.
@@ -106,7 +131,24 @@ namespace ChessTrainerApp.Components
         /// <returns>All possible legal moves for the piece.</returns>
         public IEnumerable<Move> GetLegalMoves(ChessPiece pieceToMove)
         {
-            throw new NotImplementedException(this.ToString());
+            if (pieceToMove != null)
+            {
+                // TODO - TEMPORARILY RETURN ALL SQUARES AS LEGAL. THIS MUST BE FIXED.
+                for (var i = 0; i < BoardSize; i++)
+                {
+                    for (var j = 0; j < BoardSize; j++)
+                    {
+                        yield return new Move
+                        {
+                            PieceMoved = pieceToMove.PieceType,
+                            OriginalFile = pieceToMove.File,
+                            OriginalRank = pieceToMove.Rank,
+                            FinalFile = i,
+                            FinalRank = j
+                        };
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -274,7 +316,6 @@ namespace ChessTrainerApp.Components
             // Update castling options, if necessary
 
             // Update active color
-            throw new NotImplementedException("NYI");
         }
 
         /// <summary>
@@ -293,6 +334,100 @@ namespace ChessTrainerApp.Components
         public string GetPGN()
         {
             throw new NotImplementedException(this.WhitePlayer);
+        }
+
+        public async void HandleMouseDown(MouseEventArgs args)
+        {
+            if (SelectedPiece == null)
+            {
+                (var file, var rank) = await GetMousePositionAsync(args);
+                SelectPiece(file, rank);
+            }
+        }
+
+        public async void HandleMouseUp(MouseEventArgs args)
+        {
+            if (SelectedPiece == null)
+            {
+                // If no piece is selected, do nothing
+                return;
+            }
+            else
+            {
+                (var file, var rank) = await GetMousePositionAsync(args);
+                PlacePiece(file, rank);
+            }
+        }
+
+        public void HandleMouseMove(MouseEventArgs args)
+        {
+            if (SelectedPiece != null)
+            {
+                // Move selected piece image
+                // TODO
+            }
+        }
+
+        private void SelectPiece(int file, int rank)
+        {
+            var piece = boardState[file][rank];
+            if (piece == null || ChessFormatter.IsPieceWhite(piece.PieceType) != WhiteToMove)
+            {
+                return;
+            }
+            else
+            {
+                SelectedPiece = piece;
+            }
+        }
+
+        private void PlacePiece(int file, int rank)
+        {
+            if (selectedPiece.File == file && selectedPiece.Rank == rank)
+            {
+                // If the mouse button is released on the same square the
+                // piece was selected from, do nothing. Keep the piece selected since
+                // this could be the initial click to select it.
+                return;
+            }
+            else
+            {
+                var move = LegalMovesForSelectedPiece.SingleOrDefault(m => m.FinalFile == file && m.FinalRank == rank);
+                SelectedPiece = null;
+                if (move != null)
+                {
+                    // If the piece is placed in a legal move location,
+                    // move the piece.
+                    Move(move);
+                }
+                else
+                {
+                    // If the piece is not placed in a legal move location,
+                    // try selecting the piece in that location instead.
+                    SelectPiece(file, rank);
+                }
+            }
+        }
+
+        private async Task<(int, int)> GetMousePositionAsync(MouseEventArgs args)
+        {
+            var boardDimensions = await JSRuntime.InvokeAsync<Rectangle>("getBoundingRectangle", new object[] { ElementName });
+
+            // Account for the rare case where the user clicks on the final pixel of the board
+            if (args.ClientX >= boardDimensions.Right)
+            {
+                args.ClientX--;
+            }
+
+            if (args.ClientY >= boardDimensions.Bottom)
+            {
+                args.ClientY--;
+            }
+
+            var file = ((int)args.ClientX - boardDimensions.X) * BoardSize / boardDimensions.Width;
+            var rank = (BoardSize - 1) - (((int)args.ClientY - boardDimensions.Y) * BoardSize / boardDimensions.Height);
+
+            return (file, rank);
         }
 
         /// <summary>
