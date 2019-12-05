@@ -25,13 +25,13 @@
 
         public bool ShortCastle =>
             (PieceMoved == ChessPieces.WhiteKing || PieceMoved == ChessPieces.BlackKing) &&
-            OriginalRank == 3 &&
-            FinalRank == 1;
+            OriginalFile == 4 &&
+            FinalFile == 6;
 
         public bool LongCastle =>
             (PieceMoved == ChessPieces.WhiteKing || PieceMoved == ChessPieces.BlackKing) &&
-            OriginalRank == 3 &&
-            FinalRank == 5;
+            OriginalFile == 4 &&
+            FinalFile == 2;
 
         public ChessPieces PieceMoved { get; set; }
 
