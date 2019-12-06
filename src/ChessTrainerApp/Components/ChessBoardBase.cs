@@ -319,24 +319,25 @@ namespace ChessTrainerApp.Components
         /// <param name="move">The move to apply to the game state.</param>
         public void Move(Move move)
         {
-            // Check that move is legal
-
             // Add to moves list
             Moves.Add(move);
 
             // Adjust piece positions
+            boardState[move.OriginalFile][move.OriginalRank] = null;
+            boardState[move.FinalFile][move.FinalRank] = new ChessPiece(move.PiecePromotedTo ?? move.PieceMoved, move.FinalFile, move.FinalRank);
 
             // Make additional board adjustments in cases of castling, en passant, or promotion
 
             // Increment or reset half move clock
-
-            // Increment move count if black moved
 
             // Update en passant target, if necessary
 
             // Update castling options, if necessary
 
             // Update active color
+            WhiteToMove = !WhiteToMove;
+
+            Render();
         }
 
         /// <summary>
