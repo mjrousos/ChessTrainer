@@ -6,8 +6,13 @@
     <OutputPathBase Condition=" '$(OutputPathBase)' == '' ">$(MSBuildThisFileDirectory)bin\$(Configuration)\</OutputPathBase>
     <OutputPath>$(OutputPathBase)\$(MSBuildProjectName)\</OutputPath>
     <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
-
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+
+  <!-- Treat warnings as errors in release builds, so that all warnings
+         are fixed before pushing to CI but don't need to be immediately
+         fixed during development -->
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 </Project>
