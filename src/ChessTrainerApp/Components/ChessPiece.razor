@@ -44,4 +44,9 @@
 
             _ => string.Empty,
         };
+
+    public override string ToString() => 
+        String.Join(' ', 
+            ChessFormatter.PieceToString(PieceType, pForPawn: true), 
+            $"{ChessFormatter.FileToString(File)}{ChessFormatter.RankToString(Rank)}");
 }
