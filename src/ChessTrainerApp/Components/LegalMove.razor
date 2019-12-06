@@ -1,0 +1,11 @@
+﻿<img class="@Class" src="images/LegalMove.svg" />
+
+@code {
+        [Parameter]
+    public int File { get; set; }
+
+    [Parameter]
+    public int Rank { get; set; }
+
+    public string Class => $"piece {ChessFormatter.FileToString(File)}{ChessFormatter.RankToString(Rank)}";
+}

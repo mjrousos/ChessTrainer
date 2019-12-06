@@ -133,19 +133,23 @@ namespace ChessTrainerApp.Components
         {
             if (pieceToMove != null)
             {
-                // TODO - TEMPORARILY RETURN ALL SQUARES AS LEGAL. THIS MUST BE FIXED.
+                // TODO - TEMPORARILY RETURN RANDOM SQUARES AS LEGAL. THIS MUST BE FIXED.
+                var numGen = new Random();
                 for (var i = 0; i < BoardSize; i++)
                 {
                     for (var j = 0; j < BoardSize; j++)
                     {
-                        yield return new Move
+                        if (numGen.Next(3) == 0)
                         {
-                            PieceMoved = pieceToMove.PieceType,
-                            OriginalFile = pieceToMove.File,
-                            OriginalRank = pieceToMove.Rank,
-                            FinalFile = i,
-                            FinalRank = j
-                        };
+                            yield return new Move
+                            {
+                                PieceMoved = pieceToMove.PieceType,
+                                OriginalFile = pieceToMove.File,
+                                OriginalRank = pieceToMove.Rank,
+                                FinalFile = i,
+                                FinalRank = j
+                            };
+                        }
                     }
                 }
             }

@@ -12,4 +12,8 @@
     {
         <ChessPiece File="piece.File" Rank="piece.Rank" PieceType="piece.PieceType" />
     }
+    @foreach (var legalMove in LegalMovesForSelectedPiece)
+    {
+        <LegalMove File="legalMove.FinalFile" Rank="legalMove.FinalRank" />
+    }
 </div>
