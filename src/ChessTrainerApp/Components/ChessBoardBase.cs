@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Unicode;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -24,6 +27,10 @@ namespace ChessTrainerApp.Components
 
         // Stores which piece (if any) is on each board space
         private ChessPiece[][] boardState;
+
+        // Tracks whether the component is rendered so that we know whether
+        // to call StateHasChanged or not.
+        private bool rendered = false;
 
         /// <summary>
         /// Gets or sets moves since initial position.
@@ -103,6 +110,8 @@ namespace ChessTrainerApp.Components
             {
                 selectedPiece = value;
                 LegalMovesForSelectedPiece = GetLegalMoves(selectedPiece);
+
+                Render();
             }
         }
 
@@ -124,6 +133,12 @@ namespace ChessTrainerApp.Components
             LoadFEN(InitialGameFEN);
         }
 
+        protected override void OnAfterRender(bool firstRender)
+        {
+            base.OnAfterRender(firstRender);
+            rendered = true;
+        }
+
         /// <summary>
         /// Retrieves potential legal moves for a given piece.
         /// </summary>
@@ -134,7 +149,9 @@ namespace ChessTrainerApp.Components
             if (pieceToMove != null)
             {
                 // TODO - TEMPORARILY RETURN RANDOM SQUARES AS LEGAL. THIS MUST BE FIXED.
-                var numGen = new Random();
+                var hasher = MD5.Create();
+                var hash = hasher.ComputeHash(Encoding.UTF8.GetBytes(pieceToMove.ToString()));
+                var numGen = new Random(BitConverter.ToInt32(hash));
                 for (var i = 0; i < BoardSize; i++)
                 {
                     for (var j = 0; j < BoardSize; j++)
@@ -432,6 +449,17 @@ namespace ChessTrainerApp.Components
             var rank = (BoardSize - 1) - (((int)args.ClientY - boardDimensions.Y) * BoardSize / boardDimensions.Height);
 
             return (file, rank);
+        }
+
+        /// <summary>
+        /// Tells Blazor to re-render the component
+        /// </summary>
+        private void Render()
+        {
+            if (rendered)
+            {
+                StateHasChanged();
+            }
         }
 
         /// <summary>
