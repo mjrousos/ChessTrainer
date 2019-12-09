@@ -37,6 +37,7 @@
 
 body {
     height: 100vh;
+    margin: 0;
 }
 
 html, body {
@@ -59,6 +60,7 @@ html, body {
     width: 100%;
     height: auto;
     position: relative;
+    display: flex;
 }
 
 .board {
