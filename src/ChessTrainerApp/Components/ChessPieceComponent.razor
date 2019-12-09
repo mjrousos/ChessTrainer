@@ -3,9 +3,9 @@
 @code {
     const string SpriteSource = "Chess_Pieces_Sprite.svg";
 
-    public ChessPiece() { }
+    public ChessPieceComponent() { }
 
-    public ChessPiece(ChessPieces pieceType, int file, int rank)
+    public ChessPieceComponent(ChessPieces pieceType, int file, int rank)
     {
         PieceType = pieceType;
         File = file;
@@ -44,9 +44,5 @@
 
             _ => string.Empty,
         };
-
-    public override string ToString() => 
-        String.Join(' ', 
-            ChessFormatter.PieceToString(PieceType, pForPawn: true), 
-            $"{ChessFormatter.FileToString(File)}{ChessFormatter.RankToString(Rank)}");
+        
 }

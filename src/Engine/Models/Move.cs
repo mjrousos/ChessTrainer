@@ -1,4 +1,6 @@
-﻿namespace ChessTrainerApp
+﻿using MjrChess.Engine.Utilities;
+
+namespace MjrChess.Engine.Models
 {
     /// <summary>
     /// A single move in a chess game.

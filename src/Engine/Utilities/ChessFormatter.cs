@@ -2,8 +2,9 @@
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using MjrChess.Engine.Models;
 
-namespace ChessTrainerApp
+namespace MjrChess.Engine.Utilities
 {
     /// <summary>
     /// Helper methods for translating chess concepts to or from strings.

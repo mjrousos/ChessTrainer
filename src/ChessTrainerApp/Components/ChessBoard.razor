@@ -8,11 +8,15 @@
          @onmousedown="HandleMouseDown" 
          @onmouseup="HandleMouseUp"
          />
-    @foreach (var piece in Pieces)
+    @foreach (var piece in Game.Pieces)
     {
-        <ChessPiece File="piece.File" Rank="piece.Rank" PieceType="piece.PieceType" />
+        if (!piece.File.HasValue || !piece.Rank.HasValue)
+        {
+            continue;
+        }
+        <ChessPieceComponent File="piece.File.Value" Rank="piece.Rank.Value" PieceType="piece.PieceType" />
     }
-    @foreach (var legalMove in LegalMovesForSelectedPiece)
+    @foreach (var legalMove in Game.LegalMovesForSelectedPiece)
     {
         <LegalMove File="legalMove.FinalFile" Rank="legalMove.FinalRank" />
     }

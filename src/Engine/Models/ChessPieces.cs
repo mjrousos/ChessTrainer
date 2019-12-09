@@ -1,4 +1,4 @@
-﻿namespace ChessTrainerApp
+﻿namespace MjrChess.Engine.Models
 {
     public enum ChessPieces
     {

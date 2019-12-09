@@ -1,18 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using ChessTrainerApp.Data;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace ChessTrainerApp
+namespace MjrChess.Trainer
 {
     public class Startup
     {
@@ -37,7 +30,6 @@ namespace ChessTrainerApp
                 options.Providers.Add<GzipCompressionProvider>();
                 options.MimeTypes = ResponseCompressionDefaults.MimeTypes;
             });
-            services.AddSingleton<WeatherForecastService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

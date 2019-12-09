@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
-namespace ChessTrainerApp.BlazorExtensions
+namespace MjrChess.Trainer.BlazorExtensions
 {
     public class MaterialDesignComponentBase : ComponentBase
     {

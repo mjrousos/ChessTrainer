@@ -5,6 +5,8 @@
     <UserSecretsId>e39a09eb-b684-487a-a471-35916dfebaa3</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..</DockerfileContext>
+    <RootNamespace>MjrChess.Trainer</RootNamespace>
+    <AssemblyName>MjrChess.Trainer</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +16,8 @@
   <ItemGroup>
     <PackageReference Update="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.6" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.9.5" />
+
+    <ProjectReference Include="..\Engine\Engine.csproj" />
   </ItemGroup>
 
   <ItemGroup>

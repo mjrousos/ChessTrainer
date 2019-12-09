@@ -5,7 +5,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 
-namespace ChessTrainerApp.BlazorExtensions
+namespace MjrChess.Trainer.BlazorExtensions
 {
     /// <summary>
     /// Extension of the RouteView class for displaying layout pages accepting additional parameters

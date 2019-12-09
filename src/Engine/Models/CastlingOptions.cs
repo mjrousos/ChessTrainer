@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ChessTrainerApp
+namespace MjrChess.Engine.Models
 {
     [Flags]
     public enum CastlingOptions
