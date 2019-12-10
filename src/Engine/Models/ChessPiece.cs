@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using MjrChess.Engine.Utilities;
 
 namespace MjrChess.Engine.Models

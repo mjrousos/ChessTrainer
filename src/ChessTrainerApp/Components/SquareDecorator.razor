@@ -1,0 +1,16 @@
+﻿@using MjrChess.Engine.Utilities
+
+<img class="@Class" src="images/@($"{ImageName}.svg")" />
+
+@code {
+    [Parameter]
+    public int File { get; set; }
+
+    [Parameter]
+    public int Rank { get; set; }
+
+    [Parameter]
+    public string ImageName { get; set; }
+
+    public string Class => $"boardSquareDecorator {ChessFormatter.FileToString(File)}{ChessFormatter.RankToString(Rank)}";
+}

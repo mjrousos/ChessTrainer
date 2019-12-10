@@ -69,6 +69,16 @@ html, body {
     z-index: 0;
 }
 
+.boardSquareDecorator {
+    pointer-events: none;
+    width: 12.5%;
+    height: 12.5%;
+    position: absolute;
+    z-index: 1;
+    top: 0px;
+    left: 0px;
+}
+
 .piece {
     pointer-events: none;
     width: 12.5%;

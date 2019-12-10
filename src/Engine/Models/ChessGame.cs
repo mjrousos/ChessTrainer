@@ -90,6 +90,11 @@ namespace MjrChess.Engine.Models
         /// </summary>
         public int MoveCount { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether a player's king is in check.
+        /// </summary>
+        public bool Check { get; set; }
+
         private ChessPiece selectedPiece;
 
         /// <summary>
@@ -166,6 +171,7 @@ namespace MjrChess.Engine.Models
             Result = GameResult.Ongoing;
             HalfMoveClock = 0;
             MoveCount = 1;
+            Check = false;
             boardState = new ChessPiece[BoardSize][];
             for (var i = 0; i < boardState.GetLength(0); i++)
             {

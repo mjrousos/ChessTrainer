@@ -18,6 +18,15 @@
     }
     @foreach (var legalMove in Game.LegalMovesForSelectedPiece)
     {
-        <LegalMove File="legalMove.FinalFile" Rank="legalMove.FinalRank" />
+        <SquareDecorator File="legalMove.FinalFile" Rank="legalMove.FinalRank" ImageName="LegalMove" />
+    }
+    @if (Game.SelectedPiece != null)
+    {
+        <SquareDecorator File="Game.SelectedPiece.File.Value" Rank="Game.SelectedPiece.Rank.Value" ImageName="SelectedSquare" />
+    }
+    @if (Game.Check)
+    {
+        var checkedKing = Game.Pieces.Single(p => p.PieceType == (Game.WhiteToMove ? ChessPieces.BlackKing : ChessPieces.WhiteKing));
+        <SquareDecorator File="checkedKing.File.Value" Rank="checkedKing.Rank.Value" ImageName="Check" />
     }
 </div>
