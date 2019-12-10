@@ -245,7 +245,15 @@ namespace MjrChess.Engine.Models
         /// <param name="file">The file the piece is on.</param>
         /// <param name="rank">The rank the piece is on.</param>
         /// <returns>The piece on the indicated square or null if no piece is there.</returns>
-        public ChessPiece GetPiece(int file, int rank) => boardState[file][rank];
+        public ChessPiece GetPiece(int file, int rank)
+        {
+            if (file >= BoardSize || rank >= BoardSize || file < 0 || rank < 0)
+            {
+                return null;
+            }
+
+            return boardState[file][rank];
+        }
 
         /// <summary>
         /// Make a move.
