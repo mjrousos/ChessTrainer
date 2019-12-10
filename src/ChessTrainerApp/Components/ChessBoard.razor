@@ -16,13 +16,13 @@
         }
         <ChessPieceComponent File="piece.File.Value" Rank="piece.Rank.Value" PieceType="piece.PieceType" />
     }
-    @foreach (var legalMove in Game.LegalMovesForSelectedPiece)
+    @foreach (var legalMove in LegalMovesForSelectedPiece)
     {
         <SquareDecorator File="legalMove.FinalFile" Rank="legalMove.FinalRank" ImageName="LegalMove" />
     }
-    @if (Game.SelectedPiece != null)
+    @if (SelectedPiece != null)
     {
-        <SquareDecorator File="Game.SelectedPiece.File.Value" Rank="Game.SelectedPiece.Rank.Value" ImageName="SelectedSquare" />
+        <SquareDecorator File="SelectedPiece.File.Value" Rank="SelectedPiece.Rank.Value" ImageName="SelectedSquare" />
     }
     @if (Game.Check)
     {

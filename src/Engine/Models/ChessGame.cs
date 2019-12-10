@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using MjrChess.Engine.Utilities;
 
 namespace MjrChess.Engine.Models
@@ -22,8 +19,6 @@ namespace MjrChess.Engine.Models
         /// Gets or sets moves since initial position.
         /// </summary>
         public IList<Move> Moves { get; set; }
-
-        public IEnumerable<Move> LegalMovesForSelectedPiece { get; set; }
 
         /// <summary>
         /// Gets pieces currently on the board.
@@ -95,64 +90,12 @@ namespace MjrChess.Engine.Models
         /// </summary>
         public bool Check { get; set; }
 
-        private ChessPiece selectedPiece;
-
-        /// <summary>
-        /// Gets or sets the piece the user currently has selected.
-        /// </summary>
-        public ChessPiece SelectedPiece
-        {
-            get
-            {
-                return selectedPiece;
-            }
-
-            set
-            {
-                selectedPiece = value;
-                LegalMovesForSelectedPiece = GetLegalMoves(selectedPiece);
-            }
-        }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="ChessGame"/> class, setup for a new standard chess game.
         /// </summary>
         public ChessGame()
         {
             LoadFEN(InitialGameFEN);
-        }
-
-        /// <summary>
-        /// Retrieves potential legal moves for a given piece.
-        /// </summary>
-        /// <param name="pieceToMove">The piece to move.</param>
-        /// <returns>All possible legal moves for the piece.</returns>
-        public IEnumerable<Move> GetLegalMoves(ChessPiece pieceToMove)
-        {
-            if (pieceToMove != null)
-            {
-                // TODO - TEMPORARILY RETURN RANDOM SQUARES AS LEGAL. THIS MUST BE FIXED.
-                var hasher = MD5.Create();
-                var hash = hasher.ComputeHash(Encoding.UTF8.GetBytes(pieceToMove.ToString()));
-                var numGen = new Random(BitConverter.ToInt32(hash, 0));
-                for (var i = 0; i < BoardSize; i++)
-                {
-                    for (var j = 0; j < BoardSize; j++)
-                    {
-                        if (numGen.Next(3) == 0)
-                        {
-                            yield return new Move
-                            {
-                                PieceMoved = pieceToMove.PieceType,
-                                OriginalFile = pieceToMove.File.Value,
-                                OriginalRank = pieceToMove.Rank.Value,
-                                FinalFile = i,
-                                FinalRank = j
-                            };
-                        }
-                    }
-                }
-            }
         }
 
         /// <summary>
@@ -167,7 +110,6 @@ namespace MjrChess.Engine.Models
             WhiteCastlingOptions =
                 BlackCastlingOptions = CastlingOptions.KingSide | CastlingOptions.QueenSide;
             EnPassantTarget = null;
-            SelectedPiece = null;
             Result = GameResult.Ongoing;
             HalfMoveClock = 0;
             MoveCount = 1;
@@ -298,6 +240,14 @@ namespace MjrChess.Engine.Models
         }
 
         /// <summary>
+        /// Gets the chess piece at a particular board position.
+        /// </summary>
+        /// <param name="file">The file the piece is on.</param>
+        /// <param name="rank">The rank the piece is on.</param>
+        /// <returns>The piece on the indicated square or null if no piece is there.</returns>
+        public ChessPiece GetPiece(int file, int rank) => boardState[file][rank];
+
+        /// <summary>
         /// Make a move.
         /// </summary>
         /// <param name="move">The move to apply to the game state.</param>
@@ -338,50 +288,6 @@ namespace MjrChess.Engine.Models
         public string GetPGN()
         {
             throw new NotImplementedException(this.WhitePlayer);
-        }
-
-        /// <summary>
-        /// Attempts to select a game piece.
-        /// </summary>
-        /// <param name="file">The file of the piece to be selected.</param>
-        /// <param name="rank">The rank of the piece to be selected.</param>
-        /// <returns>True if a piece was successfully selected, false otherwise. Note that this does not guarantee the selected piece has any legal moves.</returns>
-        public bool SelectPiece(int file, int rank)
-        {
-            var piece = boardState[file][rank];
-            if (piece == null || ChessFormatter.IsPieceWhite(piece.PieceType) != WhiteToMove)
-            {
-                return false;
-            }
-            else
-            {
-                SelectedPiece = piece;
-                return true;
-            }
-        }
-
-        /// <summary>
-        /// Attempts to place a selected piece. This unselects any selected piece.
-        /// </summary>
-        /// <param name="file">The file to place the selected piece on.</param>
-        /// <param name="rank">The rank to place the selected piece on.</param>
-        /// <returns>True if the selected piece was successully and legally placed on the indicated rank and file. False if the move is illegal or if no piece is selected.</returns>
-        public bool PlacePiece(int file, int rank)
-        {
-            var move = LegalMovesForSelectedPiece.SingleOrDefault(m => m.FinalFile == file && m.FinalRank == rank);
-            SelectedPiece = null;
-            if (move != null)
-            {
-                // If the piece is placed in a legal move location,
-                // move the piece.
-                Move(move);
-
-                return true;
-            }
-            else
-            {
-                return false;
-            }
         }
 
         /// <summary>

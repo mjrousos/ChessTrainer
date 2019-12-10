@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MjrChess.Engine;
 
 namespace MjrChess.Trainer
 {
@@ -30,6 +31,8 @@ namespace MjrChess.Trainer
                 options.Providers.Add<GzipCompressionProvider>();
                 options.MimeTypes = ResponseCompressionDefaults.MimeTypes;
             });
+
+            services.AddScoped<ChessEngine>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
