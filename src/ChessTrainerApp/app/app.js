@@ -2,8 +2,13 @@ import { MDCRipple, MDCRippleFoundation, util } from '@material/ripple';
 import { MDCTextField } from '@material/textfield';
 import { MDCTopAppBar } from '@material/top-app-bar';
 import { MDCDrawer } from "@material/drawer";
+import { MDCSnackbar } from '@material/snackbar';
 import '@fortawesome/fontawesome-free/js/fontawesome';
 import '@fortawesome/fontawesome-free/js/solid';
+
+var primaryNotifier;
+var copyNotifier;
+var copyButton;
 
 window.onload = function (e) {
     console.log('App loaded');
@@ -29,6 +34,11 @@ window.attachMDC = () => {
     for (const drawer of drawers) {
         MDCDrawer.attachTo(drawer);
     }
+
+    primaryNotifier = new MDCSnackbar(document.getElementById('PrimaryNotifier'));
+    copyNotifier = new MDCSnackbar(document.getElementById('CopyNotifier'));
+    copyNotifier.timeoutMs = 10000;
+    copyButton = document.getElementById("CopyButton");
 };
 
 window.toggleDrawer = (drawerName) => {
@@ -55,4 +65,26 @@ window.getBoundingRectangle = (componentId) => {
     } else {
         return null;
     }
+};
+
+window.notifyWithCopy = (text, copyText) => {
+    copyNotifier.labelText = text;
+    copyButton.onclick = () => {
+        window.copyToClipboard(text);
+        window.notify(copyText);
+    };
+    copyNotifier.open();
+};
+
+window.notify = (text) => {
+    primaryNotifier.labelText = text;
+    primaryNotifier.open();
+};
+
+window.copyToClipboard = (text) => {
+    // Note that this doesn't work with (pre-beta) Edge or Safari
+    // If I want to support browsers other than Chrome, FireFox, and Edge Beta,
+    // I'll need to replace this with a more general solution.
+    // https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText
+    return navigator.clipboard.writeText(text);
 };

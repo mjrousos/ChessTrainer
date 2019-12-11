@@ -17,6 +17,36 @@
         @(await Html.RenderComponentAsync<App>(RenderMode.ServerPrerendered))
     </app>
 
+    <!-- Toast notification divs -->
+    <div id="PrimaryNotifier" class="mdc-snackbar mdc-snackbar--stacked">
+        <div class="mdc-snackbar__surface">
+            <div id="PrimaryNotifierLabel" class="mdc-snackbar__label"
+                 role="status"
+                 aria-live="polite">
+            </div>
+            <div class="mdc-snackbar__actions">
+                <button type="button" class="mdc-button mdc-snackbar__dismiss">
+                    Ok
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="CopyNotifier" class="mdc-snackbar mdc-snackbar--stacked">
+        <div class="mdc-snackbar__surface">
+            <div id="CopyNotifierLabel" class="mdc-snackbar__label"
+                 role="status"
+                 aria-live="polite">
+            </div>
+            <div class="mdc-snackbar__actions">
+                <button id="CopyButton" type="button" class="mdc-button mdc-snackbar__action">
+                    Copy
+                </button>
+                <button type="button" class="mdc-button mdc-snackbar__dismiss">
+                    Ok
+                </button>
+            </div>
+        </div>
+    </div>
     <script src="_framework/blazor.server.js"></script>
     <script src="app.bundle.js"></script>
 </body>

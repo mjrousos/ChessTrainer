@@ -1,0 +1,43 @@
+﻿@using MjrChess.Trainer.BlazorExtensions
+
+@inherits MaterialDesignComponentBase
+
+<div class="mdc-layout-grid nested-vertical-grid">
+    <div class="mdc-layout-grid__inner">
+        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-9">
+            @((MarkupString)ChessFormatter.MovesToString(Game.Moves, true))
+        </div>
+        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3 mdc-layout-grid--align-right">
+            <button class="mdc-button mdc-button--raised pull-right" @onclick="CopyPGN">
+                <span class="mdc-button__label">
+                    PGN
+                </span>
+            </button>
+            <button class="mdc-button mdc-button--raised pull-right" @onclick="CopyFEN">
+                <span class="mdc-button__label">
+                    FEN
+                </span>
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; }
+
+    [Parameter]
+    public ChessGame Game { get; set; }
+
+    private async Task CopyPGN()
+    {
+        var pgn = Game.GetPGN();
+        await JSRuntime.InvokeVoidAsync("notifyWithCopy", pgn, "Copied PGN to clipboard");
+    }
+
+    private async Task CopyFEN()
+    {
+        var fen = Game.GetFEN();
+        await JSRuntime.InvokeVoidAsync("notifyWithCopy", fen, "Copied FEN to clipboard");
+    }
+}

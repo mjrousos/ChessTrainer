@@ -362,7 +362,8 @@ namespace MjrChess.Engine.Models
         /// <returns>FEN notation description of the game state.</returns>
         public string GetFEN()
         {
-            throw new NotImplementedException(this.WhitePlayer);
+            // TODO
+            return "FEN export not yet implemented";
         }
 
         /// <summary>
@@ -371,7 +372,8 @@ namespace MjrChess.Engine.Models
         /// <returns>PGN notation description of the game state.</returns>
         public string GetPGN()
         {
-            throw new NotImplementedException(this.WhitePlayer);
+            // TODO
+            return ChessFormatter.MovesToString(Moves, false);
         }
 
         /// <summary>

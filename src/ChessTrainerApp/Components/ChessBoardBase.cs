@@ -163,7 +163,7 @@ namespace MjrChess.Trainer.Components
         }
 
         /// <summary>
-        /// Tells Blazor to re-render the component
+        /// Tells Blazor to re-render the component.
         /// </summary>
         private void Render()
         {

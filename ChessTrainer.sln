@@ -15,7 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IngestionFunctions", "src\I
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{CBD3F384-DDE9-44C0-BD4C-0B984E0FF7ED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine", "src\Engine\Engine.csproj", "{A909A755-D1EE-474F-B855-5C5108329387}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Engine", "src\Engine\Engine.csproj", "{A909A755-D1EE-474F-B855-5C5108329387}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3E9FD578-EA98-4564-8569-D4702259AAB1}"
 	ProjectSection(SolutionItems) = preProject

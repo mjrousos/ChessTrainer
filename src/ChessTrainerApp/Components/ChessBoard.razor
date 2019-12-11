@@ -1,13 +1,11 @@
 ﻿@inherits ChessBoardBase
 
 <div class="boardContainer">
-    <img 
-         id="@ElementName" 
-         class="board" 
-         src="images/board.svg" 
-         @onmousedown="HandleMouseDown" 
-         @onmouseup="HandleMouseUp"
-         />
+    <img id="@ElementName"
+         class="board"
+         src="images/board.svg"
+         @onmousedown="HandleMouseDown"
+         @onmouseup="HandleMouseUp" />
     @foreach (var piece in Game.Pieces)
     {
         if (piece.Position == null)
@@ -30,3 +28,4 @@
         <SquareDecorator File="checkedKing.Position.File" Rank="checkedKing.Position.Rank" ImageName="Check" />
     }
 </div>
+<GameDetails Game="Game" />

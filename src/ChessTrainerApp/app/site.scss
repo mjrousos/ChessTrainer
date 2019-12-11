@@ -6,6 +6,7 @@
 @import "@material/drawer/mdc-drawer";
 @import "@material/list/mdc-list";
 @import "@material/layout-grid/mdc-layout-grid";
+@import "@material/snackbar/mdc-snackbar";
 
 /* Make sure the app bar shows over the menu drawer */
 .mdc-top-app-bar {
@@ -30,6 +31,12 @@
     text-decoration: none;
 }
 
+/* Resize snackbar dismiss text size to match normal button text size */
+.mdc-snackbar__dismiss.mdc-snackbar__dismiss {
+    font-size: 14px;
+    padding: 0px 8px 0px 8px;
+}
+
 /* Make sure elements that act as link have a matching cursor */
 .link:hover {
     cursor: pointer;
@@ -38,6 +45,10 @@
 body {
     height: 100vh;
     margin: 0;
+}
+
+body button {
+    margin: 0px 0px 5px 0px;
 }
 
 html, body {
@@ -54,6 +65,12 @@ html, body {
 
 .validation-message {
     color: red;
+}
+
+/* Nested vertical grids can occupy the entire row of the parent grid */
+.nested-vertical-grid {
+    padding-right: 0px;
+    padding-left: 0px;
 }
 
 .boardContainer {
