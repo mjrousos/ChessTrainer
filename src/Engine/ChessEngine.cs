@@ -124,6 +124,9 @@ namespace MjrChess.Engine
         private Move ValidateMove(Move move)
         {
             // TODO
+
+            // Also, check whether spaces king starts in or moves through are in check
+
             return move;
         }
 
@@ -178,7 +181,7 @@ namespace MjrChess.Engine
                 {
                     yield return CreateMoveFromPiece(king, new BoardPosition(6, 0), false);
                 }
-                else if ((Game.WhiteCastlingOptions & CastlingOptions.QueenSide) == CastlingOptions.QueenSide &&
+                if ((Game.WhiteCastlingOptions & CastlingOptions.QueenSide) == CastlingOptions.QueenSide &&
                     Game.GetPiece(3, 0) == null &&
                     Game.GetPiece(2, 0) == null &&
                     Game.GetPiece(1, 0) == null)
@@ -194,7 +197,7 @@ namespace MjrChess.Engine
                 {
                     yield return CreateMoveFromPiece(king, new BoardPosition(6, 7), false);
                 }
-                else if ((Game.BlackCastlingOptions & CastlingOptions.QueenSide) == CastlingOptions.QueenSide &&
+                if ((Game.BlackCastlingOptions & CastlingOptions.QueenSide) == CastlingOptions.QueenSide &&
                     Game.GetPiece(3, 7) == null &&
                     Game.GetPiece(2, 7) == null &&
                     Game.GetPiece(1, 7) == null)

@@ -270,11 +270,37 @@ namespace MjrChess.Engine.Models
             // Add to moves list
             Moves.Add(move);
 
-            // Adjust piece positions
+            // Adjust piece positions (and apply promotion, if necessary)
             boardState[move.OriginalPosition.File][move.OriginalPosition.Rank] = null;
             boardState[move.FinalPosition.File][move.FinalPosition.Rank] = new ChessPiece(move.PiecePromotedTo ?? move.PieceMoved, move.FinalPosition);
 
             // Make additional board adjustments in cases of castling
+            if (move.ShortCastle)
+            {
+                if (WhiteToMove)
+                {
+                    boardState[7][0] = null;
+                    boardState[5][0] = new ChessPiece(ChessPieces.WhiteRook, new BoardPosition(5, 0));
+                }
+                else
+                {
+                    boardState[7][7] = null;
+                    boardState[5][7] = new ChessPiece(ChessPieces.BlackRook, new BoardPosition(5, 7));
+                }
+            }
+            else if (move.LongCastle)
+            {
+                if (WhiteToMove)
+                {
+                    boardState[0][0] = null;
+                    boardState[3][0] = new ChessPiece(ChessPieces.WhiteRook, new BoardPosition(3, 0));
+                }
+                else
+                {
+                    boardState[0][7] = null;
+                    boardState[3][7] = new ChessPiece(ChessPieces.BlackRook, new BoardPosition(3, 7));
+                }
+            }
 
             // Remove captured en passant piece
             if ((move.PieceMoved == ChessPieces.WhitePawn || move.PieceMoved == ChessPieces.BlackPawn) &&
@@ -285,6 +311,14 @@ namespace MjrChess.Engine.Models
             }
 
             // Increment or reset half move clock
+            if (move.Capture || move.PieceMoved == ChessPieces.WhitePawn || move.PieceMoved == ChessPieces.BlackPawn)
+            {
+                HalfMoveClock = 0;
+            }
+            else
+            {
+                HalfMoveClock++;
+            }
 
             // Update en passant target
             if (move.PieceMoved == ChessPieces.WhitePawn && move.OriginalPosition.Rank == 1 && move.FinalPosition.Rank == 3)
@@ -301,6 +335,22 @@ namespace MjrChess.Engine.Models
             }
 
             // Update castling options, if necessary
+            (WhiteCastlingOptions, BlackCastlingOptions) = move.OriginalPosition switch
+            {
+                { File: 4, Rank: 0 } => (CastlingOptions.None, BlackCastlingOptions),
+                { File: 4, Rank: 7 } => (WhiteCastlingOptions, CastlingOptions.None),
+                { File: 0, Rank: 0 } => (WhiteCastlingOptions & ~CastlingOptions.QueenSide, BlackCastlingOptions),
+                { File: 0, Rank: 7 } => (WhiteCastlingOptions, BlackCastlingOptions & ~CastlingOptions.QueenSide),
+                { File: 7, Rank: 0 } => (WhiteCastlingOptions & ~CastlingOptions.KingSide, BlackCastlingOptions),
+                { File: 7, Rank: 7 } => (WhiteCastlingOptions, BlackCastlingOptions & ~CastlingOptions.KingSide),
+                _ => (WhiteCastlingOptions, BlackCastlingOptions)
+            };
+
+            // Update move count
+            if (!WhiteToMove)
+            {
+                MoveCount++;
+            }
 
             // Update active color
             WhiteToMove = !WhiteToMove;
