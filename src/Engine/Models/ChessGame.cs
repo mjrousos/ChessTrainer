@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Text;
 using MjrChess.Engine.Utilities;
 
 namespace MjrChess.Engine.Models
@@ -9,6 +10,7 @@ namespace MjrChess.Engine.Models
     {
         public const int DefaultBoardSize = 8;
         private const string InitialGameFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        private const char FenRankDelimiter = '/';
 
         // Stores which piece (if any) is on each board space
         private ChessPiece[][] boardState;
@@ -139,7 +141,7 @@ namespace MjrChess.Engine.Models
                 {
                     switch (piece)
                     {
-                        case '/':
+                        case FenRankDelimiter:
                             rank--;
                             file = 0;
                             break;
@@ -362,8 +364,79 @@ namespace MjrChess.Engine.Models
         /// <returns>FEN notation description of the game state.</returns>
         public string GetFEN()
         {
-            // TODO
-            return "FEN export not yet implemented";
+            var fen = new StringBuilder();
+
+            // Write moves
+            var emptySquares = 0;
+            for (var rank = BoardSize - 1; rank >= 0; rank--)
+            {
+                for (var file = 0; file < BoardSize; file++)
+                {
+                    if (boardState[file][rank] != null)
+                    {
+                        if (emptySquares > 0)
+                        {
+                            fen.Append(emptySquares);
+                            emptySquares = 0;
+                        }
+
+                        fen.Append(ChessFormatter.PieceToString(boardState[file][rank].PieceType, true, true));
+                    }
+                    else
+                    {
+                        emptySquares++;
+                    }
+                }
+
+                if (emptySquares > 0)
+                {
+                    fen.Append(emptySquares);
+                    emptySquares = 0;
+                }
+
+                if (rank > 0)
+                {
+                    fen.Append(FenRankDelimiter);
+                }
+            }
+
+            // Write active color
+            fen.Append($" {(WhiteToMove ? "w" : "b")} ");
+
+            // Write castling options
+            if (BlackCastlingOptions == CastlingOptions.None && WhiteCastlingOptions == CastlingOptions.None)
+            {
+                fen.Append("- ");
+            }
+            else
+            {
+                if ((WhiteCastlingOptions & CastlingOptions.KingSide) == CastlingOptions.KingSide)
+                {
+                    fen.Append("K");
+                }
+
+                if ((WhiteCastlingOptions & CastlingOptions.QueenSide) == CastlingOptions.QueenSide)
+                {
+                    fen.Append("Q");
+                }
+
+                if ((BlackCastlingOptions & CastlingOptions.KingSide) == CastlingOptions.KingSide)
+                {
+                    fen.Append("k");
+                }
+
+                if ((BlackCastlingOptions & CastlingOptions.QueenSide) == CastlingOptions.QueenSide)
+                {
+                    fen.Append("q");
+                }
+
+                fen.Append(' ');
+            }
+
+            // Write en passant state, halfmove clock, and move count
+            fen.Append($"{EnPassantTarget?.ToString() ?? "-"} {HalfMoveClock} {MoveCount}");
+
+            return fen.ToString();
         }
 
         /// <summary>
