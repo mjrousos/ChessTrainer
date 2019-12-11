@@ -82,7 +82,7 @@ namespace MjrChess.Trainer.Components
             else
             {
                 (var file, var rank) = await GetMousePositionAsync(args);
-                if (SelectedPiece.File == file && SelectedPiece.Rank == rank)
+                if (SelectedPiece.Position.File == file && SelectedPiece.Position.Rank == rank)
                 {
                     // If the mouse button is released on the same square the
                     // piece was selected from, do nothing. Keep the piece selected since
@@ -125,7 +125,7 @@ namespace MjrChess.Trainer.Components
         /// <returns>True if the selected piece was successully and legally placed on the indicated rank and file. False if the move is illegal or if no piece is selected.</returns>
         private bool PlacePiece(int file, int rank)
         {
-            var move = LegalMovesForSelectedPiece.SingleOrDefault(m => m.FinalFile == file && m.FinalRank == rank);
+            var move = LegalMovesForSelectedPiece.SingleOrDefault(m => m.FinalPosition.File == file && m.FinalPosition.Rank == rank);
             SelectedPiece = null;
             if (move != null)
             {

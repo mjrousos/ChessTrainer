@@ -11,35 +11,35 @@ namespace MjrChess.Engine
     /// </summary>
     public class ChessEngine
     {
-        private static IEnumerable<Func<int, int, (int, int)>> RookMovements => new Func<int, int, (int, int)>[]
+        private static IEnumerable<Func<BoardPosition, BoardPosition>> RookMovements => new Func<BoardPosition, BoardPosition>[]
         {
-            (file, rank) => (file + 1, rank),
-            (file, rank) => (file - 1, rank),
-            (file, rank) => (file, rank + 1),
-            (file, rank) => (file, rank - 1)
+            position => new BoardPosition(position.File + 1, position.Rank),
+            position => new BoardPosition(position.File - 1, position.Rank),
+            position => new BoardPosition(position.File, position.Rank + 1),
+            position => new BoardPosition(position.File, position.Rank - 1)
         };
 
-        private static IEnumerable<Func<int, int, (int, int)>> BishopMovements => new Func<int, int, (int, int)>[]
+        private static IEnumerable<Func<BoardPosition, BoardPosition>> BishopMovements => new Func<BoardPosition, BoardPosition>[]
         {
-            (file, rank) => (file + 1, rank + 1),
-            (file, rank) => (file - 1, rank + 1),
-            (file, rank) => (file + 1, rank - 1),
-            (file, rank) => (file - 1, rank - 1)
+            position => new BoardPosition(position.File + 1, position.Rank + 1),
+            position => new BoardPosition(position.File - 1, position.Rank + 1),
+            position => new BoardPosition(position.File + 1, position.Rank - 1),
+            position => new BoardPosition(position.File - 1, position.Rank - 1)
         };
 
-        private static IEnumerable<Func<int, int, (int, int)>> KnightMovements => new Func<int, int, (int, int)>[]
+        private static IEnumerable<Func<BoardPosition, BoardPosition>> KnightMovements => new Func<BoardPosition, BoardPosition>[]
         {
-            (file, rank) => (file + 2, rank + 1),
-            (file, rank) => (file + 2, rank - 1),
-            (file, rank) => (file - 2, rank + 1),
-            (file, rank) => (file - 2, rank - 1),
-            (file, rank) => (file + 1, rank + 2),
-            (file, rank) => (file - 1, rank + 2),
-            (file, rank) => (file + 1, rank - 2),
-            (file, rank) => (file - 1, rank - 2)
+            position => new BoardPosition(position.File + 2, position.Rank + 1),
+            position => new BoardPosition(position.File + 2, position.Rank - 1),
+            position => new BoardPosition(position.File - 2, position.Rank + 1),
+            position => new BoardPosition(position.File - 2, position.Rank - 1),
+            position => new BoardPosition(position.File + 1, position.Rank + 2),
+            position => new BoardPosition(position.File - 1, position.Rank + 2),
+            position => new BoardPosition(position.File + 1, position.Rank - 2),
+            position => new BoardPosition(position.File - 1, position.Rank - 2)
         };
 
-        private static IEnumerable<Func<int, int, (int, int)>> RoyalMovements => RookMovements.Union(BishopMovements);
+        private static IEnumerable<Func<BoardPosition, BoardPosition>> RoyalMovements => RookMovements.Union(BishopMovements);
 
         public ChessGame Game { get; internal set; }
 
@@ -139,31 +139,28 @@ namespace MjrChess.Engine
             var rankProgresion = whitePawn ? 1 : -1;
 
             // Check one-space advance
-            var finalFile = pawn.File.Value;
-            var finalRank = pawn.Rank.Value + rankProgresion;
-            if (Game.GetPiece(finalFile, finalRank) == null)
+            var finalPosition = new BoardPosition(pawn.Position.File, pawn.Position.Rank + rankProgresion);
+            if (Game.GetPiece(finalPosition) == null)
             {
-                yield return CreateMoveFromPiece(pawn, finalFile, finalRank, false);
+                yield return CreateMoveFromPiece(pawn, finalPosition, false);
 
                 // Check two-space advance
-                finalFile = pawn.File.Value;
-                finalRank = pawn.Rank.Value + (2 * rankProgresion);
-                if (pawn.Rank.Value == (whitePawn ? 1 : 6) && Game.GetPiece(finalFile, finalRank) == null)
+                finalPosition = new BoardPosition(pawn.Position.File, pawn.Position.Rank + (2 * rankProgresion));
+                if (pawn.Position.Rank == (whitePawn ? 1 : 6) && Game.GetPiece(finalPosition) == null)
                 {
-                    yield return CreateMoveFromPiece(pawn, finalFile, finalRank, false);
+                    yield return CreateMoveFromPiece(pawn, finalPosition, false);
                 }
             }
 
             // Check captures
-            var captureFiles = new[] { pawn.File.Value - 1, pawn.File.Value + 1 };
+            var captureFiles = new[] { pawn.Position.File - 1, pawn.Position.File + 1 };
             foreach (var captureFile in captureFiles)
             {
-                finalFile = captureFile;
-                finalRank = pawn.Rank.Value + rankProgresion;
-                var pieceAtDestination = Game.GetPiece(finalFile, finalRank);
-                if (Game.EnPassantTarget == (finalFile, finalRank) || (pieceAtDestination != null && ChessFormatter.IsPieceWhite(pieceAtDestination.PieceType) != whitePawn))
+                finalPosition = new BoardPosition(captureFile, pawn.Position.Rank + rankProgresion);
+                var pieceAtDestination = Game.GetPiece(finalPosition);
+                if (Game.EnPassantTarget == finalPosition || (pieceAtDestination != null && ChessFormatter.IsPieceWhite(pieceAtDestination.PieceType) != whitePawn))
                 {
-                    yield return CreateMoveFromPiece(pawn, finalFile, finalRank, true);
+                    yield return CreateMoveFromPiece(pawn, finalPosition, true);
                 }
             }
         }
@@ -179,14 +176,14 @@ namespace MjrChess.Engine
                     Game.GetPiece(5, 0) == null &&
                     Game.GetPiece(6, 0) == null)
                 {
-                    yield return CreateMoveFromPiece(king, 6, 0, false);
+                    yield return CreateMoveFromPiece(king, new BoardPosition(6, 0), false);
                 }
                 else if ((Game.WhiteCastlingOptions & CastlingOptions.QueenSide) == CastlingOptions.QueenSide &&
                     Game.GetPiece(3, 0) == null &&
                     Game.GetPiece(2, 0) == null &&
                     Game.GetPiece(1, 0) == null)
                 {
-                    yield return CreateMoveFromPiece(king, 2, 0, false);
+                    yield return CreateMoveFromPiece(king, new BoardPosition(2, 0), false);
                 }
             }
             else
@@ -195,31 +192,34 @@ namespace MjrChess.Engine
                     Game.GetPiece(5, 7) == null &&
                     Game.GetPiece(6, 7) == null)
                 {
-                    yield return CreateMoveFromPiece(king, 6, 7, false);
+                    yield return CreateMoveFromPiece(king, new BoardPosition(6, 7), false);
                 }
                 else if ((Game.BlackCastlingOptions & CastlingOptions.QueenSide) == CastlingOptions.QueenSide &&
                     Game.GetPiece(3, 7) == null &&
                     Game.GetPiece(2, 7) == null &&
                     Game.GetPiece(1, 7) == null)
                 {
-                    yield return CreateMoveFromPiece(king, 2, 7, false);
+                    yield return CreateMoveFromPiece(king, new BoardPosition(2, 7), false);
                 }
             }
 
             // Check for normal moves
             foreach (var applyMovement in RoyalMovements)
             {
-                var (finalFile, finalRank) = applyMovement(king.File.Value, king.Rank.Value);
-                if (finalFile >= 0 && finalFile < Game.BoardSize && finalRank >= 0 && finalRank < Game.BoardSize)
+                var finalPosition = applyMovement(king.Position);
+                if (finalPosition.File >= 0 &&
+                    finalPosition.File < Game.BoardSize &&
+                    finalPosition.Rank >= 0 &&
+                    finalPosition.Rank < Game.BoardSize)
                 {
-                    var pieceAtDestination = Game.GetPiece(finalFile, finalRank);
+                    var pieceAtDestination = Game.GetPiece(finalPosition);
                     if (pieceAtDestination == null)
                     {
-                        yield return CreateMoveFromPiece(king, finalFile, finalRank, false);
+                        yield return CreateMoveFromPiece(king, finalPosition, false);
                     }
                     else if (whiteKing != ChessFormatter.IsPieceWhite(pieceAtDestination.PieceType))
                     {
-                        yield return CreateMoveFromPiece(king, finalFile, finalRank, true);
+                        yield return CreateMoveFromPiece(king, finalPosition, true);
                     }
                 }
             }
@@ -229,17 +229,20 @@ namespace MjrChess.Engine
         {
             foreach (var applyMovement in KnightMovements)
             {
-                var (finalFile, finalRank) = applyMovement(knight.File.Value, knight.Rank.Value);
-                if (finalFile >= 0 && finalFile < Game.BoardSize && finalRank >= 0 && finalRank < Game.BoardSize)
+                var finalPosition = applyMovement(knight.Position);
+                if (finalPosition.File >= 0 &&
+                    finalPosition.File < Game.BoardSize &&
+                    finalPosition.Rank >= 0 &&
+                    finalPosition.Rank < Game.BoardSize)
                 {
-                    var pieceAtDestination = Game.GetPiece(finalFile, finalRank);
+                    var pieceAtDestination = Game.GetPiece(finalPosition);
                     if (pieceAtDestination == null)
                     {
-                        yield return CreateMoveFromPiece(knight, finalFile, finalRank, false);
+                        yield return CreateMoveFromPiece(knight, finalPosition, false);
                     }
                     else if (ChessFormatter.IsPieceWhite(knight.PieceType) != ChessFormatter.IsPieceWhite(pieceAtDestination.PieceType))
                     {
-                        yield return CreateMoveFromPiece(knight, finalFile, finalRank, true);
+                        yield return CreateMoveFromPiece(knight, finalPosition, true);
                     }
                 }
             }
@@ -251,22 +254,25 @@ namespace MjrChess.Engine
 
         private IEnumerable<Move> GetQueenMoves(ChessPiece rook) => GetStraightPieceMoves(rook, RoyalMovements);
 
-        private IEnumerable<Move> GetStraightPieceMoves(ChessPiece piece, IEnumerable<Func<int, int, (int, int)>> movements)
+        private IEnumerable<Move> GetStraightPieceMoves(ChessPiece piece, IEnumerable<Func<BoardPosition, BoardPosition>> movements)
         {
             foreach (var applyMovement in movements)
             {
-                var (finalFile, finalRank) = applyMovement(piece.File.Value, piece.Rank.Value);
+                var finalPosition = applyMovement(piece.Position);
 
-                while (finalFile >= 0 && finalFile < Game.BoardSize && finalRank >= 0 && finalRank < Game.BoardSize)
+                while (finalPosition.File >= 0 &&
+                    finalPosition.File < Game.BoardSize &&
+                    finalPosition.Rank >= 0 &&
+                    finalPosition.Rank < Game.BoardSize)
                 {
-                    var pieceAtDestination = Game.GetPiece(finalFile, finalRank);
+                    var pieceAtDestination = Game.GetPiece(finalPosition);
                     if (pieceAtDestination == null)
                     {
-                        yield return CreateMoveFromPiece(piece, finalFile, finalRank, false);
+                        yield return CreateMoveFromPiece(piece, finalPosition, false);
                     }
                     else if (ChessFormatter.IsPieceWhite(piece.PieceType) != ChessFormatter.IsPieceWhite(pieceAtDestination.PieceType))
                     {
-                        yield return CreateMoveFromPiece(piece, finalFile, finalRank, true);
+                        yield return CreateMoveFromPiece(piece, finalPosition, true);
                         break;
                     }
                     else
@@ -274,21 +280,19 @@ namespace MjrChess.Engine
                         break;
                     }
 
-                    (finalFile, finalRank) = applyMovement(finalFile, finalRank);
+                    finalPosition = applyMovement(finalPosition);
                 }
             }
         }
 
-        private Move CreateMoveFromPiece(ChessPiece piece, int finalFile, int finalRank, bool capture)
+        private Move CreateMoveFromPiece(ChessPiece piece, BoardPosition finalPosition, bool capture)
         {
-            var promoted = (piece.PieceType == ChessPieces.WhitePawn || piece.PieceType == ChessPieces.BlackPawn) && finalRank % (Game.BoardSize - 1) == 0;
+            var promoted = (piece.PieceType == ChessPieces.WhitePawn || piece.PieceType == ChessPieces.BlackPawn) && finalPosition.Rank % (Game.BoardSize - 1) == 0;
             return new Move
             {
                 PieceMoved = piece.PieceType,
-                OriginalFile = piece.File.Value,
-                OriginalRank = piece.Rank.Value,
-                FinalFile = finalFile,
-                FinalRank = finalRank,
+                OriginalPosition = piece.Position,
+                FinalPosition = finalPosition,
                 Capture = capture,
                 PiecePromotedTo = promoted ? (ChessFormatter.IsPieceWhite(piece.PieceType) ? ChessPieces.WhiteQueen : ChessPieces.BlackQueen) : (ChessPieces?)null
             };

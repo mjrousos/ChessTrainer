@@ -114,17 +114,17 @@ namespace MjrChess.Engine.Utilities
             var pieceMoved = PieceToString(move.PieceMoved);
             output.Append(
                 string.IsNullOrEmpty(pieceMoved) ?
-                (move.Capture ? FileToString(move.OriginalFile) : string.Empty) :
+                (move.Capture ? FileToString(move.OriginalPosition.File) : string.Empty) :
                 pieceMoved);
 
             if (move.AmbiguousOriginalFile)
             {
-                output.Append(FileToString(move.OriginalFile));
+                output.Append(FileToString(move.OriginalPosition.File));
             }
 
             if (move.AmbiguousOriginalRank)
             {
-                output.Append(RankToString(move.OriginalRank));
+                output.Append(RankToString(move.OriginalPosition.Rank));
             }
 
             if (move.Capture)
@@ -132,7 +132,7 @@ namespace MjrChess.Engine.Utilities
                 output.Append("x");
             }
 
-            output.Append($"{FileToString(move.FinalFile)}{RankToString(move.FinalRank)}");
+            output.Append($"{move.FinalPosition}");
 
             if (move.PiecePromotedTo != null)
             {

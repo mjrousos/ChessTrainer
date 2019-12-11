@@ -6,8 +6,4 @@
     <AssemblyName>MjrChess.Engine</AssemblyName>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="Models\" />
-  </ItemGroup>
-
 </Project>

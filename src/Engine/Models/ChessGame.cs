@@ -73,7 +73,7 @@ namespace MjrChess.Engine.Models
         /// <summary>
         /// Gets or sets the square an en passant capture can be made to (if any).
         /// </summary>
-        public (int, int)? EnPassantTarget { get; set; }
+        public BoardPosition EnPassantTarget { get; set; }
 
         /// <summary>
         /// Gets or sets the number of half moves since a pawn was moved or a piece was captured.
@@ -157,8 +157,7 @@ namespace MjrChess.Engine.Models
                         case 'p':
                             boardState[file][rank] = new ChessPiece(
                                 ChessFormatter.PieceFromString($"{piece}"),
-                                file,
-                                rank);
+                                new BoardPosition(file, rank));
                             file++;
                             break;
                         default:
@@ -209,7 +208,7 @@ namespace MjrChess.Engine.Models
             // Parse en passant target
             if (fenComponents.Length > 3 && fenComponents[3].Length == 2)
             {
-                EnPassantTarget = (
+                EnPassantTarget = new BoardPosition(
                     ChessFormatter.FileFromString($"{fenComponents[3][0]}"),
                     ChessFormatter.RankFromString($"{fenComponents[3][1]}"));
             }
@@ -242,6 +241,13 @@ namespace MjrChess.Engine.Models
         /// <summary>
         /// Gets the chess piece at a particular board position.
         /// </summary>
+        /// <param name="position">The position to retrieve a piece from.</param>
+        /// <returns>The piece on the indicated square or null if no piece is there.</returns>
+        public ChessPiece GetPiece(BoardPosition position) => GetPiece(position.File, position.Rank);
+
+        /// <summary>
+        /// Gets the chess piece at a particular board position.
+        /// </summary>
         /// <param name="file">The file the piece is on.</param>
         /// <param name="rank">The rank the piece is on.</param>
         /// <returns>The piece on the indicated square or null if no piece is there.</returns>
@@ -265,8 +271,8 @@ namespace MjrChess.Engine.Models
             Moves.Add(move);
 
             // Adjust piece positions
-            boardState[move.OriginalFile][move.OriginalRank] = null;
-            boardState[move.FinalFile][move.FinalRank] = new ChessPiece(move.PiecePromotedTo ?? move.PieceMoved, move.FinalFile, move.FinalRank);
+            boardState[move.OriginalPosition.File][move.OriginalPosition.Rank] = null;
+            boardState[move.FinalPosition.File][move.FinalPosition.Rank] = new ChessPiece(move.PiecePromotedTo ?? move.PieceMoved, move.FinalPosition);
 
             // Make additional board adjustments in cases of castling, en passant, or promotion
 

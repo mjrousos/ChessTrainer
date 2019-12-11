@@ -7,13 +7,9 @@ namespace MjrChess.Engine.Models
     /// </summary>
     public class Move
     {
-        public int OriginalRank { get; set; }
+        public BoardPosition OriginalPosition { get; set; }
 
-        public int OriginalFile { get; set; }
-
-        public int FinalRank { get; set; }
-
-        public int FinalFile { get; set; }
+        public BoardPosition FinalPosition { get; set; }
 
         public bool AmbiguousOriginalRank { get; set; }
 
@@ -27,13 +23,13 @@ namespace MjrChess.Engine.Models
 
         public bool ShortCastle =>
             (PieceMoved == ChessPieces.WhiteKing || PieceMoved == ChessPieces.BlackKing) &&
-            OriginalFile == 4 &&
-            FinalFile == 6;
+            OriginalPosition.File == 4 &&
+            FinalPosition.File == 6;
 
         public bool LongCastle =>
             (PieceMoved == ChessPieces.WhiteKing || PieceMoved == ChessPieces.BlackKing) &&
-            OriginalFile == 4 &&
-            FinalFile == 2;
+            OriginalPosition.File == 4 &&
+            FinalPosition.File == 2;
 
         public ChessPieces PieceMoved { get; set; }
 
