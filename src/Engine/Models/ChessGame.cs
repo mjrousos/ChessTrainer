@@ -274,11 +274,31 @@ namespace MjrChess.Engine.Models
             boardState[move.OriginalPosition.File][move.OriginalPosition.Rank] = null;
             boardState[move.FinalPosition.File][move.FinalPosition.Rank] = new ChessPiece(move.PiecePromotedTo ?? move.PieceMoved, move.FinalPosition);
 
-            // Make additional board adjustments in cases of castling, en passant, or promotion
+            // Make additional board adjustments in cases of castling
+
+            // Remove captured en passant piece
+            if ((move.PieceMoved == ChessPieces.WhitePawn || move.PieceMoved == ChessPieces.BlackPawn) &&
+                EnPassantTarget != null &&
+                move.FinalPosition == EnPassantTarget)
+            {
+                boardState[EnPassantTarget.File][EnPassantTarget.Rank + (WhiteToMove ? -1 : 1)] = null;
+            }
 
             // Increment or reset half move clock
 
-            // Update en passant target, if necessary
+            // Update en passant target
+            if (move.PieceMoved == ChessPieces.WhitePawn && move.OriginalPosition.Rank == 1 && move.FinalPosition.Rank == 3)
+            {
+                EnPassantTarget = new BoardPosition(move.OriginalPosition.File, 2);
+            }
+            else if (move.PieceMoved == ChessPieces.BlackPawn && move.OriginalPosition.Rank == 6 && move.FinalPosition.Rank == 4)
+            {
+                EnPassantTarget = new BoardPosition(move.OriginalPosition.File, 5);
+            }
+            else
+            {
+                EnPassantTarget = null;
+            }
 
             // Update castling options, if necessary
 

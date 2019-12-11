@@ -18,10 +18,34 @@ namespace MjrChess.Engine.Models
         public override string ToString() =>
             $"{ChessFormatter.FileToString(File)}{ChessFormatter.RankToString(Rank)}";
 
-        public bool Equals(BoardPosition other) => File == other.File && Rank == other.Rank;
+        public bool Equals(BoardPosition other) => File == other?.File && Rank == other?.Rank;
 
         public override bool Equals(object obj) => (obj is BoardPosition pos) ? Equals(pos) : false;
 
         public override int GetHashCode() => (File * 100) + Rank;
+
+        public static bool operator ==(BoardPosition lhs, BoardPosition rhs)
+        {
+            // Check for null on left side.
+            if (ReferenceEquals(lhs, null))
+            {
+                if (ReferenceEquals(rhs, null))
+                {
+                    // null == null = true.
+                    return true;
+                }
+
+                // Only the left side is null.
+                return false;
+            }
+
+            // Equals handles case of null on right side.
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(BoardPosition lhs, BoardPosition rhs)
+        {
+            return !(lhs == rhs);
+        }
     }
 }
