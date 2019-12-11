@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using MjrChess.Engine.Utilities;
 
@@ -231,7 +232,7 @@ namespace MjrChess.Engine.Models
         }
 
         /// <summary>
-        /// Initialize the board to a position given in PGN format. https://en.wikipedia.org/wiki/Portable_Game_Notation.
+        /// Initialize the board to a position given in PGN format. https://en.wikipedia.org/wiki/Portable_Game_Notation, https://www.chessclub.com/help/PGN-spec.
         /// </summary>
         /// <param name="pgn">The PGN-formatted game state to load.</param>
         public void LoadPGN(string pgn)
@@ -440,13 +441,28 @@ namespace MjrChess.Engine.Models
         }
 
         /// <summary>
-        /// Get the game state in PGN notation. https://en.wikipedia.org/wiki/Portable_Game_Notation.
+        /// Get the game state in PGN notation. https://en.wikipedia.org/wiki/Portable_Game_Notation, https://www.chessclub.com/help/PGN-spec.
         /// </summary>
         /// <returns>PGN notation description of the game state.</returns>
         public string GetPGN()
         {
             // TODO
-            return ChessFormatter.MovesToString(Moves, false);
+            return GetMoveList();
+        }
+
+        public string GetMoveList()
+        {
+            var halfMovesSinceStart = Moves.Count;
+
+            // Add one half move if black started
+            var firstPieceMoved = Moves.FirstOrDefault();
+            if (firstPieceMoved != null && !ChessFormatter.IsPieceWhite(firstPieceMoved.PieceMoved))
+            {
+                halfMovesSinceStart++;
+            }
+
+            var movesSinceStart = halfMovesSinceStart / 2;
+            return ChessFormatter.MovesToString(Moves, MoveCount - movesSinceStart);
         }
 
         /// <summary>

@@ -5,7 +5,7 @@
 <div class="mdc-layout-grid nested-vertical-grid">
     <div class="mdc-layout-grid__inner">
         <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-9">
-            @((MarkupString)ChessFormatter.MovesToString(Game.Moves, true))
+            @((MarkupString)GetFormattedMoves())
         </div>
         <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3 mdc-layout-grid--align-right">
             <button class="mdc-button mdc-button--raised pull-right" @onclick="CopyPGN">
@@ -29,12 +29,27 @@
     [Parameter]
     public ChessGame Game { get; set; }
 
+    // Get move list from game and format last move as bold
+    private string GetFormattedMoves()
+    {
+        var moves = Game.GetMoveList();
+        var lastSpace = moves.LastIndexOf(' ');
+        if (lastSpace > 0)
+        {
+            moves = $"{moves.Substring(0, lastSpace + 1)}<b>{moves.Substring(lastSpace + 1)}</b>";
+        }
+
+        return moves;
+    }
+
+    // Get PGN description of the game and display it with the JS notifyWithCopy toast method
     private async Task CopyPGN()
     {
         var pgn = Game.GetPGN();
         await JSRuntime.InvokeVoidAsync("notifyWithCopy", pgn, "Copied PGN to clipboard");
     }
 
+    // Get FEN description of the game and display it with the JS notifyWithCopy toast method
     private async Task CopyFEN()
     {
         var fen = Game.GetFEN();
