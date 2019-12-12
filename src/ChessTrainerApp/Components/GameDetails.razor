@@ -4,10 +4,14 @@
 
 <div class="mdc-layout-grid nested-vertical-grid">
     <div class="mdc-layout-grid__inner">
-        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-9">
+        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-8">
             @((MarkupString)GetFormattedMoves())
         </div>
-        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3 mdc-layout-grid--align-right">
+        <div class="
+             mdc-layout-grid__cell
+             mdc-layout-grid__cell--span-4
+             mdc-layout-grid__cell--span-8-tablet
+             mdc-layout-grid--align-right">
             <button class="mdc-button mdc-button--raised pull-right" @onclick="CopyPGN">
                 <span class="mdc-button__label">
                     PGN

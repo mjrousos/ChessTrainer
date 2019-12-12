@@ -74,6 +74,11 @@ namespace MjrChess.Engine.Models
         public string BlackPlayer { get; set; }
 
         /// <summary>
+        /// Gets an integer representing white's advantage (or disadvantage)
+        /// </summary>
+        public int WhiteAdvantage => Pieces.Sum(p => ChessFormatter.GetPieceValue(p.PieceType));
+
+        /// <summary>
         /// Gets or sets the game's result.
         /// </summary>
         public GameResult Result { get; set; }

@@ -22,6 +22,46 @@ namespace MjrChess.Engine.Utilities
             ChessPieces.WhitePawn
         };
 
+        public static ChessPieces[] StartingWhitePieces => new[]
+        {
+            ChessPieces.WhitePawn,
+            ChessPieces.WhitePawn,
+            ChessPieces.WhitePawn,
+            ChessPieces.WhitePawn,
+            ChessPieces.WhitePawn,
+            ChessPieces.WhitePawn,
+            ChessPieces.WhitePawn,
+            ChessPieces.WhitePawn,
+            ChessPieces.WhiteRook,
+            ChessPieces.WhiteKnight,
+            ChessPieces.WhiteBishop,
+            ChessPieces.WhiteQueen,
+            ChessPieces.WhiteKing,
+            ChessPieces.WhiteBishop,
+            ChessPieces.WhiteKnight,
+            ChessPieces.WhiteRook
+        };
+
+        public static ChessPieces[] StartingBlackPieces => new[]
+        {
+            ChessPieces.BlackPawn,
+            ChessPieces.BlackPawn,
+            ChessPieces.BlackPawn,
+            ChessPieces.BlackPawn,
+            ChessPieces.BlackPawn,
+            ChessPieces.BlackPawn,
+            ChessPieces.BlackPawn,
+            ChessPieces.BlackPawn,
+            ChessPieces.BlackRook,
+            ChessPieces.BlackKnight,
+            ChessPieces.BlackBishop,
+            ChessPieces.BlackQueen,
+            ChessPieces.BlackKing,
+            ChessPieces.BlackBishop,
+            ChessPieces.BlackKnight,
+            ChessPieces.BlackRook
+        };
+
         public static string RankToString(int rank) => $"{rank + 1}";
 
         public static int RankFromString(string rank) => int.Parse(rank, CultureInfo.InvariantCulture) - 1;
@@ -29,6 +69,31 @@ namespace MjrChess.Engine.Utilities
         public static string FileToString(int file) => $"{(char)(file + 0x61)}";
 
         public static int FileFromString(string file) => file[0] - 0x61;
+
+        /// <summary>
+        /// Converts a chess piece to an approximate numerical value.
+        /// </summary>
+        /// <param name="piece">The piece to be converted to a value.</param>
+        /// <returns>The approximate number of pawns the piece is worth.</returns>
+        public static int GetPieceValue(ChessPieces piece) =>
+            piece switch
+            {
+                // TODO : This is fine for purposes of displaying advantage,
+                //        but if this develops into a fuller chess engine, it
+                //        will need a more sophisticated system and kings will need
+                //        a value.
+                ChessPieces.WhiteQueen => 9,
+                ChessPieces.BlackQueen => -9,
+                ChessPieces.WhiteRook => 5,
+                ChessPieces.BlackRook => -5,
+                ChessPieces.WhiteBishop => 3,
+                ChessPieces.BlackBishop => -3,
+                ChessPieces.WhiteKnight => 3,
+                ChessPieces.BlackKnight => -3,
+                ChessPieces.WhitePawn => 1,
+                ChessPieces.BlackPawn => -1,
+                _ => 0
+            };
 
         /// <summary>
         /// Converts a chess piece into a string representation.

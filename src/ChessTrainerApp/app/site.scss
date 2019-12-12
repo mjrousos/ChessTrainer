@@ -31,12 +31,10 @@
     text-decoration: none;
 }
 
-.playerName {
-    display: inline;
-}
-
 .playerName h2 {
     font-weight: normal;
+    display: inline;
+    vertical-align: top;
 }
 
 .activePlayer h2 {
@@ -86,6 +84,11 @@ html, body {
     padding-left: 0px;
 }
 
+/* Nested tight grids can occupy the entire row of the parent grid and have small offset vertically */
+.nested-tight-grid {
+    padding: 5px 0px 0px 0px;
+}
+
 .boardContainer {
     width: 100%;
     height: auto;
@@ -107,6 +110,15 @@ html, body {
     z-index: 1;
     top: 0px;
     left: 0px;
+}
+
+.capturedPieces .piece {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 30px;
+    height: 30px;
+    margin-top: -3.6px; // Line up with <h2> text
 }
 
 .piece {
