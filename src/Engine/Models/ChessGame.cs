@@ -18,6 +18,8 @@ namespace MjrChess.Engine.Models
 
         public int BoardSize { get; set; } = DefaultBoardSize;
 
+        public string StartingFEN { get; set; }
+
         /// <summary>
         /// Gets or sets moves since initial position.
         /// </summary>
@@ -136,6 +138,7 @@ namespace MjrChess.Engine.Models
             BlackPlayer = "Black Player";
             Site = "Mike's Chess App";
             Round = "-";
+            StartDate = DateTimeOffset.Now;
             WhiteToMove = true;
             WhiteCastlingOptions =
                 BlackCastlingOptions = CastlingOptions.KingSide | CastlingOptions.QueenSide;
@@ -158,6 +161,7 @@ namespace MjrChess.Engine.Models
         public void LoadFEN(string fen)
         {
             ClearGameState();
+            StartingFEN = fen;
             var fenComponents = fen?.Split(new char[] { ' ' }, 6, StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
 
             // Parse piece positions
@@ -266,6 +270,12 @@ namespace MjrChess.Engine.Models
         public void LoadPGN(string pgn)
         {
             ClearGameState();
+
+            // TODO
+            //
+            // 1. Set game state based on tags
+            // 2. LoadFEN (either one specified in the PGN or InitialGameFEN
+            // 3. Apply moves
             throw new NotImplementedException("NYI");
         }
 
@@ -493,8 +503,25 @@ namespace MjrChess.Engine.Models
         /// <returns>PGN notation description of the game state.</returns>
         public string GetPGN()
         {
-            // TODO
-            return GetMoveList();
+            var pgn = new StringBuilder();
+            pgn.AppendLine($"[Event \"{Event}\"]");
+            pgn.AppendLine($"[Site \"{Site}\"]");
+            pgn.AppendLine($"[Date \"{StartDate.ToString("yyyy.MM.dd", CultureInfo.InvariantCulture)}\"]");
+            pgn.AppendLine($"[Round \"{Round}\"]");
+            pgn.AppendLine($"[White \"{WhitePlayer}\"]");
+            pgn.AppendLine($"[Black \"{BlackPlayer}\"]");
+            pgn.AppendLine($"[Result \"{ChessFormatter.ResultToString(Result)}\"]");
+            if (!string.Equals(StartingFEN, InitialGameFEN, StringComparison.Ordinal))
+            {
+                pgn.AppendLine($"[FEN \"{StartingFEN}\"]");
+            }
+
+            pgn.AppendLine();
+            pgn.Append(GetMoveList());
+            pgn.AppendLine($" {ChessFormatter.ResultToString(Result)}");
+            pgn.AppendLine();
+
+            return pgn.ToString();
         }
 
         public string GetMoveList()

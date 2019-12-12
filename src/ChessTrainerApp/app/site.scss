@@ -42,6 +42,11 @@
     color: $mdc-theme-primary;
 }
 
+/* Preserve white space in snackbar labels */
+.mdc-snackbar__label {
+    white-space: pre-wrap;
+}
+
 /* Resize snackbar dismiss text size to match normal button text size */
 .mdc-snackbar__dismiss.mdc-snackbar__dismiss {
     font-size: 14px;

@@ -95,6 +95,25 @@ namespace MjrChess.Engine.Utilities
                 _ => 0
             };
 
+        public static string ResultToString(GameResult result) =>
+            result switch
+            {
+                GameResult.BlackWins => "0-1",
+                GameResult.WhiteWins => "1-0",
+                GameResult.Draw => "1/2-1/2",
+                _ => "*"
+            };
+
+        public static GameResult ResultFromString(string result) =>
+            result switch
+            {
+                "0-1" => GameResult.BlackWins,
+                "1-0" => GameResult.WhiteWins,
+                "1/2-1/2" => GameResult.Draw,
+                "*" => GameResult.Ongoing,
+                _ => throw new ArgumentException("Invalid result string", nameof(result))
+            };
+
         /// <summary>
         /// Converts a chess piece into a string representation.
         /// </summary>
