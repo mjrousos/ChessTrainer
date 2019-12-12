@@ -228,6 +228,7 @@ namespace MjrChess.Engine.Models
                 MoveCount = int.Parse(fenComponents[5], CultureInfo.InvariantCulture);
             }
 
+            // TODO : Look for check
             // TODO : Set Result
         }
 
@@ -348,6 +349,25 @@ namespace MjrChess.Engine.Models
                 { File: 7, Rank: 7 } => (WhiteCastlingOptions, BlackCastlingOptions & ~CastlingOptions.KingSide),
                 _ => (WhiteCastlingOptions, BlackCastlingOptions)
             };
+
+            if (move.Checks || move.Checkmates)
+            {
+                Check = true;
+            }
+            else
+            {
+                Check = false;
+            }
+
+            if (move.Checkmates)
+            {
+                Result = WhiteToMove ? GameResult.WhiteWins : GameResult.BlackWins;
+            }
+
+            if (move.Stalemates)
+            {
+                Result = GameResult.Draw;
+            }
 
             // Update move count
             if (!WhiteToMove)

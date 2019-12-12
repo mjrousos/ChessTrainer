@@ -24,7 +24,7 @@
     }
     @if (Game.Check)
     {
-        var checkedKing = Game.Pieces.Single(p => p.PieceType == (Game.WhiteToMove ? ChessPieces.BlackKing : ChessPieces.WhiteKing));
+        var checkedKing = Game.Pieces.Single(p => p.PieceType == (Game.WhiteToMove ? ChessPieces.WhiteKing : ChessPieces.BlackKing));
         <SquareDecorator File="checkedKing.Position.File" Rank="checkedKing.Position.Rank" ImageName="Check" />
     }
 </div>

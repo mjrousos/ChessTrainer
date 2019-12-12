@@ -80,13 +80,13 @@ namespace MjrChess.Engine
         {
             if (pieceToMove != null)
             {
-                foreach (var possibleMove in GetMoveOptions(pieceToMove))
+                var possibleMoves = GetMoveOptions(pieceToMove).Where(IsLegal);
+                foreach (var move in possibleMoves)
                 {
-                    var move = ValidateMove(possibleMove);
-                    if (move != null)
-                    {
-                        yield return move;
-                    }
+                    CheckForAmbiguousMove(move);
+                    CheckForCheck(move);
+                    CheckForMate(move);
+                    yield return move;
                 }
             }
         }
@@ -99,7 +99,7 @@ namespace MjrChess.Engine
         /// <param name="piece">The piece to move.</param>
         /// <returns>A complete list of possible ending squares.</returns>
         public IEnumerable<Move> GetMoveOptions(ChessPiece piece) =>
-            piece.PieceType switch
+            piece?.PieceType switch
             {
                 ChessPieces.WhitePawn => GetPawnMoves(piece),
                 ChessPieces.BlackPawn => GetPawnMoves(piece),
@@ -116,16 +116,106 @@ namespace MjrChess.Engine
                 _ => Enumerable.Empty<Move>()
             };
 
-        /// <summary>
-        /// Checks a possible move for check, checkmate, and ambiguous moves.
-        /// </summary>
-        /// <param name="move">The move to validate.</param>
-        /// <returns>Null if the move is illegal or, if legal, an updated move with check, checkmate, and ambiguous move information.</returns>
-        private Move ValidateMove(Move move)
+        private void CheckForAmbiguousMove(Move move)
         {
-            // TODO
-            // Also, check whether spaces king starts in or moves through are in check
-            return move;
+            var similarPieces = Game.Pieces.Where(p => p.PieceType == move.PieceMoved);
+
+            foreach (var piece in similarPieces)
+            {
+                if (piece.Position == move.OriginalPosition)
+                {
+                    continue;
+                }
+
+                if (GetMoveOptions(piece).Where(IsLegal).Select(m => m.FinalPosition).Contains(move.FinalPosition))
+                {
+                    if (piece.Position.File != move.OriginalPosition.File)
+                    {
+                        move.AmbiguousOriginalFile = true;
+                    }
+                    else
+                    {
+                        move.AmbiguousOriginalRank = true;
+                    }
+                }
+            }
+        }
+
+        private void CheckForCheck(Move move)
+        {
+            var whiteMoving = ChessFormatter.IsPieceWhite(move.PieceMoved);
+
+            // Create a hypothetical board state if the propose move was made
+            var prospectiveGame = new ChessGame();
+            prospectiveGame.LoadFEN(Game.GetFEN());
+            prospectiveGame.Move(move);
+            var prospectiveEngine = new ChessEngine { Game = prospectiveGame };
+
+            var friendlyPieces = prospectiveGame.Pieces.Where(p => ChessFormatter.IsPieceWhite(p.PieceType) == whiteMoving);
+            var opposingKing = prospectiveGame.Pieces.Single(p => p.PieceType == (whiteMoving ? ChessPieces.BlackKing : ChessPieces.WhiteKing));
+
+            foreach (var piece in friendlyPieces)
+            {
+                // If any friendly piece could move to the opposing king's square, then the move gives check
+                // We don't need to check for legal moves because even pinned pieces or others that can't move because
+                // of a risk of check from the opponent are still able to give check.
+                if (prospectiveEngine.GetMoveOptions(piece).Select(m => m.FinalPosition).Contains(opposingKing.Position))
+                {
+                    move.Checks = true;
+                    if (move.Stalemates)
+                    {
+                        move.Stalemates = false;
+                        move.Checkmates = true;
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        private void CheckForMate(Move move)
+        {
+            // Create a hypothetical board state if the propose move was made
+            var prospectiveGame = new ChessGame();
+            prospectiveGame.LoadFEN(Game.GetFEN());
+            prospectiveGame.Move(move);
+            var prospectiveEngine = new ChessEngine { Game = prospectiveGame };
+            var opposingPieces = prospectiveGame.Pieces.Where(p => ChessFormatter.IsPieceWhite(p.PieceType) != ChessFormatter.IsPieceWhite(move.PieceMoved));
+
+            // Calculate all possible legal moves for the opponent after the proposed move. If there are no moves available, then it is mate.
+            // If I develop this into a fuller engine in the future, this method may be absorbed into more general calculating functionality.
+            var possibleMoves = opposingPieces.SelectMany(p => prospectiveEngine.GetMoveOptions(p).Where(prospectiveEngine.IsLegal));
+
+            if (!possibleMoves.Any())
+            {
+                if (move.Checks)
+                {
+                    move.Checkmates = true;
+                }
+                else
+                {
+                    move.Stalemates = true;
+                }
+            }
+        }
+
+        private bool IsLegal(Move move)
+        {
+            var whiteMoving = ChessFormatter.IsPieceWhite(move.PieceMoved);
+
+            // Create a hypothetical board state if the propose move was made
+            var prospectiveGame = new ChessGame();
+            prospectiveGame.LoadFEN(Game.GetFEN());
+            prospectiveGame.Move(move);
+            var prospectiveEngine = new ChessEngine { Game = prospectiveGame };
+
+            var opposingPieces = prospectiveGame.Pieces.Where(p => ChessFormatter.IsPieceWhite(p.PieceType) != whiteMoving);
+            var friendlyKing = prospectiveGame.Pieces.Single(p => p.PieceType == (whiteMoving ? ChessPieces.WhiteKing : ChessPieces.BlackKing));
+
+            // If any of the opponent's pieces could capture the king after this move, then it is illegal
+            var kingVulnerable = opposingPieces.Any(piece => prospectiveEngine.GetMoveOptions(piece).Select(m => m.FinalPosition).Contains(friendlyKing.Position));
+
+            return !kingVulnerable;
         }
 
         /// <summary>

@@ -21,6 +21,8 @@ namespace MjrChess.Engine.Models
 
         public bool Checkmates { get; set; }
 
+        public bool Stalemates { get; set; }
+
         public bool ShortCastle =>
             (PieceMoved == ChessPieces.WhiteKing || PieceMoved == ChessPieces.BlackKing) &&
             OriginalPosition.File == 4 &&

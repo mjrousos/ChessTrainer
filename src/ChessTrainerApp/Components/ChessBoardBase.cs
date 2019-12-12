@@ -24,7 +24,7 @@ namespace MjrChess.Trainer.Components
 
         protected ChessGame Game => Engine?.Game;
 
-        protected IEnumerable<Move> LegalMovesForSelectedPiece { get; set; } = Enumerable.Empty<Move>();
+        protected Move[] LegalMovesForSelectedPiece { get; set; } = new Move[0];
 
         private ChessPiece selectedPiece;
 
@@ -41,7 +41,11 @@ namespace MjrChess.Trainer.Components
             set
             {
                 selectedPiece = value;
-                LegalMovesForSelectedPiece = Engine.GetLegalMoves(selectedPiece);
+
+                // Storing an enumerable in state used by Blazor was causing the enumerable
+                // to be evaluated multiple times. Therefore, store as an array to make sure
+                // that the evaluation is only done once.
+                LegalMovesForSelectedPiece = Engine.GetLegalMoves(selectedPiece).ToArray();
             }
         }
 
