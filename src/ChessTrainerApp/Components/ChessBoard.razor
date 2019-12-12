@@ -1,5 +1,8 @@
 ﻿@inherits ChessBoardBase
 
+<div class="playerName @((!Game.WhiteToMove && Game.Result == GameResult.Ongoing) ? "activePlayer" : "")">
+    <h2>@Game.BlackPlayer</h2>
+</div>
 <div class="boardContainer">
     <img id="@ElementName"
          class="board"
@@ -27,5 +30,8 @@
         var checkedKing = Game.Pieces.Single(p => p.PieceType == (Game.WhiteToMove ? ChessPieces.WhiteKing : ChessPieces.BlackKing));
         <SquareDecorator File="checkedKing.Position.File" Rank="checkedKing.Position.Rank" ImageName="Check" />
     }
+</div>
+<div class="playerName @((Game.WhiteToMove && Game.Result == GameResult.Ongoing) ? "activePlayer" : "")">
+    <h2>@Game.WhitePlayer</h2>
 </div>
 <GameDetails Game="Game" />

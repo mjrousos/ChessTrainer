@@ -31,6 +31,19 @@
     text-decoration: none;
 }
 
+.playerName {
+    display: inline;
+}
+
+.playerName h2 {
+    font-weight: normal;
+}
+
+.activePlayer h2 {
+    font-weight: bold;
+    color: $mdc-theme-primary;
+}
+
 /* Resize snackbar dismiss text size to match normal button text size */
 .mdc-snackbar__dismiss.mdc-snackbar__dismiss {
     font-size: 14px;

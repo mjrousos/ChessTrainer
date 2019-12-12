@@ -24,6 +24,26 @@ namespace MjrChess.Engine.Models
         public IList<Move> Moves { get; set; }
 
         /// <summary>
+        /// Gets or sets the name of the event this game was a part of.
+        /// </summary>
+        public string Event { get; set; }
+
+        /// <summary>
+        /// Gets or sets the location of the event.
+        /// </summary>
+        public string Site { get; set; }
+
+        /// <summary>
+        /// Gets or sets the playing round of the event this game was played in.
+        /// </summary>
+        public string Round { get; set; }
+
+        /// <summary>
+        /// Gets or sets the day the game started.
+        /// </summary>
+        public DateTimeOffset StartDate { get; set; }
+
+        /// <summary>
         /// Gets pieces currently on the board.
         /// </summary>
         public IEnumerable<ChessPiece> Pieces
@@ -107,8 +127,10 @@ namespace MjrChess.Engine.Models
         public void ClearGameState()
         {
             Moves = new List<Move>();
-            WhitePlayer =
-                BlackPlayer = null;
+            WhitePlayer = "White Player";
+            BlackPlayer = "Black Player";
+            Site = "Mike's Chess App";
+            Round = "-";
             WhiteToMove = true;
             WhiteCastlingOptions =
                 BlackCastlingOptions = CastlingOptions.KingSide | CastlingOptions.QueenSide;
