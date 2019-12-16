@@ -77,12 +77,7 @@ namespace MjrChess.Trainer.Components
 
         public async void HandleMouseUp(MouseEventArgs args)
         {
-            if (SelectedPiece == null)
-            {
-                // If no piece is selected, do nothing
-                return;
-            }
-            else
+            if (SelectedPiece != null)
             {
                 (var file, var rank) = await GetMousePositionAsync(args);
                 if (SelectedPiece.Position.File == file && SelectedPiece.Position.Rank == rank)
@@ -108,16 +103,22 @@ namespace MjrChess.Trainer.Components
         /// <returns>True if a piece was successfully selected, false otherwise. Note that this does not guarantee the selected piece has any legal moves.</returns>
         public bool SelectPiece(int file, int rank)
         {
+            // Don't select pieces if the game is finished
+            if (Game.Result != GameResult.Ongoing)
+            {
+                return false;
+            }
+
             var piece = Game.GetPiece(file, rank);
+
+            // If the clicked square doesn't contain a piece or contains a piece for the wrong player, do nothing
             if (piece == null || ChessFormatter.IsPieceWhite(piece.PieceType) != Game.WhiteToMove)
             {
                 return false;
             }
-            else
-            {
-                SelectedPiece = piece;
-                return true;
-            }
+
+            SelectedPiece = piece;
+            return true;
         }
 
         /// <summary>
