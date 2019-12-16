@@ -215,6 +215,14 @@ namespace MjrChess.Engine
             // If any of the opponent's pieces could capture the king after this move, then it is illegal
             var kingVulnerable = opposingPieces.Any(piece => prospectiveEngine.GetMoveOptions(piece).Select(m => m.FinalPosition).Contains(friendlyKing.Position));
 
+            // Special case castling as the king can't move out of or through a threatened square while castling
+            if (move.LongCastle || move.ShortCastle)
+            {
+                var traversedSquares = Enumerable.Range(move.OriginalPosition.File, move.FinalPosition.File).Select(file => new BoardPosition(file, move.OriginalPosition.Rank));
+                kingVulnerable |= traversedSquares.Any(traversedSquare =>
+                    opposingPieces.Any(piece => prospectiveEngine.GetMoveOptions(piece).Select(m => m.FinalPosition).Contains(traversedSquare)));
+            }
+
             return !kingVulnerable;
         }
 
