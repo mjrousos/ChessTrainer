@@ -137,12 +137,12 @@ namespace MjrChess.Engine.Utilities
                 ChessPieces.BlackKnight => "n",
                 ChessPieces.WhitePawn => pForPawn ? "P" : string.Empty,
                 ChessPieces.BlackPawn => pForPawn ? "p" : string.Empty,
-                _ => null,
+                _ => "\uFFFD",
             };
 
             if (!fenStyle)
             {
-                ret = ret?.ToUpperInvariant();
+                ret = ret.ToUpperInvariant();
             }
 
             return ret;

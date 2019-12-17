@@ -8,8 +8,8 @@
              mdc-layout-grid__cell
              mdc-layout-grid__cell--span-4
              playerName 
-             @(((Game.WhiteToMove == WhitePlayer) && Game.Result == GameResult.Ongoing) ? "activePlayer" : "")">
-            <h2>@(WhitePlayer ? Game.WhitePlayer : Game.BlackPlayer)</h2>
+             @(((Game?.WhiteToMove == WhitePlayer) && Game?.Result == GameResult.Ongoing) ? "activePlayer" : "")">
+            <h2>@(WhitePlayer ? Game?.WhitePlayer : Game?.BlackPlayer)</h2>
         </div>
         <div class="
              capturedPieces
@@ -33,12 +33,17 @@
     public bool WhitePlayer { get; set; }
 
     [Parameter]
-    public ChessGame Game { get; set; }
+    public ChessGame? Game { get; set; }
 
     private string PlayerAdvantage
     {
         get
         {
+            if (Game is null)
+            {
+                return string.Empty;
+            }
+
             var advantage = WhitePlayer ? Game.WhiteAdvantage : -Game.WhiteAdvantage;
 
             return advantage > 0 ? $"+{advantage}" : string.Empty;
@@ -49,6 +54,11 @@
     {
         get
         {
+            if (Game is null)
+            {
+                return Enumerable.Empty<ChessPieces>();
+            }
+
             var startingPieces = (WhitePlayer ? ChessFormatter.StartingWhitePieces : ChessFormatter.StartingBlackPieces).ToList();
             var currentPieces = Game.Pieces.Select(p => p.PieceType).Where(p => ChessFormatter.IsPieceWhite(p) == WhitePlayer);
 

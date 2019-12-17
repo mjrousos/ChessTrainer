@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
@@ -7,7 +8,7 @@ namespace MjrChess.Trainer.BlazorExtensions
     public class MaterialDesignComponentBase : ComponentBase
     {
         [Inject]
-        private IJSRuntime JSRuntime { get; set; }
+        private IJSRuntime JSRuntime { get; set; } = default!;
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {

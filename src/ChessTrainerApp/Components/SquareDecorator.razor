@@ -10,7 +10,7 @@
     public int Rank { get; set; }
 
     [Parameter]
-    public string ImageName { get; set; }
+    public string? ImageName { get; set; }
 
     public string Class => $"boardSquareDecorator {ChessFormatter.FileToString(File)}{ChessFormatter.RankToString(Rank)}";
 }

@@ -7,6 +7,14 @@ namespace MjrChess.Engine.Models
     /// </summary>
     public class Move
     {
+        // https://github.com/dotnet/csharplang/issues/2328
+        public Move(ChessPieces pieceMoved, BoardPosition originalPosition, BoardPosition finalPosition)
+        {
+            PieceMoved = pieceMoved;
+            OriginalPosition = originalPosition;
+            FinalPosition = finalPosition;
+        }
+
         public BoardPosition OriginalPosition { get; set; }
 
         public BoardPosition FinalPosition { get; set; }

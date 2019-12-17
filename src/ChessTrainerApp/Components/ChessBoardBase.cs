@@ -16,35 +16,35 @@ namespace MjrChess.Trainer.Components
     public class ChessBoardBase : ComponentBase
     {
         [Inject]
-        private IJSRuntime JSRuntime { get; set; }
+        private IJSRuntime JSRuntime { get; set; } = default!;
 
         [Inject]
         protected ChessEngine Engine { get; set; }
 
-        protected ChessGame Game => Engine?.Game;
+        protected ChessGame Game => Engine.Game;
 
         protected Move[] LegalMovesForSelectedPiece { get; set; } = new Move[0];
 
-        private ChessPiece selectedPiece;
+        private ChessPiece? _selectedPiece;
 
         /// <summary>
         /// Gets or sets the piece the user currently has selected.
         /// </summary>
-        public ChessPiece SelectedPiece
+        public ChessPiece? SelectedPiece
         {
             get
             {
-                return selectedPiece;
+                return _selectedPiece;
             }
 
             set
             {
-                selectedPiece = value;
+                _selectedPiece = value;
 
                 // Storing an enumerable in state used by Blazor was causing the enumerable
                 // to be evaluated multiple times. Therefore, store as an array to make sure
                 // that the evaluation is only done once.
-                LegalMovesForSelectedPiece = Engine.GetLegalMoves(selectedPiece).ToArray();
+                LegalMovesForSelectedPiece = Engine.GetLegalMoves(_selectedPiece).ToArray();
             }
         }
 
@@ -52,7 +52,7 @@ namespace MjrChess.Trainer.Components
 
         // Tracks whether the component is rendered so that we know whether
         // to call StateHasChanged or not.
-        private bool rendered = false;
+        private bool _rendered = false;
 
         public ChessBoardBase()
         {
@@ -62,7 +62,7 @@ namespace MjrChess.Trainer.Components
         protected override void OnAfterRender(bool firstRender)
         {
             base.OnAfterRender(firstRender);
-            rendered = true;
+            _rendered = true;
         }
 
         public async void HandleMouseDown(MouseEventArgs args)
@@ -104,7 +104,7 @@ namespace MjrChess.Trainer.Components
         public bool SelectPiece(int file, int rank)
         {
             // Don't select pieces if the game is finished
-            if (Game.Result != GameResult.Ongoing)
+            if (Game?.Result != GameResult.Ongoing)
             {
                 return false;
             }
@@ -171,7 +171,7 @@ namespace MjrChess.Trainer.Components
         /// </summary>
         private void Render()
         {
-            if (rendered)
+            if (_rendered)
             {
                 StateHasChanged();
             }

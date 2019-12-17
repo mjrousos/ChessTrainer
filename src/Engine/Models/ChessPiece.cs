@@ -15,7 +15,7 @@ namespace MjrChess.Engine.Models
 
         public BoardPosition Position { get; set; }
 
-        public bool Equals(ChessPiece other) =>
+        public bool Equals(ChessPiece? other) =>
             PieceType == other?.PieceType &&
             Position == other?.Position;
 
@@ -28,12 +28,12 @@ namespace MjrChess.Engine.Models
                 ChessFormatter.PieceToString(PieceType, pForPawn: true),
                 Position?.ToString());
 
-        public static bool operator ==(ChessPiece lhs, ChessPiece rhs)
+        public static bool operator ==(ChessPiece? lhs, ChessPiece? rhs)
         {
             // Check for null on left side.
-            if (ReferenceEquals(lhs, null))
+            if (lhs is null)
             {
-                if (ReferenceEquals(rhs, null))
+                if (rhs is null)
                 {
                     // null == null = true.
                     return true;
@@ -47,7 +47,7 @@ namespace MjrChess.Engine.Models
             return lhs.Equals(rhs);
         }
 
-        public static bool operator !=(ChessPiece lhs, ChessPiece rhs)
+        public static bool operator !=(ChessPiece? lhs, ChessPiece? rhs)
         {
             return !(lhs == rhs);
         }

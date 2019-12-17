@@ -45,7 +45,7 @@ namespace MjrChess.Trainer.BlazorExtensions
             // Pass null for any additional expected parameters that weren't defined by the page
             foreach (var name in parametersExpected)
             {
-                builder.AddAttribute(index++, name, (object)null);
+                builder.AddAttribute(index++, name, (object)null!);
             }
 
             builder.CloseComponent();
@@ -59,10 +59,9 @@ namespace MjrChess.Trainer.BlazorExtensions
             var getAttributesMethod = pageType.GetMethod(GetLayoutParametersName);
             if (getAttributesMethod != null)
             {
-                var attributes = getAttributesMethod.Invoke(null, null) as Dictionary<string, object>;
-                foreach (var attr in attributes)
+                if (getAttributesMethod.Invoke(null, null) is Dictionary<string, object> attributes)
                 {
-                    if (parameterNames.Contains(attr.Key))
+                    foreach (var attr in attributes.Where(a => parameterNames.Contains(a.Key)))
                     {
                         builder.AddAttribute(index++, attr.Key, attr.Value);
                         parameterNames.Remove(attr.Key);

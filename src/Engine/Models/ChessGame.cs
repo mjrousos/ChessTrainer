@@ -14,36 +14,36 @@ namespace MjrChess.Engine.Models
         private const char FenRankDelimiter = '/';
 
         // Stores which piece (if any) is on each board space
-        private ChessPiece[][] boardState;
+        private ChessPiece?[][] boardState = default!; // https://github.com/dotnet/csharplang/issues/2869
 
         public int BoardSize { get; set; } = DefaultBoardSize;
 
-        public string StartingFEN { get; set; }
+        public string StartingFEN { get; set; } = default!; // https://github.com/dotnet/csharplang/issues/2869
 
         /// <summary>
         /// Gets or sets moves since initial position.
         /// </summary>
-        public IList<Move> Moves { get; set; }
+        public IList<Move> Moves { get; set; } = default!; // https://github.com/dotnet/csharplang/issues/2869
 
         /// <summary>
         /// Gets or sets the name of the event this game was a part of.
         /// </summary>
-        public string Event { get; set; }
+        public string? Event { get; set; }
 
         /// <summary>
         /// Gets or sets the location of the event.
         /// </summary>
-        public string Site { get; set; }
+        public string? Site { get; set; }
 
         /// <summary>
         /// Gets or sets the playing round of the event this game was played in.
         /// </summary>
-        public string Round { get; set; }
+        public string? Round { get; set; }
 
         /// <summary>
         /// Gets or sets the day the game started.
         /// </summary>
-        public DateTimeOffset StartDate { get; set; }
+        public DateTimeOffset? StartDate { get; set; }
 
         /// <summary>
         /// Gets pieces currently on the board.
@@ -56,9 +56,10 @@ namespace MjrChess.Engine.Models
                 {
                     for (var rank = 0; rank < BoardSize; rank++)
                     {
-                        if (boardState[file][rank] != null)
+                        var squareState = boardState[file][rank];
+                        if (squareState != null)
                         {
-                            yield return boardState[file][rank];
+                            yield return squareState;
                         }
                     }
                 }
@@ -68,15 +69,15 @@ namespace MjrChess.Engine.Models
         /// <summary>
         /// Gets or sets name of the player with the white pieces (if known).
         /// </summary>
-        public string WhitePlayer { get; set; }
+        public string WhitePlayer { get; set; } = default!; // https://github.com/dotnet/csharplang/issues/2869
 
         /// <summary>
         /// Gets or sets name of the player with the black pieces (if known).
         /// </summary>
-        public string BlackPlayer { get; set; }
+        public string BlackPlayer { get; set; } = default!; // https://github.com/dotnet/csharplang/issues/2869
 
         /// <summary>
-        /// Gets an integer representing white's advantage (or disadvantage)
+        /// Gets an integer representing white's advantage (or disadvantage).
         /// </summary>
         public int WhiteAdvantage => Pieces.Sum(p => ChessFormatter.GetPieceValue(p.PieceType));
 
@@ -103,7 +104,7 @@ namespace MjrChess.Engine.Models
         /// <summary>
         /// Gets or sets the square an en passant capture can be made to (if any).
         /// </summary>
-        public BoardPosition EnPassantTarget { get; set; }
+        public BoardPosition? EnPassantTarget { get; set; }
 
         /// <summary>
         /// Gets or sets the number of half moves since a pawn was moved or a piece was captured.
@@ -150,7 +151,7 @@ namespace MjrChess.Engine.Models
             boardState = new ChessPiece[BoardSize][];
             for (var i = 0; i < boardState.GetLength(0); i++)
             {
-                boardState[i] = new ChessPiece[BoardSize];
+                boardState[i] = new ChessPiece?[BoardSize];
             }
         }
 
@@ -284,7 +285,7 @@ namespace MjrChess.Engine.Models
         /// </summary>
         /// <param name="position">The position to retrieve a piece from.</param>
         /// <returns>The piece on the indicated square or null if no piece is there.</returns>
-        public ChessPiece GetPiece(BoardPosition position) => GetPiece(position.File, position.Rank);
+        public ChessPiece? GetPiece(BoardPosition position) => GetPiece(position.File, position.Rank);
 
         /// <summary>
         /// Gets the chess piece at a particular board position.
@@ -292,7 +293,7 @@ namespace MjrChess.Engine.Models
         /// <param name="file">The file the piece is on.</param>
         /// <param name="rank">The rank the piece is on.</param>
         /// <returns>The piece on the indicated square or null if no piece is there.</returns>
-        public ChessPiece GetPiece(int file, int rank)
+        public ChessPiece? GetPiece(int file, int rank)
         {
             if (file >= BoardSize || rank >= BoardSize || file < 0 || rank < 0)
             {
@@ -430,7 +431,12 @@ namespace MjrChess.Engine.Models
             {
                 for (var file = 0; file < BoardSize; file++)
                 {
-                    if (boardState[file][rank] != null)
+                    var squareState = boardState[file][rank];
+                    if (squareState is null)
+                    {
+                        emptySquares++;
+                    }
+                    else
                     {
                         if (emptySquares > 0)
                         {
@@ -438,11 +444,7 @@ namespace MjrChess.Engine.Models
                             emptySquares = 0;
                         }
 
-                        fen.Append(ChessFormatter.PieceToString(boardState[file][rank].PieceType, true, true));
-                    }
-                    else
-                    {
-                        emptySquares++;
+                        fen.Append(ChessFormatter.PieceToString(squareState.PieceType, true, true));
                     }
                 }
 
@@ -504,10 +506,10 @@ namespace MjrChess.Engine.Models
         public string GetPGN()
         {
             var pgn = new StringBuilder();
-            pgn.AppendLine($"[Event \"{Event}\"]");
-            pgn.AppendLine($"[Site \"{Site}\"]");
-            pgn.AppendLine($"[Date \"{StartDate.ToString("yyyy.MM.dd", CultureInfo.InvariantCulture)}\"]");
-            pgn.AppendLine($"[Round \"{Round}\"]");
+            pgn.AppendLine($"[Event \"{Event ?? "-"}\"]");
+            pgn.AppendLine($"[Site \"{Site ?? "-"}\"]");
+            pgn.AppendLine($"[Round \"{Round ?? "-"}\"]");
+            pgn.AppendLine($"[Date \"{StartDate?.ToString("yyyy.MM.dd", CultureInfo.InvariantCulture) ?? "??"}\"]");
             pgn.AppendLine($"[White \"{WhitePlayer}\"]");
             pgn.AppendLine($"[Black \"{BlackPlayer}\"]");
             pgn.AppendLine($"[Result \"{ChessFormatter.ResultToString(Result)}\"]");

@@ -76,7 +76,7 @@ namespace MjrChess.Engine
         /// </summary>
         /// <param name="pieceToMove">The piece to move.</param>
         /// <returns>All possible legal moves for the piece.</returns>
-        public IEnumerable<Move> GetLegalMoves(ChessPiece pieceToMove)
+        public IEnumerable<Move> GetLegalMoves(ChessPiece? pieceToMove)
         {
             if (pieceToMove != null)
             {
@@ -389,11 +389,8 @@ namespace MjrChess.Engine
         private Move CreateMoveFromPiece(ChessPiece piece, BoardPosition finalPosition, bool capture)
         {
             var promoted = (piece.PieceType == ChessPieces.WhitePawn || piece.PieceType == ChessPieces.BlackPawn) && finalPosition.Rank % (Game.BoardSize - 1) == 0;
-            return new Move
+            return new Move(piece.PieceType, piece.Position, finalPosition)
             {
-                PieceMoved = piece.PieceType,
-                OriginalPosition = piece.Position,
-                FinalPosition = finalPosition,
                 Capture = capture,
                 PiecePromotedTo = promoted ? (ChessFormatter.IsPieceWhite(piece.PieceType) ? ChessPieces.WhiteQueen : ChessPieces.BlackQueen) : (ChessPieces?)null
             };

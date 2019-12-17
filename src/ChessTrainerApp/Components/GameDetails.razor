@@ -28,15 +28,15 @@
 
 @code {
     [Inject]
-    private IJSRuntime JSRuntime { get; set; }
+    private IJSRuntime JSRuntime { get; set; } = default!;
 
     [Parameter]
-    public ChessGame Game { get; set; }
+    public ChessGame? Game { get; set; }
 
     // Get move list from game and format last move as bold
     private string GetFormattedMoves()
     {
-        var moves = Game.GetMoveList();
+        var moves = Game?.GetMoveList() ?? string.Empty;
         var lastSpace = moves.LastIndexOf(' ');
         if (lastSpace > 0)
         {
@@ -49,14 +49,14 @@
     // Get PGN description of the game and display it with the JS notifyWithCopy toast method
     private async Task CopyPGN()
     {
-        var pgn = Game.GetPGN();
+        var pgn = Game?.GetPGN();
         await JSRuntime.InvokeVoidAsync("notifyWithCopy", pgn, "Copied PGN to clipboard");
     }
 
     // Get FEN description of the game and display it with the JS notifyWithCopy toast method
     private async Task CopyFEN()
     {
-        var fen = Game.GetFEN();
+        var fen = Game?.GetFEN();
         await JSRuntime.InvokeVoidAsync("notifyWithCopy", fen, "Copied FEN to clipboard");
     }
 }
