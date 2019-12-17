@@ -346,10 +346,10 @@ namespace MjrChess.Engine.Models
 
             // Remove captured en passant piece
             if ((move.PieceMoved == ChessPieces.WhitePawn || move.PieceMoved == ChessPieces.BlackPawn) &&
-                EnPassantTarget != null &&
-                move.FinalPosition == EnPassantTarget)
+                EnPassantTarget.HasValue &&
+                move.FinalPosition == EnPassantTarget.Value)
             {
-                boardState[EnPassantTarget.File][EnPassantTarget.Rank + (WhiteToMove ? -1 : 1)] = null;
+                boardState[EnPassantTarget.Value.File][EnPassantTarget.Value.Rank + (WhiteToMove ? -1 : 1)] = null;
             }
 
             // Increment or reset half move clock

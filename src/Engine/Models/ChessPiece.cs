@@ -11,9 +11,9 @@ namespace MjrChess.Engine.Models
             Position = position;
         }
 
-        public ChessPieces PieceType { get; set; }
+        public ChessPieces PieceType { get; }
 
-        public BoardPosition Position { get; set; }
+        public BoardPosition Position { get; }
 
         public bool Equals(ChessPiece? other) =>
             PieceType == other?.PieceType &&
@@ -26,7 +26,7 @@ namespace MjrChess.Engine.Models
         public override string ToString() =>
             string.Join(" ",
                 ChessFormatter.PieceToString(PieceType, pForPawn: true),
-                Position?.ToString());
+                Position.ToString());
 
         public static bool operator ==(ChessPiece? lhs, ChessPiece? rhs)
         {
