@@ -31,6 +31,7 @@ namespace MjrChess.Trainer
                 options.Providers.Add<GzipCompressionProvider>();
                 options.MimeTypes = ResponseCompressionDefaults.MimeTypes;
             });
+            services.AddHealthChecks();
 
             services.AddScoped<ChessEngine>();
         }
@@ -63,6 +64,7 @@ namespace MjrChess.Trainer
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapBlazorHub();
+                endpoints.MapHealthChecks("/hc");
                 endpoints.MapFallbackToPage("/_Host");
             });
         }
