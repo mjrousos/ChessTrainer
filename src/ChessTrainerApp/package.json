@@ -1,12 +1,18 @@
 {
   "name": "chesstrainerapp",
+  "description": "Blazor web app for practicing chess tactics",
+  "repository": "https://dotnetcst.visualstudio.com/DefaultCollection/LearningProjects/_git/ChessTrainer",
   "version": "1.0.0",
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^5.12.0",
+    "@fortawesome/fontawesome-svg-core": "^1.2.26",
+    "@fortawesome/free-solid-svg-icons": "^5.12.0",
+    "@fortawesome/free-regular-svg-icons": "^5.12.0",
+    "@fortawesome/free-brands-svg-icons": "^5.12.0",
     "material-components-web": "^3.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.6.4",
-    "@fortawesome/fontawesome-free": "^5.11.2",
     "babel-core": "^6.22.1",
     "babel-loader": "7.0.0",
     "babel-preset-env": "^1.7.0",

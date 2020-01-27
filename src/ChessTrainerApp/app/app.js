@@ -3,12 +3,20 @@ import { MDCTextField } from '@material/textfield';
 import { MDCTopAppBar } from '@material/top-app-bar';
 import { MDCDrawer } from "@material/drawer";
 import { MDCSnackbar } from '@material/snackbar';
-import '@fortawesome/fontawesome-free/js/fontawesome';
-import '@fortawesome/fontawesome-free/js/solid';
+import { library, dom } from '@fortawesome/fontawesome-svg-core'
+import { faChessKing } from '@fortawesome/free-solid-svg-icons/faChessKing';
+import { faCodeBranch } from '@fortawesome/free-solid-svg-icons/faCodeBranch';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
 
 var primaryNotifier;
 var copyNotifier;
 var copyButton;
+
+// Add FA icons to library
+library.add(faChessKing, faCodeBranch, faQuestion);
+
+// Watch for <i> elements and update to appropriate <svg>
+dom.watch();
 
 window.onload = function (e) {
     console.log('App loaded');
