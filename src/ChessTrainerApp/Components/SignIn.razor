@@ -1,0 +1,24 @@
+﻿<div>
+    <AuthorizeView>
+        <Authorized>
+            Welcome, @context.User.Identity.Name
+            <a class="mdc-top-app-bar__action-item mdc-button" aria-label="Sign out" href="AzureADB2C/Account/SignOut">Sign out</a>
+        </Authorized>
+        <Authorizing>
+            <span>Authorizing...</span>
+        </Authorizing>
+        <NotAuthorized>
+            <a class="mdc-top-app-bar__action-item mdc-button" aria-label="Sign in" href="AzureADB2C/Account/SignIn">Sign in</a>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+@code {
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
+
+    async Task SignUserIn()
+    {
+        await JSRuntime.InvokeVoidAsync("notify", "Signing in");
+    }
+}

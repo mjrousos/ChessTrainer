@@ -2,11 +2,16 @@
 
 <Router AppAssembly="@typeof(Program).Assembly">
     <Found Context="routeData">
-        <ExpandedRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <CascadingAuthenticationState>
+            <!-- TODO : Cannot use AuthorizeRouteView since it is sealed. Perhaps this is an issue I should file? -->
+            <ExpandedRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        </CascadingAuthenticationState>
     </Found>
     <NotFound>
-        <LayoutView Layout="@typeof(MainLayout)">
-            <p>Sorry, there's nothing at this address.</p>
-        </LayoutView>
+        <CascadingAuthenticationState>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p>Sorry, there's nothing at this address.</p>
+            </LayoutView>
+        </CascadingAuthenticationState>
     </NotFound>
 </Router>
