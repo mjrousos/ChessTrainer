@@ -1,6 +1,6 @@
 ﻿namespace MjrChess.Trainer.Models
 {
-    public class PuzzleHistory : EntityBase
+    public class PuzzleHistory : IEntity
     {
         public string UserId { get; set; } = default!;
 

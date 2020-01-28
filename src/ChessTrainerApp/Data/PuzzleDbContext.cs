@@ -65,6 +65,10 @@ namespace MjrChess.Trainer.Data
 
             // User settings configuration
             modelBuilder.Entity<UserSettings>()
+                .Property(s => s.UserId)
+                .IsRequired();
+
+            modelBuilder.Entity<UserSettings>()
                 .HasMany(s => s.PreferredPlayers)
                 .WithOne();
 
@@ -73,17 +77,24 @@ namespace MjrChess.Trainer.Data
 
         private void SeedData(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Player>()
+                .HasData(
+                    new Player("Hustler") { Id = 1 },
+                    new Player("Noobie") { Id = 2 });
+
             modelBuilder.Entity<TacticsPuzzle>()
                 .HasData(
-                    new TacticsPuzzle("r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4")
+                    new
                     {
                         Id = 1,
-                        Solution = new Engine.Models.Move(
-                            Engine.Models.ChessPieces.WhiteQueen,
-                            new Engine.Models.BoardPosition("f3"),
-                            new Engine.Models.BoardPosition("f7")),
-                        BlackPlayer = "Noobie",
-                        WhitePlayer = "Hustler",
+                        Position = "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4",
+                        CreatedDate = DateTimeOffset.Now,
+                        LastModifiedDate = DateTimeOffset.Now,
+                        PieceMoved = Engine.Models.ChessPieces.WhiteQueen,
+                        MovedFrom = "f3",
+                        MovedTo = "f7",
+                        WhitePlayerId = 1,
+                        BlackPlayerId = 2,
                         GameDate = new DateTimeOffset(2015, 2, 7, 0, 0, 0, TimeSpan.Zero)
                     });
         }
@@ -103,7 +114,7 @@ namespace MjrChess.Trainer.Data
         private void UpdateTimestamps()
         {
             var updateTime = DateTimeOffset.Now;
-            foreach (var change in ChangeTracker.Entries<EntityBase>())
+            foreach (var change in ChangeTracker.Entries<IEntity>())
             {
                 switch (change.State)
                 {

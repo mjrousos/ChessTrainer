@@ -4,7 +4,7 @@ using MjrChess.Engine.Models;
 
 namespace MjrChess.Trainer.Models
 {
-    public class TacticsPuzzle : EntityBase
+    public class TacticsPuzzle : IEntity
     {
         public TacticsPuzzle(string position)
         {
@@ -35,9 +35,9 @@ namespace MjrChess.Trainer.Models
             }
         }
 
-        public string? WhitePlayer { get; set; }
+        public Player? WhitePlayer { get; set; }
 
-        public string? BlackPlayer { get; set; }
+        public Player? BlackPlayer { get; set; }
 
         public DateTimeOffset? GameDate { get; set; }
 

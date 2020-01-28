@@ -1,6 +1,6 @@
 ﻿namespace MjrChess.Trainer.Models
 {
-    public class Player : EntityBase
+    public class Player : IEntity
     {
         public Player(string name)
         {
