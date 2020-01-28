@@ -15,6 +15,22 @@ namespace MjrChess.Engine.Models
             Rank = rank;
         }
 
+        public BoardPosition(string rankAndFile)
+        {
+            if (string.IsNullOrWhiteSpace(rankAndFile))
+            {
+                throw new ArgumentException("Rank and file cannot be null or empty", nameof(rankAndFile));
+            }
+
+            if (rankAndFile.Length != 2)
+            {
+                throw new ArgumentException("Rank and file strings must contain exactly two characters", nameof(rankAndFile));
+            }
+
+            File = ChessFormatter.FileFromChar(rankAndFile[0]);
+            Rank = ChessFormatter.RankFromChar(rankAndFile[1]);
+        }
+
         public override string ToString() =>
             $"{ChessFormatter.FileToString(File)}{ChessFormatter.RankToString(Rank)}";
 

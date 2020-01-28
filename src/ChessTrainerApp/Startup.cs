@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Authentication.AzureADB2C.UI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MjrChess.Engine;
+using MjrChess.Trainer.Data;
 
 namespace MjrChess.Trainer
 {
@@ -25,6 +27,9 @@ namespace MjrChess.Trainer
         {
             services.AddAuthentication(AzureADB2CDefaults.AuthenticationScheme)
                 .AddAzureADB2C(options => Configuration.Bind("AzureAdB2C", options));
+
+            services.AddDbContext<PuzzleDbContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("PuzzleDatabase")));
 
             services.AddRazorPages();
             services.AddServerSideBlazor();

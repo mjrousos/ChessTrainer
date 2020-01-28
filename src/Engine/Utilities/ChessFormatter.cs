@@ -66,9 +66,13 @@ namespace MjrChess.Engine.Utilities
 
         public static int RankFromString(string rank) => int.Parse(rank, CultureInfo.InvariantCulture) - 1;
 
+        public static int RankFromChar(char rank) => RankFromString(rank.ToString(CultureInfo.InvariantCulture));
+
         public static string FileToString(int file) => $"{(char)(file + 0x61)}";
 
-        public static int FileFromString(string file) => file[0] - 0x61;
+        public static int FileFromString(string file) => FileFromChar(file[0]);
+
+        public static int FileFromChar(char file) => file - 0x61;
 
         /// <summary>
         /// Converts a chess piece to an approximate numerical value.
