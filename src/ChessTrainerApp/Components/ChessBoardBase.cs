@@ -21,6 +21,12 @@ namespace MjrChess.Trainer.Components
         [Inject]
         protected ChessEngine Engine { get; set; }
 
+        [Parameter]
+        public bool UserMovableWhitePieces { get; set; } = true;
+
+        [Parameter]
+        public bool UserMovableBlackPieces { get; set; } = true;
+
         protected ChessGame Game => Engine.Game;
 
         protected Move[] LegalMovesForSelectedPiece { get; set; } = new Move[0];
@@ -109,9 +115,16 @@ namespace MjrChess.Trainer.Components
                 return false;
             }
 
+            // Don't select pieces if the user isn't allowed to move the active color's pieces
+            if ((Game.WhiteToMove && !UserMovableWhitePieces) ||
+                (!Game.WhiteToMove && !UserMovableBlackPieces))
+            {
+                return false;
+            }
+
             var piece = Game.GetPiece(file, rank);
 
-            // If the clicked square doesn't contain a piece or contains a piece for the wrong player, do nothing
+            // Don't select pieces if the clicked square doesn't contain a piece or contains a piece for the wrong player
             if (piece == null || ChessFormatter.IsPieceWhite(piece.PieceType) != Game.WhiteToMove)
             {
                 return false;
