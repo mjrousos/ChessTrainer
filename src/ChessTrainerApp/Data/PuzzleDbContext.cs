@@ -48,6 +48,9 @@ namespace MjrChess.Trainer.Data
                 .Ignore(p => p.Solution);
 
             modelBuilder.Entity<TacticsPuzzle>()
+                .Ignore(p => p.IncorrectMove);
+
+            modelBuilder.Entity<TacticsPuzzle>()
                 .Property(p => p.PieceMoved)
                 .IsRequired();
 
@@ -93,6 +96,9 @@ namespace MjrChess.Trainer.Data
                         PieceMoved = Engine.Models.ChessPieces.WhiteQueen,
                         MovedFrom = "f3",
                         MovedTo = "f7",
+                        IncorrectPieceMoved = Engine.Models.ChessPieces.WhitePawn,
+                        IncorrectMovedFrom = "d2",
+                        IncorrectMovedTo = "d4",
                         WhitePlayerId = 1,
                         BlackPlayerId = 2,
                         GameDate = new DateTimeOffset(2015, 2, 7, 0, 0, 0, TimeSpan.Zero)
