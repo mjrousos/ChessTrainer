@@ -11,19 +11,19 @@ namespace MjrChess.Trainer.Migrations
                 name: "UserId",
                 table: "UserSettings",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: string.Empty);
 
             migrationBuilder.AddColumn<string>(
                 name: "IncorrectMovedFrom",
                 table: "Puzzles",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: string.Empty);
 
             migrationBuilder.AddColumn<string>(
                 name: "IncorrectMovedTo",
                 table: "Puzzles",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: string.Empty);
 
             migrationBuilder.AddColumn<int>(
                 name: "IncorrectPieceMoved",

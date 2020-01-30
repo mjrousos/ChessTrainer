@@ -103,17 +103,17 @@ namespace MjrChess.Trainer.Migrations
             migrationBuilder.InsertData(
                 table: "Players",
                 columns: new[] { "Id", "CreatedDate", "LastModifiedDate", "Name", "Site", "UserSettingsId" },
-                values: new object[] { 1, null, null, "Hustler", 2, null });
+                values: new object?[] { 1, null, null, "Hustler", 2, null });
 
             migrationBuilder.InsertData(
                 table: "Players",
                 columns: new[] { "Id", "CreatedDate", "LastModifiedDate", "Name", "Site", "UserSettingsId" },
-                values: new object[] { 2, null, null, "Noobie", 2, null });
+                values: new object?[] { 2, null, null, "Noobie", 2, null });
 
             migrationBuilder.InsertData(
                 table: "Puzzles",
                 columns: new[] { "Id", "BlackPlayerId", "CreatedDate", "GameDate", "LastModifiedDate", "MovedFrom", "MovedTo", "PieceMoved", "Position", "WhitePlayerId" },
-                values: new object[] { 1, 2, new DateTimeOffset(new DateTime(2020, 1, 28, 15, 8, 36, 513, DateTimeKind.Unspecified).AddTicks(2138), new TimeSpan(0, -5, 0, 0, 0)), new DateTimeOffset(new DateTime(2015, 2, 7, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), new DateTimeOffset(new DateTime(2020, 1, 28, 15, 8, 36, 517, DateTimeKind.Unspecified).AddTicks(5938), new TimeSpan(0, -5, 0, 0, 0)), "f3", "f7", 1, "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", 1 });
+                values: new object?[] { 1, 2, new DateTimeOffset(new DateTime(2020, 1, 28, 15, 8, 36, 513, DateTimeKind.Unspecified).AddTicks(2138), new TimeSpan(0, -5, 0, 0, 0)), new DateTimeOffset(new DateTime(2015, 2, 7, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), new DateTimeOffset(new DateTime(2020, 1, 28, 15, 8, 36, 517, DateTimeKind.Unspecified).AddTicks(5938), new TimeSpan(0, -5, 0, 0, 0)), "f3", "f7", 1, "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", 1 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Players_UserSettingsId",
