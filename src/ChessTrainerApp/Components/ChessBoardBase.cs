@@ -18,8 +18,8 @@ namespace MjrChess.Trainer.Components
         [Inject]
         private IJSRuntime JSRuntime { get; set; } = default!;
 
-        [Inject]
-        protected ChessEngine Engine { get; set; }
+        [Parameter]
+        public ChessEngine Engine { get; set; } = new ChessEngine();
 
         [Parameter]
         public bool UserMovableWhitePieces { get; set; } = true;

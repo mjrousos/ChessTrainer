@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using System;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.AzureADB2C.UI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -9,6 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MjrChess.Engine;
 using MjrChess.Trainer.Data;
+using MjrChess.Trainer.Models;
+using MjrChess.Trainer.Services;
 
 namespace MjrChess.Trainer
 {
@@ -29,8 +32,19 @@ namespace MjrChess.Trainer
                 .AddAzureADB2C(options => Configuration.Bind("AzureAdB2C", options));
 
             services.AddDbContext<PuzzleDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("PuzzleDatabase")));
+                options.UseSqlServer(Configuration.GetConnectionString("PuzzleDatabase"), options =>
+                {
+                    options.EnableRetryOnFailure(maxRetryCount: 15, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+                }));
 
+            services.AddScoped<IRepository<Player>, EFRepository<Player>>();
+            services.AddScoped<IRepository<PuzzleHistory>, EFRepository<PuzzleHistory>>();
+            services.AddScoped<IRepository<TacticsPuzzle>, EFRepository<TacticsPuzzle>>();
+            services.AddScoped<IRepository<UserSettings>, EFRepository<UserSettings>>();
+
+            services.AddScoped<IPuzzleService, PuzzleService>();
+
+            services.AddHttpContextAccessor();
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddResponseCompression(options =>
@@ -41,7 +55,7 @@ namespace MjrChess.Trainer
             });
             services.AddHealthChecks();
 
-            services.AddScoped<ChessEngine>();
+            services.AddTransient<ChessEngine>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
