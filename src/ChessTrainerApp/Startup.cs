@@ -39,7 +39,7 @@ namespace MjrChess.Trainer
 
             services.AddScoped<IRepository<Player>, EFRepository<Player>>();
             services.AddScoped<IRepository<PuzzleHistory>, EFRepository<PuzzleHistory>>();
-            services.AddScoped<IRepository<TacticsPuzzle>, EFRepository<TacticsPuzzle>>();
+            services.AddScoped<IRepository<TacticsPuzzle>, TacticsPuzzleRepository>();
             services.AddScoped<IRepository<UserSettings>, EFRepository<UserSettings>>();
 
             services.AddScoped<IPuzzleService, PuzzleService>();

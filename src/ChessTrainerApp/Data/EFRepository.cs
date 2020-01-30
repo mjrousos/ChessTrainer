@@ -10,11 +10,13 @@ namespace MjrChess.Trainer.Data
     public class EFRepository<T> : IRepository<T>
         where T : IEntity
     {
-        private PuzzleDbContext Context { get; }
+        protected PuzzleDbContext Context { get; }
 
         private ILogger<EFRepository<T>> Logger { get; }
 
         private DbSet<T> DbSet => Context.Set<T>();
+
+        protected virtual IQueryable<T> DbSetWithRelatedEntities => DbSet;
 
         public EFRepository(PuzzleDbContext context, ILogger<EFRepository<T>> logger)
         {
@@ -23,7 +25,7 @@ namespace MjrChess.Trainer.Data
             Context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
         }
 
-        public async Task<T> AddAsync(T item)
+        public virtual async Task<T> AddAsync(T item)
         {
             var result = await DbSet.AddAsync(item);
             await Context.SaveChangesAsync();
@@ -32,7 +34,7 @@ namespace MjrChess.Trainer.Data
             return result.Entity;
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public virtual async Task<bool> DeleteAsync(int id)
         {
             var result = false;
             var entity = await GetAsync(id);
@@ -48,20 +50,20 @@ namespace MjrChess.Trainer.Data
             return result;
         }
 
-        public Task<IQueryable<T>> GetAllAsync()
+        public virtual Task<IQueryable<T>> GetAllAsync()
         {
             Logger.LogInformation("Querying items from database {EntityType}", typeof(T).Name);
-            return Task.FromResult(DbSet.AsQueryable());
+            return Task.FromResult(DbSetWithRelatedEntities.AsQueryable());
         }
 
-        public async Task<T?> GetAsync(int id)
+        public virtual async Task<T?> GetAsync(int id)
         {
-            var entity = await DbSet.SingleOrDefaultAsync(t => t.Id == id);
+            var entity = await DbSetWithRelatedEntities.SingleOrDefaultAsync(t => t.Id == id);
             Logger.LogInformation("Retrieving entity {Id} from database {EntityType} {Result}", id, typeof(T).Name, entity == null ? "failed" : "succeeded");
             return entity;
         }
 
-        public async Task<T?> UpdateAsync(T item)
+        public virtual async Task<T?> UpdateAsync(T item)
         {
             T? ret = null;
             var entity = await GetAsync(item.Id);
