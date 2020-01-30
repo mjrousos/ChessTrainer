@@ -67,6 +67,18 @@ namespace MjrChess.Engine.Models
         }
 
         /// <summary>
+        /// Callback delegate for handling OnMove events.
+        /// </summary>
+        /// <param name="sender">The chess game in which the move was made.</param>
+        /// <param name="move">The move that was made.</param>
+        public delegate void MoveHandler(ChessGame sender, Move move);
+
+        /// <summary>
+        /// Event that is raised when a move is made.
+        /// </summary>
+        public event MoveHandler? OnMove;
+
+        /// <summary>
         /// Gets or sets name of the player with the white pieces (if known).
         /// </summary>
         public string WhitePlayer { get; set; } = default!; // https://github.com/dotnet/csharplang/issues/2869
@@ -415,6 +427,8 @@ namespace MjrChess.Engine.Models
 
             // Update active color
             WhiteToMove = !WhiteToMove;
+
+            OnMove?.Invoke(this, move);
         }
 
         /// <summary>

@@ -7,6 +7,25 @@
     margin-bottom: 4px;
 }
 
+.puzzleMessage {
+    text-align: center;
+    margin-top: 0.5em;
+    margin-bottom: 0.2em;
+}
+
+.puzzleMessage i {
+    font-size: 36px;
+    vertical-align: bottom;
+}
+
+.correctMessage {
+    color: green;
+}
+
+.incorrectMessage {
+    color: darkred;
+}
+
 .puzzleInfoCard .piece {
     position: relative;
     top: auto;

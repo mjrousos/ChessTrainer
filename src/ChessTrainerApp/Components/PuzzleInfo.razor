@@ -21,10 +21,42 @@
         <div class="mdc-typography mdc-typography--body2">
             Can you do better? Find the best move for @(ChessFormatter.IsPieceWhite(Puzzle.PieceMoved)?"white":"black")!
         </div>
+        @if (PuzzleState == PuzzleState.Solved)
+        {
+            <div>
+                <h1 class="mdc-typography mdc-typography--headline4 puzzleMessage correctMessage">
+                    <i class="material-icons" aria-hidden="true">check</i>
+                    Correct
+                </h1>
+            </div>
+        }
+        @if (PuzzleState == PuzzleState.Missed)
+        {
+            <div>
+                <h1 class="mdc-typography mdc-typography--headline4 puzzleMessage incorrectMessage">
+                    <i class="material-icons md-48" aria-hidden="true">clear</i>
+                    Incorrect
+                </h1>
+            </div>
+        }
         <div class="mdc-card__actions mdc-layout-grid--align-right">
-            <button class="mdc-button mdc-card__action mdc-card__action--button mdc-button--raised pull-right mdc-ripple-upgraded">
-                <span class="mdc-button__label">Skip</span>
-            </button>
+            @switch (PuzzleState)
+            {
+                case PuzzleState.Solved:
+                case PuzzleState.Revealed:
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right">replay</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right">skip_next</button>
+                    break;
+                case PuzzleState.Missed:
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right">replay</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right">help_outline</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right">skip_next</button>
+                    break;
+                case PuzzleState.Ongoing:
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right">help_outline</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right">skip_next</button>
+                    break;
+            }
         </div>
     </div>
 }
@@ -32,6 +64,9 @@
 @code {
     [Parameter]
     public TacticsPuzzle? Puzzle { get; set; }
+
+    [Parameter]
+    public PuzzleState PuzzleState { get; set; }
 
     public string Description
     {
