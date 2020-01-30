@@ -1,0 +1,15 @@
+﻿<div class="loader">
+    @if (!string.IsNullOrWhiteSpace(Title))
+    {
+        <h2 class="loaderTitle">@Title</h2>
+    }
+    <div class="loaderSpinner" />
+    <div class="loaderBackground">
+        <img src="images/Chess_Pieces_Sprite.svg#svgView(viewBox(0, 45, 45, 45))" />
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string? Title { get; set; }
+}
