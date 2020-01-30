@@ -1,0 +1,18 @@
+﻿.puzzleInfoCard {
+    display: inline-flex;
+    padding: 0px 16px 0px 16px;
+}
+
+.puzzleInfoCard .mdc-typography--headline6 {
+    margin-bottom: 4px;
+}
+
+.puzzleInfoCard .piece {
+    position: relative;
+    top: auto;
+    left: auto;
+    margin: 0px -7px 0px -7px;
+    width: 33px;
+    height: 33px;
+    vertical-align: bottom;
+}

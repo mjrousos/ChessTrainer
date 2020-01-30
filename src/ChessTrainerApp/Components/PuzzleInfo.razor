@@ -1,1 +1,44 @@
-﻿<h1>Info</h1>
+﻿@using MjrChess.Trainer.BlazorExtensions
+@using MjrChess.Trainer.Models
+
+@inherits MaterialDesignComponentBase
+
+@if (Puzzle != null)
+{
+    <div class="mdc-card puzzleInfoCard">
+        <div>
+            <h2 class="mdc-typography mdc-typography--headline6">
+                <ChessPieceComponent PieceType="ChessPieces.WhitePawn" File="7" /> @(Puzzle.WhitePlayer?.Name??"White Player")
+                v.
+                <ChessPieceComponent PieceType="ChessPieces.BlackPawn" File="7" /> @(Puzzle.BlackPlayer?.Name??"Black Player")
+            </h2>
+            <h3 class="mdc-typography mdc-typography--subtitle2">@Description</h3>
+        </div>
+        <div class="mdc-typography mdc-typography--body2">
+            In this position, @(ChessFormatter.IsPieceWhite(Puzzle.PieceMoved)?"white":"black") blundered by playing <strong>@(Puzzle.IncorrectMove.ToString())</strong>.
+        </div>
+        <br />
+        <div class="mdc-typography mdc-typography--body2">
+            Can you do better? Find the best move for @(ChessFormatter.IsPieceWhite(Puzzle.PieceMoved)?"white":"black")!
+        </div>
+        <div class="mdc-card__actions mdc-layout-grid--align-right">
+            <button class="mdc-button mdc-card__action mdc-card__action--button mdc-button--raised pull-right mdc-ripple-upgraded">
+                <span class="mdc-button__label">Skip</span>
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public TacticsPuzzle? Puzzle { get; set; }
+
+    public string Description
+    {
+        get
+        {
+            var descriptionComponents = new[] { Puzzle?.Site, Puzzle?.GameDate?.ToString("yyyy-MM-dd") };
+            return string.Join(", ", descriptionComponents.Where(s => !string.IsNullOrWhiteSpace(s)));
+        }
+    }
+}
