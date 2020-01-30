@@ -16,6 +16,8 @@ namespace MjrChess.Trainer.Data
 
         public DbSet<UserSettings> UserSettings { get; set; } = default!;
 
+        public DbSet<UserSettingsXPlayer> UserSettingsXPlayers { get; set; } = default!;
+
         public PuzzleDbContext(DbContextOptions<PuzzleDbContext> options)
             : base(options)
         { }
@@ -74,6 +76,20 @@ namespace MjrChess.Trainer.Data
             modelBuilder.Entity<UserSettings>()
                 .HasMany(s => s.PreferredPlayers)
                 .WithOne();
+
+            // User settings x Players join configuration
+            modelBuilder.Entity<UserSettingsXPlayer>()
+                .HasKey(x => new { x.UserSettingsId, x.PlayerId });
+
+            modelBuilder.Entity<UserSettingsXPlayer>()
+                .HasOne(x => x.UserSettings)
+                .WithMany(s => s.PreferredPlayers)
+                .HasForeignKey(x => x.UserSettingsId);
+
+            modelBuilder.Entity<UserSettingsXPlayer>()
+                .HasOne(x => x.Player)
+                .WithMany()
+                .HasForeignKey(x => x.PlayerId);
 
             SeedData(modelBuilder);
         }

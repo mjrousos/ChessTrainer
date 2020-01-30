@@ -6,6 +6,6 @@ namespace MjrChess.Trainer.Models
     {
         public string UserId { get; set; } = default!;
 
-        public ICollection<Player> PreferredPlayers { get; set; } = new HashSet<Player>();
+        public ICollection<UserSettingsXPlayer> PreferredPlayers { get; set; } = new HashSet<UserSettingsXPlayer>();
     }
 }

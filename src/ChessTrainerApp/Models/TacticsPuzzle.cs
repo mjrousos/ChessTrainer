@@ -58,6 +58,8 @@ namespace MjrChess.Trainer.Models
 
         public DateTimeOffset? GameDate { get; set; }
 
+        public string? Site { get; set; }
+
         public ICollection<PuzzleHistory> History { get; set; } = new HashSet<PuzzleHistory>();
     }
 }
