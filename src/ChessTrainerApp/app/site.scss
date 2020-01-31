@@ -127,8 +127,13 @@ html, body {
     left: 0px;
 }
 
+.capturedPieces {
+    min-height: 32px;
+}
+
 .capturedPieces .piece {
     position: relative;
+    vertical-align: bottom;
     top: auto;
     left: auto;
     width: 30px;
