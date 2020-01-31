@@ -33,6 +33,10 @@ namespace MjrChess.Engine.Models
 
         public bool Stalemates { get; set; }
 
+        public ChessPieces PieceMoved { get; set; }
+
+        public ChessPieces? PiecePromotedTo { get; set; }
+
         public bool ShortCastle =>
             (PieceMoved == ChessPieces.WhiteKing || PieceMoved == ChessPieces.BlackKing) &&
             OriginalPosition.File == 4 &&
@@ -42,10 +46,6 @@ namespace MjrChess.Engine.Models
             (PieceMoved == ChessPieces.WhiteKing || PieceMoved == ChessPieces.BlackKing) &&
             OriginalPosition.File == 4 &&
             FinalPosition.File == 2;
-
-        public ChessPieces PieceMoved { get; set; }
-
-        public ChessPieces? PiecePromotedTo { get; set; }
 
         public bool Equals(Move? other) =>
             !(other is null) &&
