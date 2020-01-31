@@ -5,6 +5,7 @@ import { MDCDrawer } from "@material/drawer";
 import { MDCSnackbar } from '@material/snackbar';
 import { library, dom } from '@fortawesome/fontawesome-svg-core'
 import { faChessKing } from '@fortawesome/free-solid-svg-icons/faChessKing';
+import { faChessQueen } from '@fortawesome/free-solid-svg-icons/faChessQueen';
 import { faCodeBranch } from '@fortawesome/free-solid-svg-icons/faCodeBranch';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
 
@@ -13,7 +14,7 @@ var copyNotifier;
 var copyButton;
 
 // Add FA icons to library
-library.add(faChessKing, faCodeBranch, faQuestion);
+library.add(faChessKing, faChessQueen, faCodeBranch, faQuestion);
 
 // Watch for <i> elements and update to appropriate <svg>
 dom.watch();
