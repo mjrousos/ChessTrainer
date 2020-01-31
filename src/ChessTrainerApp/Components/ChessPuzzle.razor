@@ -14,9 +14,23 @@
     }
 </div>
 <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-8-tablet mdc-layout-grid__cell--span-4-phone">
-    <PuzzleInfo Puzzle="CurrentPuzzle" PuzzleState="CurrentPuzzleState" />
+    <PuzzleInfo 
+        Puzzle="CurrentPuzzle" 
+        PuzzleState="CurrentPuzzleState" 
+        PuzzleEngine="PuzzleEngine"
+        OnReset="WrapActionAsTask(ResetPuzzle)" 
+        OnReveal="WrapActionAsTask(RevealPuzzle)" 
+        OnNext="LoadNextPuzzleAsync"/>
 </div>
 
 @code {
     bool WhiteToMove => ChessFormatter.IsPieceWhite(CurrentPuzzle?.PieceMoved ?? ChessPieces.WhiteKing);
+
+    // Use this instead of Task.Run so that short synchronous tasks aren't queued on
+    // the ThreadPool just to wrap them as Tasks.
+    Func<Task> WrapActionAsTask(Action action) => () =>
+    {
+        action?.Invoke();
+        return Task.CompletedTask;
+    };
 } 

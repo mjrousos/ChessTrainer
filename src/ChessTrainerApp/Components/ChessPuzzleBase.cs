@@ -1,7 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
-using Microsoft.JSInterop;
 using MjrChess.Engine;
 using MjrChess.Engine.Models;
 using MjrChess.Trainer.Models;
@@ -15,9 +16,6 @@ namespace MjrChess.Trainer.Components
 
         [Inject]
         private ILogger<ChessPuzzleBase> Logger { get; set; } = default!;
-
-        [Inject]
-        private IJSRuntime JSRuntime { get; set; } = default!;
 
         [Inject]
         private IPuzzleService PuzzleService { get; set; } = default!;
@@ -42,7 +40,7 @@ namespace MjrChess.Trainer.Components
 
         protected PuzzleState CurrentPuzzleState { get; set; }
 
-        private async Task LoadNextPuzzleAsync()
+        protected async Task LoadNextPuzzleAsync()
         {
             CurrentPuzzle = await PuzzleService.GetPuzzleAsync();
             CurrentPuzzleState = PuzzleState.Ongoing;
@@ -51,10 +49,14 @@ namespace MjrChess.Trainer.Components
             StateHasChanged();
         }
 
-        private void ResetPuzzle()
+        protected void ResetPuzzle()
         {
             if (CurrentPuzzle != null)
             {
+                // Currently it's a no-op to reset an ongoing puzzle (since an ongoing
+                // puzzle is already in the starting state), but I'm allowing it since,
+                // in the future, multi-step puzzles might make sense to reset while still
+                // ongoing.
                 CurrentPuzzleState = PuzzleState.Ongoing;
                 PuzzleEngine.LoadPosition(CurrentPuzzle.Position);
                 Logger.LogInformation("Reset puzzle ID {PuzzleId}", CurrentPuzzle.Id);
@@ -62,12 +64,32 @@ namespace MjrChess.Trainer.Components
             }
         }
 
-        private void RevealPuzzle()
+        protected void RevealPuzzle()
         {
-            if (CurrentPuzzle != null)
+            // Reveal is a no-op if there's no puzzle or the puzzle is already revealed or solved
+            if (CurrentPuzzle != null && CurrentPuzzleState != PuzzleState.Revealed && CurrentPuzzleState != PuzzleState.Solved)
             {
+                if (CurrentPuzzleState == PuzzleState.Missed)
+                {
+                    ResetPuzzle();
+                }
+
+                // Puzzle solutions only include where the piece should move.
+                // They don't include information about check, checkmate, etc.
+                // By finding the solution move with the current engine, that
+                // information is added.
+                var pieceMoved = new ChessPiece(CurrentPuzzle.PieceMoved, CurrentPuzzle.Solution.OriginalPosition);
+                var solution = puzzleEngine.GetLegalMoves(pieceMoved).SingleOrDefault(m => m.FinalPosition == CurrentPuzzle.Solution.FinalPosition);
+                if (solution == null)
+                {
+                    Logger.LogError("Invalid puzzle {PuzzleId} has impossible solution {Solution}", CurrentPuzzle.Id, CurrentPuzzle.Solution);
+                    throw new InvalidOperationException($"Invalid puzzle {CurrentPuzzle.Id} has impossible solution");
+                }
+
+                puzzleEngine.Game.Move(solution);
                 Logger.LogInformation("Revealed puzzle ID {PuzzleId} solution", CurrentPuzzle.Id);
                 CurrentPuzzleState = PuzzleState.Revealed;
+                StateHasChanged();
             }
         }
 

@@ -1,4 +1,5 @@
-﻿@using MjrChess.Trainer.BlazorExtensions
+﻿@using MjrChess.Engine 
+@using MjrChess.Trainer.BlazorExtensions
 @using MjrChess.Trainer.Models
 
 @inherits MaterialDesignComponentBase
@@ -21,40 +22,51 @@
         <div class="mdc-typography mdc-typography--body2">
             Can you do better? Find the best move for @(ChessFormatter.IsPieceWhite(Puzzle.PieceMoved)?"white":"black")!
         </div>
-        @if (PuzzleState == PuzzleState.Solved)
+        @switch (PuzzleState)
         {
-            <div>
-                <h1 class="mdc-typography mdc-typography--headline4 puzzleMessage correctMessage">
-                    <i class="material-icons" aria-hidden="true">check</i>
-                    Correct
-                </h1>
-            </div>
-        }
-        @if (PuzzleState == PuzzleState.Missed)
-        {
-            <div>
-                <h1 class="mdc-typography mdc-typography--headline4 puzzleMessage incorrectMessage">
-                    <i class="material-icons md-48" aria-hidden="true">clear</i>
-                    Incorrect
-                </h1>
-            </div>
+            case PuzzleState.Solved:
+                <div>
+                    <h1 class="mdc-typography mdc-typography--headline4 puzzleMessage correctMessage">
+                        <i class="material-icons" aria-hidden="true">check</i>
+                        Correct
+                    </h1>
+                </div>
+                break;
+            case PuzzleState.Missed:
+                <div>
+                    <h1 class="mdc-typography mdc-typography--headline4 puzzleMessage incorrectMessage">
+                        <i class="material-icons md-48" aria-hidden="true">clear</i>
+                        Incorrect
+                    </h1>
+                </div>
+                break;
+            case PuzzleState.Revealed:
+                <div>
+                    <h1 class="mdc-typography mdc-typography--headline4 puzzleMessage">
+                        <!-- Show the last move made after revealing instead of Puzzle.Solution
+                             since Puzzle.Solution only includes the piece and where to move it
+                             (without check or checkmate information). -->
+                        @PuzzleEngine.Game.Moves.LastOrDefault()
+                    </h1>
+                </div>
+                break;
         }
         <div class="mdc-card__actions mdc-layout-grid--align-right">
             @switch (PuzzleState)
             {
                 case PuzzleState.Solved:
                 case PuzzleState.Revealed:
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right">replay</button>
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right">skip_next</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right" @onclick="() => OnReset?.Invoke()">replay</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right" @onclick="() => OnNext?.Invoke()">skip_next</button>
                     break;
                 case PuzzleState.Missed:
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right">replay</button>
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right">help_outline</button>
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right">skip_next</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right" @onclick="() => OnReset?.Invoke()">replay</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right" @onclick="() => OnReveal?.Invoke()">help_outline</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right" @onclick="() => OnNext?.Invoke()">skip_next</button>
                     break;
                 case PuzzleState.Ongoing:
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right">help_outline</button>
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right">skip_next</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right" @onclick="() => OnReveal?.Invoke()">help_outline</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right" @onclick="() => OnNext?.Invoke()">skip_next</button>
                     break;
             }
         </div>
@@ -67,6 +79,18 @@
 
     [Parameter]
     public PuzzleState PuzzleState { get; set; }
+
+    [Parameter]
+    public ChessEngine PuzzleEngine { get; set; }
+
+    [Parameter]
+    public Func<Task>? OnNext { get; set; }
+
+    [Parameter]
+    public Func<Task>? OnReset { get; set; }
+
+    [Parameter]
+    public Func<Task>? OnReveal { get; set; }
 
     public string Description
     {
