@@ -15,12 +15,21 @@
             </h2>
             <h3 class="mdc-typography mdc-typography--subtitle2">@Description</h3>
         </div>
-        <div class="mdc-typography mdc-typography--body2">
-            In this position, @(ChessFormatter.IsPieceWhite(Puzzle.PieceMoved)?"white":"black") blundered by playing <strong>@(Puzzle.IncorrectMove.ToString())</strong>.
-        </div>
+        @if (Puzzle.IncorrectMove != null)
+        {
+            <div class="mdc-typography mdc-typography--body2">
+                In this position, @(ChessFormatter.IsPieceWhite(Puzzle.PieceMoved) ? "white" : "black") blundered by playing <strong>@(Puzzle.IncorrectMove.ToString())</strong>. Can you do better?
+            </div>
+        }
+        else
+        {
+            <div class="mdc-typography mdc-typography--body2">
+                In this position, @(ChessFormatter.IsPieceWhite(Puzzle.PieceMoved) ? "white" : "black") successfully took advantage of a poor move by @(ChessFormatter.IsPieceWhite(Puzzle.PieceMoved) ? "black" : "white").
+            </div>
+        }
         <br />
         <div class="mdc-typography mdc-typography--body2">
-            Can you do better? Find the best move for @(ChessFormatter.IsPieceWhite(Puzzle.PieceMoved)?"white":"black")!
+            Find the best move for @(ChessFormatter.IsPieceWhite(Puzzle.PieceMoved) ? "white" : "black")!
         </div>
         @switch (PuzzleState)
         {
@@ -44,8 +53,8 @@
                 <div>
                     <h1 class="mdc-typography mdc-typography--headline4 puzzleMessage">
                         <!-- Show the last move made after revealing instead of Puzzle.Solution
-                             since Puzzle.Solution only includes the piece and where to move it
-                             (without check or checkmate information). -->
+                    since Puzzle.Solution only includes the piece and where to move it
+                    (without check or checkmate information). -->
                         @PuzzleEngine.Game.Moves.LastOrDefault()
                     </h1>
                 </div>
@@ -81,7 +90,7 @@
     public PuzzleState PuzzleState { get; set; }
 
     [Parameter]
-    public ChessEngine PuzzleEngine { get; set; }
+    public ChessEngine PuzzleEngine { get; set; } = default!;
 
     [Parameter]
     public Func<Task>? OnNext { get; set; }

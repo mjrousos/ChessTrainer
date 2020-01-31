@@ -24,11 +24,11 @@ namespace MjrChess.Trainer.Models
 
         public string MovedTo { get; set; } = default!; // https://github.com/dotnet/csharplang/issues/2869
 
-        public ChessPieces IncorrectPieceMoved { get; set; }
+        public ChessPieces? IncorrectPieceMoved { get; set; }
 
-        public string IncorrectMovedFrom { get; set; } = default!; // https://github.com/dotnet/csharplang/issues/2869
+        public string? IncorrectMovedFrom { get; set; }
 
-        public string IncorrectMovedTo { get; set; } = default!; // https://github.com/dotnet/csharplang/issues/2869
+        public string? IncorrectMovedTo { get; set; }
 
         public Move Solution
         {
@@ -41,14 +41,16 @@ namespace MjrChess.Trainer.Models
             }
         }
 
-        public Move IncorrectMove
+        public Move? IncorrectMove
         {
-            get => new Move(IncorrectPieceMoved, new BoardPosition(IncorrectMovedFrom), new BoardPosition(IncorrectMovedTo));
+            get => (IncorrectPieceMoved != null && IncorrectMovedFrom != null && IncorrectMovedTo != null) ?
+                new Move(IncorrectPieceMoved.Value, new BoardPosition(IncorrectMovedFrom), new BoardPosition(IncorrectMovedTo)) :
+                null;
             set
             {
-                IncorrectPieceMoved = value.PieceMoved;
-                IncorrectMovedFrom = value.OriginalPosition.ToString();
-                IncorrectMovedTo = value.FinalPosition.ToString();
+                IncorrectPieceMoved = value?.PieceMoved;
+                IncorrectMovedFrom = value?.OriginalPosition.ToString();
+                IncorrectMovedTo = value?.FinalPosition.ToString();
             }
         }
 
