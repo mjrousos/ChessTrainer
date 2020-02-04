@@ -12,7 +12,7 @@ namespace MjrChess.Trainer.Components
 {
     public class ChessPuzzleBase : ComponentBase
     {
-        private ChessEngine puzzleEngine = default!;
+        private ChessEngine _puzzleEngine = default!;
 
         [Inject]
         private ILogger<ChessPuzzleBase> Logger { get; set; } = default!;
@@ -23,16 +23,16 @@ namespace MjrChess.Trainer.Components
         [Inject]
         protected ChessEngine PuzzleEngine
         {
-            get => puzzleEngine;
+            get => _puzzleEngine;
             set
             {
-                if (puzzleEngine != null)
+                if (_puzzleEngine != null)
                 {
-                    puzzleEngine.Game.OnMove -= HandleMove;
+                    _puzzleEngine.Game.OnMove -= HandleMove;
                 }
 
-                puzzleEngine = value;
-                puzzleEngine.Game.OnMove += HandleMove;
+                _puzzleEngine = value;
+                _puzzleEngine.Game.OnMove += HandleMove;
             }
         }
 
@@ -79,14 +79,14 @@ namespace MjrChess.Trainer.Components
                 // By finding the solution move with the current engine, that
                 // information is added.
                 var pieceMoved = new ChessPiece(CurrentPuzzle.PieceMoved, CurrentPuzzle.Solution.OriginalPosition);
-                var solution = puzzleEngine.GetLegalMoves(pieceMoved).SingleOrDefault(m => m.FinalPosition == CurrentPuzzle.Solution.FinalPosition);
+                var solution = PuzzleEngine.GetLegalMoves(pieceMoved).SingleOrDefault(m => m.FinalPosition == CurrentPuzzle.Solution.FinalPosition);
                 if (solution == null)
                 {
                     Logger.LogError("Invalid puzzle {PuzzleId} has impossible solution {Solution}", CurrentPuzzle.Id, CurrentPuzzle.Solution);
                     throw new InvalidOperationException($"Invalid puzzle {CurrentPuzzle.Id} has impossible solution");
                 }
 
-                puzzleEngine.Game.Move(solution);
+                PuzzleEngine.Game.Move(solution);
                 Logger.LogInformation("Revealed puzzle ID {PuzzleId} solution", CurrentPuzzle.Id);
                 CurrentPuzzleState = PuzzleState.Revealed;
                 StateHasChanged();
