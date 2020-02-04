@@ -4,7 +4,7 @@ namespace MjrChess.Trainer
 {
     public static class IdentityExtensions
     {
-        private const string UserIdClaimType = "sub";
+        private const string UserIdClaimType = ClaimTypes.NameIdentifier;
 
         public static string? GetUserId(this ClaimsPrincipal principal)
         {
