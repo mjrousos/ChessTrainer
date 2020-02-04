@@ -40,9 +40,10 @@ namespace MjrChess.Trainer
             services.AddScoped<IRepository<Player>, EFRepository<Player>>();
             services.AddScoped<IRepository<PuzzleHistory>, EFRepository<PuzzleHistory>>();
             services.AddScoped<IRepository<TacticsPuzzle>, TacticsPuzzleRepository>();
-            services.AddScoped<IRepository<UserSettings>, EFRepository<UserSettings>>();
+            services.AddScoped<IRepository<UserSettings>, UserSettingsRepository>();
 
             services.AddScoped<IPuzzleService, PuzzleService>();
+            services.AddScoped<IUserService, UserService>();
 
             services.AddHttpContextAccessor();
             services.AddRazorPages();
@@ -55,6 +56,7 @@ namespace MjrChess.Trainer
             });
             services.AddHealthChecks();
 
+            services.AddTransient<CurrentUserService>();
             services.AddTransient<ChessEngine>();
         }
 

@@ -21,6 +21,12 @@ namespace MjrChess.Trainer.Components
         private IPuzzleService PuzzleService { get; set; } = default!;
 
         [Inject]
+        private IUserService UserService { get; set; } = default!;
+
+        [Inject]
+        private CurrentUserService CurrentUserService { get; set; } = default!;
+
+        [Inject]
         protected ChessEngine PuzzleEngine
         {
             get => _puzzleEngine;
@@ -40,10 +46,13 @@ namespace MjrChess.Trainer.Components
 
         protected PuzzleState CurrentPuzzleState { get; set; }
 
+        protected bool FirstAttempt { get; set; }
+
         protected async Task LoadNextPuzzleAsync()
         {
             CurrentPuzzle = await PuzzleService.GetPuzzleAsync();
             CurrentPuzzleState = PuzzleState.Ongoing;
+            FirstAttempt = true;
             PuzzleEngine.LoadPosition(CurrentPuzzle.Position);
             Logger.LogInformation("Loaded puzzle ID {PuzzleId}", CurrentPuzzle.Id);
             StateHasChanged();
@@ -86,6 +95,9 @@ namespace MjrChess.Trainer.Components
                     throw new InvalidOperationException($"Invalid puzzle {CurrentPuzzle.Id} has impossible solution");
                 }
 
+                // Users don't get credit for solving (or missing) a puzzle once they know the solution
+                FirstAttempt = false;
+
                 PuzzleEngine.Game.Move(solution);
                 Logger.LogInformation("Revealed puzzle ID {PuzzleId} solution", CurrentPuzzle.Id);
                 CurrentPuzzleState = PuzzleState.Revealed;
@@ -115,21 +127,37 @@ namespace MjrChess.Trainer.Components
             await base.OnAfterRenderAsync(firstRender);
         }
 
-        private void HandleMove(ChessGame game, Move move)
+        private async void HandleMove(ChessGame game, Move move)
         {
             if (CurrentPuzzle != null)
             {
                 if (move == CurrentPuzzle.Solution)
                 {
-                    Logger.LogInformation("Puzzle {PuzzleId} solved", CurrentPuzzle.Id);
+                    Logger.LogInformation("Puzzle {PuzzleId} solved by {UserId}", CurrentPuzzle.Id, CurrentUserService.CurrentUserId ?? "Anonymous");
                     CurrentPuzzleState = PuzzleState.Solved;
                     StateHasChanged();
                 }
                 else
                 {
-                    Logger.LogInformation("Puzzle {PuzzleId} missed", CurrentPuzzle.Id);
+                    Logger.LogInformation("Puzzle {PuzzleId} missed by {UserId}", CurrentPuzzle.Id, CurrentUserService.CurrentUserId ?? "Anonymous");
                     CurrentPuzzleState = PuzzleState.Missed;
                     StateHasChanged();
+                }
+
+                // Record the user's first attempt in puzzle history
+                if (FirstAttempt)
+                {
+                    if (!(CurrentUserService.CurrentUserId is null))
+                    {
+                        await UserService.RecordPuzzleHistoryAsync(new PuzzleHistory
+                        {
+                            UserId = CurrentUserService.CurrentUserId,
+                            Puzzle = CurrentPuzzle,
+                            Solved = CurrentPuzzleState == PuzzleState.Solved
+                        });
+                    }
+
+                    FirstAttempt = false;
                 }
             }
         }

@@ -22,7 +22,12 @@ namespace MjrChess.Trainer.Data
         {
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             Context = context ?? throw new ArgumentNullException(nameof(context));
-            Context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+
+            // Disable this for now because it's awkward for services to have to begin tracking individual
+            // entities they select from a query when they're used as children of other new entities.
+            // In most cases, queries end up being small so this shouldn't matter. In the future, a stricter
+            // service/repository boundary will enable this to be re-enabled.
+            // Context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
         }
 
         public virtual async Task<T> AddAsync(T item)
@@ -70,6 +75,7 @@ namespace MjrChess.Trainer.Data
             if (entity != null)
             {
                 var result = DbSet.Update(item);
+                await Context.SaveChangesAsync();
                 ret = result.Entity;
             }
 

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MjrChess.Trainer.Data;
@@ -14,24 +12,22 @@ namespace MjrChess.Trainer.Services
     {
         private static Random NumGen { get; } = new Random();
 
-        private ClaimsPrincipal? CurrentUser { get; }
-
-        private string? CurrentUserId => CurrentUser?.GetUserId();
-
         private IRepository<TacticsPuzzle> PuzzleRepository { get; }
 
         private IRepository<UserSettings> UserSettingsRepository { get; }
+
+        public CurrentUserService UserService { get; }
 
         private ILogger<PuzzleService> Logger { get; }
 
         public PuzzleService(IRepository<TacticsPuzzle> puzzleRepository,
                              IRepository<UserSettings> userSettingsRepository,
-                             IHttpContextAccessor httpContextAccessor,
+                             CurrentUserService userService,
                              ILogger<PuzzleService> logger)
         {
-            CurrentUser = httpContextAccessor?.HttpContext.User; // TODO : Move to its own simple user service
             PuzzleRepository = puzzleRepository ?? throw new ArgumentNullException(nameof(puzzleRepository));
             UserSettingsRepository = userSettingsRepository ?? throw new ArgumentNullException(nameof(userSettingsRepository));
+            UserService = userService ?? throw new ArgumentNullException(nameof(userService));
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -40,10 +36,10 @@ namespace MjrChess.Trainer.Services
             var puzzlesQuery = await GetPuzzlesForCurrentUserAsync();
             var puzzleCount = await puzzlesQuery.CountAsync();
             var skipCount = NumGen.Next(puzzleCount);
-            var puzzle = puzzlesQuery.Skip(skipCount).First();
+            var puzzle = await puzzlesQuery.Skip(skipCount).FirstAsync();
             Logger.LogInformation("Retrieved puzzle {PuzzleId} for user {UserId} (index {SkipCount} of {PuzzleCount} puzzles)",
                 puzzle.Id,
-                CurrentUserId ?? "Anonymous",
+                UserService.CurrentUserId ?? "Anonymous",
                 skipCount,
                 puzzleCount);
 
@@ -54,23 +50,23 @@ namespace MjrChess.Trainer.Services
         {
             var puzzles = await PuzzleRepository.GetAllAsync();
 
-            if (CurrentUserId != null)
+            if (UserService.CurrentUserId != null)
             {
                 var userSettings = await (await UserSettingsRepository.GetAllAsync())
-                    .Where(s => CurrentUserId.Equals(s.UserId, StringComparison.Ordinal))
+                    .Where(s => string.Equals(UserService.CurrentUserId, s.UserId))
                     .SingleOrDefaultAsync();
 
-                if (userSettings.PreferredPlayers != null && userSettings.PreferredPlayers.Count > 0)
+                if (userSettings?.PreferredPlayers != null && userSettings.PreferredPlayers.Count > 0)
                 {
                     var preferredIds = userSettings.PreferredPlayers.Select(p => p.PlayerId);
-                    Logger.LogInformation("Retrieving puzzles for {UserId} with {PreferredPlayerCount} preferred players", CurrentUserId, preferredIds.Count());
+                    Logger.LogInformation("Retrieving puzzles for {UserId} with {PreferredPlayerCount} preferred players", UserService.CurrentUserId, preferredIds.Count());
                     puzzles = puzzles.Where(p =>
                         (p.WhitePlayer != null && preferredIds.Contains(p.WhitePlayer.Id)) ||
                         (p.BlackPlayer != null && preferredIds.Contains(p.BlackPlayer.Id)));
                 }
                 else
                 {
-                    Logger.LogInformation("Retrieving puzzles for {UserId} with {PreferredPlayerCount} preferred players", CurrentUserId, 0);
+                    Logger.LogInformation("Retrieving puzzles for {UserId} with {PreferredPlayerCount} preferred players", UserService.CurrentUserId, 0);
                 }
             }
             else
