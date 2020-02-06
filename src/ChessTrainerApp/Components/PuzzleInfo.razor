@@ -6,7 +6,7 @@
 
 @if (Puzzle != null)
 {
-    <div class="mdc-card puzzleInfoCard">
+    <div class="mdc-card">
         <div>
             <h2 class="mdc-typography mdc-typography--headline6">
                 <ChessPieceComponent PieceType="ChessPieces.WhitePawn" File="7" /> @(Puzzle.WhitePlayer?.Name??"White Player")
@@ -60,22 +60,22 @@
                 </div>
                 break;
         }
-        <div class="mdc-card__actions mdc-layout-grid--align-right">
+        <div class="mdc-card__actions mdc-card__actions--full-bleed mdc-layout-grid--align-right">
             @switch (PuzzleState)
             {
                 case PuzzleState.Solved:
                 case PuzzleState.Revealed:
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right" @onclick="() => OnReset?.Invoke()">replay</button>
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right" @onclick="() => OnNext?.Invoke()">skip_next</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnReset?.Invoke()">replay</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnNext?.Invoke()">skip_next</button>
                     break;
                 case PuzzleState.Missed:
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right" @onclick="() => OnReset?.Invoke()">replay</button>
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right" @onclick="() => OnReveal?.Invoke()">help_outline</button>
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right" @onclick="() => OnNext?.Invoke()">skip_next</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnReset?.Invoke()">replay</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnReveal?.Invoke()">help_outline</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnNext?.Invoke()">skip_next</button>
                     break;
                 case PuzzleState.Ongoing:
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right" @onclick="() => OnReveal?.Invoke()">help_outline</button>
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--button material-icons pull-right" @onclick="() => OnNext?.Invoke()">skip_next</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnReveal?.Invoke()">help_outline</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnNext?.Invoke()">skip_next</button>
                     break;
             }
         </div>

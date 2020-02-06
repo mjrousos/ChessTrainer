@@ -18,9 +18,42 @@
     z-index: 7;
 }
 
+.main {
+    height: calc(100% - 64px);
+}
+
+.card-title {
+    display: flex;
+}
+
+.card-title .mdc-icon-button {
+    padding: 0px;
+    margin-top: 8px;
+}
+
 .mdc-typography--subtitle2 {
     color: $mdc-theme-text-secondary-on-background;
     margin-top: 0px;
+}
+
+.mdc-card .mdc-list-item {
+    padding: 0px;
+}
+
+.mdc-card .mdc-list-item__text {
+    color: $mdc-list-item-primary-text-ink-color;
+}
+
+.mdc-card .mdc-list-item__secondary-text {
+    color: $mdc-list-item-secondary-text-ink-color;
+}
+
+.mdc-card .mdc-icon-button {
+    color: $mdc-list-item-primary-text-ink-color;
+}
+
+.mdc-text-field--dense {
+    width: 100%;
 }
 
 .mdc-drawer-app-content {
