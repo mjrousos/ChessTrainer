@@ -36,7 +36,7 @@ namespace MjrChess.Trainer.Services
                 throw new ArgumentException(nameof(playerName));
             }
 
-            var player = await (await PlayersRepository.GetAllAsync()).FirstOrDefaultAsync(p => playerName.ToLowerInvariant().Equals(p.Name.ToLowerInvariant()) && playerSite == p.Site);
+            var player = await (await PlayersRepository.GetAllAsync()).FirstOrDefaultAsync(p => playerName.ToLower().Equals(p.Name.ToLower()) && playerSite == p.Site);
             if (player is null)
             {
                 player = await PlayersRepository.AddAsync(new Player(playerName) { Site = playerSite });
@@ -100,6 +100,38 @@ namespace MjrChess.Trainer.Services
             }
 
             return settings.PreferredPlayers.Select(p => p.Player);
+        }
+
+        public async Task<bool> RemovePreferredPlayerAsync(string userId, int playerId)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                Logger.LogError("UserId must not be null or empty when calling GetPreferredPlayersAsync");
+                throw new ArgumentNullException(nameof(userId));
+            }
+
+            var settings = await GetUserSettingsAsync(userId);
+            if (settings is null)
+            {
+                Logger.LogInformation("No preferred players found for user {UserId}", userId);
+                return false;
+            }
+            else
+            {
+                var playerSetting = settings.PreferredPlayers.FirstOrDefault(x => x.PlayerId == playerId);
+                if (playerSetting == null)
+                {
+                    Logger.LogInformation("Could not remove preferred player {PlayerId} from user {UserId} because the user does not prefer that player", playerId, userId);
+                    return false;
+                }
+                else
+                {
+                    settings.PreferredPlayers.Remove(playerSetting);
+                    await UserSettingsRepository.UpdateAsync(settings);
+                    Logger.LogInformation("Removed preferred player {PlayerId} from user {UserId}", playerId, userId);
+                    return true;
+                }
+            }
         }
 
         public async Task<IEnumerable<PuzzleHistory>> GetPuzzleHistoryAsync(string userId)

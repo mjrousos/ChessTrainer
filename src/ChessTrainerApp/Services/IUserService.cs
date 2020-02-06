@@ -12,6 +12,8 @@ namespace MjrChess.Trainer.Services
 
         Task<bool> AddPreferredPlayerAsync(string userId, Player player);
 
+        Task<bool> RemovePreferredPlayerAsync(string userId, int playerId);
+
         Task<IEnumerable<PuzzleHistory>> GetPuzzleHistoryAsync(string userId);
 
         Task RecordPuzzleHistoryAsync(PuzzleHistory puzzleHistory);
