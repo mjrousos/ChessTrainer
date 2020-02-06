@@ -1,0 +1,78 @@
+﻿@using MjrChess.Trainer.BlazorExtensions
+@using MjrChess.Trainer.Models
+
+@inherits MaterialDesignComponentBase
+
+<div>
+    <div class="mdc-text-field mdc-text-field--outlined mdc-text-field--dense vertical-form">
+        <input class="mdc-text-field__input" id="playername-input" @bind="PlayerName">
+        <div class="mdc-notched-outline">
+            <div class="mdc-notched-outline__leading"></div>
+            <div class="mdc-notched-outline__notch">
+                <label for="playername-input" class="mdc-floating-label">Name</label>
+            </div>
+            <div class="mdc-notched-outline__trailing"></div>
+        </div>
+    </div>
+
+    <div class="mdc-select vertical-form">
+        <div class="mdc-select__anchor site-select-width-class">
+            <i class="mdc-select__dropdown-icon"></i>
+            <div class="mdc-select__selected-text"></div>
+            <span class="mdc-floating-label">Site</span>
+            <div class="mdc-line-ripple"></div>
+        </div>
+
+        <div @ref=SelectElement class="mdc-select__menu mdc-menu mdc-menu-surface site-select-width-class">
+            <ul class="mdc-list">
+                <li class="mdc-list-item" data-value="@ChessSites.ChessCom">
+                    Chess.com
+                </li>
+                <li class="mdc-list-item" data-value="@ChessSites.LiChess">
+                    lichess.org
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <button class="mdc-button mdc-button--raised" @onclick="AddPlayerAsync">
+        <div class="mdc-button__ripple"></div>
+        <i class="material-icons mdc-button__icon">add</i>
+        <span class="mdc-button__label">
+            Add
+        </span>
+    </button>
+</div>
+
+@code {
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
+
+    [Parameter]
+    public Func<Player, Task>? OnAddPreferredPlayer { get; set; }
+
+    ElementReference SelectElement { get; set; }
+
+    public async Task AddPlayerAsync()
+    {
+        if (string.IsNullOrEmpty(PlayerName))
+        {
+            await JSRuntime.InvokeVoidAsync("notify", "Name is required");
+            return;
+        }
+
+        var site = await JSRuntime.InvokeAsync<string>("getSelectValue", SelectElement);
+        if (site is null)
+        {
+            await JSRuntime.InvokeVoidAsync("notify", "Site is required");
+            return;
+        }
+
+        await (OnAddPreferredPlayer?.Invoke(new Player(PlayerName)
+        {
+            Site = Enum.Parse<ChessSites>(site)
+        }) ?? Task.CompletedTask);
+    }
+
+    public string? PlayerName { get; set; }
+}

@@ -1,10 +1,13 @@
-@import "https://fonts.googleapis.com/icon?family=Material+Icons";
 @import "./variables";
 @import "./loadingSpinner";
 @import "./puzzleInfo";
+@import "https://fonts.googleapis.com/icon?family=Material+Icons";
 @import "@material/textfield/mdc-text-field";
 @import "@material/button/mdc-button";
 @import "@material/card/mdc-card";
+@import "@material/select/mdc-select";
+@import "@material/menu-surface/mdc-menu-surface";
+@import "@material/menu/mdc-menu";
 @import "@material/top-app-bar/mdc-top-app-bar";
 @import "@material/icon-button/mdc-icon-button";
 @import "@material/drawer/mdc-drawer";
@@ -258,4 +261,13 @@ html, body {
 
 .unplaced {
     visibility: hidden;
+}
+
+// MDC select elements need their width set explicitly
+.site-select-width-class {
+    width: 100%;
+}
+
+.vertical-form {
+    margin-bottom: 8px;
 }

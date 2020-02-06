@@ -2,6 +2,8 @@ import { MDCRipple, MDCRippleFoundation, util } from '@material/ripple';
 import { MDCTextField } from '@material/textfield';
 import { MDCTopAppBar } from '@material/top-app-bar';
 import { MDCDrawer } from "@material/drawer";
+import { MDCMenu } from '@material/menu';
+import { MDCSelect } from '@material/select';
 import { MDCSnackbar } from '@material/snackbar';
 import { library, dom } from '@fortawesome/fontawesome-svg-core'
 import { faChessKing } from '@fortawesome/free-solid-svg-icons/faChessKing';
@@ -42,6 +44,16 @@ window.attachMDC = () => {
     const drawers = document.querySelectorAll('.mdc-drawer');
     for (const drawer of drawers) {
         MDCDrawer.attachTo(drawer);
+    }
+
+    const menus = document.querySelectorAll('.mdc-menu');
+    for (const menu of menus) {
+        new MDCMenu(menu);
+    }
+
+    const selects = document.querySelectorAll('.mdc-select');
+    for (const select of selects) {
+        new MDCSelect(select);
     }
 
     primaryNotifier = new MDCSnackbar(document.getElementById('PrimaryNotifier'));
@@ -96,4 +108,9 @@ window.copyToClipboard = (text) => {
     // I'll need to replace this with a more general solution.
     // https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText
     return navigator.clipboard.writeText(text);
+};
+
+window.getSelectValue = (selectElement) => {
+    var selected = selectElement.querySelector('.mdc-list-item--selected');
+    return (selected ? selected.getAttribute('data-value') : null);
 };

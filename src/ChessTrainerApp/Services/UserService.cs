@@ -128,6 +128,7 @@ namespace MjrChess.Trainer.Services
                 {
                     settings.PreferredPlayers.Remove(playerSetting);
                     await UserSettingsRepository.UpdateAsync(settings);
+                    await CleanUpPlayerAsync(playerSetting.Player);
                     Logger.LogInformation("Removed preferred player {PlayerId} from user {UserId}", playerId, userId);
                     return true;
                 }
@@ -162,6 +163,11 @@ namespace MjrChess.Trainer.Services
         private async Task<UserSettings> GetUserSettingsAsync(string userId)
         {
             return await (await UserSettingsRepository.GetAllAsync()).FirstOrDefaultAsync(s => userId.Equals(s.UserId));
+        }
+
+        private async Task CleanUpPlayerAsync(Player player)
+        {
+            // TODO : Remove the player entity if no users prefer them
         }
     }
 }

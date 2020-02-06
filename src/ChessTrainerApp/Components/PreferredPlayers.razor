@@ -1,0 +1,118 @@
+﻿@using MjrChess.Trainer.BlazorExtensions
+@using MjrChess.Trainer.Models
+@using MjrChess.Trainer.Services
+
+@inherits MaterialDesignComponentBase
+
+<div class="mdc-card">
+    <div class="card-title">
+        <h2 class="mdc-typography mdc-typography--headline6">
+            Preferred Players
+        </h2>
+        <span class="mdc-layout-grid--align-right">
+            @if (ShowPlayerList)
+            {
+                <button class="mdc-icon-button material-icons" @onclick="() => ShowPlayerList = false">expand_less</button>
+            }
+            else
+            {
+                <button class="mdc-icon-button mdc-icon material-icons" @onclick="() => ShowPlayerList = true">expand_more</button>
+            }
+        </span>
+    </div>
+    @if (ShowPlayerList)
+    {
+        <AuthorizeView>
+            <Authorized>
+                <div class="mdc-typography mdc-typography--body2">
+                    <div class="mdc-list-group">
+                        <ul class="mdc-list mdc-list--non-interactive mdc-list--two-line">
+                            @foreach (var player in Players)
+                            {
+                                <li class="mdc-list-item">
+                                    <span class="mdc-list-item__text">
+                                        <span class="mdc-list-item__primary-text">@player.Name (@player.Site.ToString())</span>
+                                        <span class="mdc-list-item__secondary-text">0 puzzles</span> <!-- TODO -->
+                                    </span>
+                                    <div class="mdc-layout-grid--align-right">
+                                        <button class="mdc-icon-button material-icons" @onclick="async () => await RemovePlayerAsync(player.Id)">clear</button>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+                <div class="mdc-card__actions mdc-card__actions--full-bleed mdc-layout-grid--align-right">
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => ShowAddPlayer = !ShowAddPlayer">add</button>
+                </div>
+                @if (ShowAddPlayer)
+                {
+                    <AddPreferredPlayer OnAddPreferredPlayer="AddNewPreferredPlayer" />
+                }
+            </Authorized>
+            <NotAuthorized>
+                <div class="mdc-typography mdc-typography--body2">
+                    Log in to choose which players' games you want puzzles from.
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+    }
+</div>
+
+@code {
+    [Inject]
+    public IJSRuntime JSRuntime { get; set; } = default!;
+
+    [Inject]
+    public IUserService UserService { get; set; } = default!;
+
+    [Inject]
+    public CurrentUserService CurrentUserService { get; set; } = default!;
+
+    public ICollection<Player> Players { get; set; } = default!;
+
+    public bool ShowAddPlayer { get; set; }
+
+    public bool ShowPlayerList { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshPreferredPlayersAsync();
+    }
+
+    private async Task RefreshPreferredPlayersAsync()
+    {
+        if (!(CurrentUserService.CurrentUserId is null))
+        {
+            Players = (await UserService.GetPreferredPlayersAsync(CurrentUserService.CurrentUserId)).ToList();
+        }
+        else
+        {
+            Players = new List<Player>();
+        }
+        StateHasChanged();
+    }
+
+    protected async Task AddNewPreferredPlayer(Player player)
+    {
+        if (!(CurrentUserService.CurrentUserId is null))
+        {
+            var result = await UserService.AddPreferredPlayerAsync(CurrentUserService.CurrentUserId, player.Name, player.Site);
+            if (result)
+            {
+                ShowAddPlayer = false;
+                await RefreshPreferredPlayersAsync();
+                await JSRuntime.InvokeVoidAsync("notify", $"Player added!\n\nNote that if {player.Name}'s games are not alreaady analyzed, it may take some time before puzzles based on their games are available.");
+            }
+        }
+    }
+
+    protected async Task RemovePlayerAsync(int playerId)
+    {
+        if (!(CurrentUserService.CurrentUserId is null))
+        {
+            await UserService.RemovePreferredPlayerAsync(CurrentUserService.CurrentUserId, playerId);
+            await RefreshPreferredPlayersAsync();
+        }
+    }
+}

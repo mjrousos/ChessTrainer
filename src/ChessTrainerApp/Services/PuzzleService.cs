@@ -35,6 +35,13 @@ namespace MjrChess.Trainer.Services
         {
             var puzzlesQuery = await GetPuzzlesForCurrentUserAsync();
             var puzzleCount = await puzzlesQuery.CountAsync();
+            if (puzzleCount == 0)
+            {
+                Logger.LogInformation("None of user {UserId}'s preferred players have games in the database", UserService.CurrentUserId ?? "Anonymous");
+                puzzlesQuery = await PuzzleRepository.GetAllAsync();
+                puzzleCount = await puzzlesQuery.CountAsync();
+            }
+
             var skipCount = NumGen.Next(puzzleCount);
             var puzzle = await puzzlesQuery.Skip(skipCount).FirstAsync();
             Logger.LogInformation("Retrieved puzzle {PuzzleId} for user {UserId} (index {SkipCount} of {PuzzleCount} puzzles)",
