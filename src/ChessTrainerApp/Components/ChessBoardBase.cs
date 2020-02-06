@@ -31,6 +31,8 @@ namespace MjrChess.Trainer.Components
 
         protected Move[] LegalMovesForSelectedPiece { get; set; } = new Move[0];
 
+        protected Move? LastMove => Game.Moves.LastOrDefault();
+
         private ChessPiece? _selectedPiece;
 
         /// <summary>

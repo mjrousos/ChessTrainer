@@ -21,7 +21,12 @@
     }
     @if (SelectedPiece != null)
     {
-        <SquareDecorator File="SelectedPiece.Position.File" Rank="SelectedPiece.Position.Rank" ImageName="SelectedSquare" />
+        <SquareDecorator File="SelectedPiece.Position.File" Rank="SelectedPiece.Position.Rank" ImageName="Highlight" />
+    }
+    @if (LastMove != null)
+    {
+        <SquareDecorator File="LastMove.OriginalPosition.File" Rank="LastMove.OriginalPosition.Rank" ImageName="Highlight" />
+        <SquareDecorator File="LastMove.FinalPosition.File" Rank="LastMove.FinalPosition.Rank" ImageName="Highlight" />
     }
     @if (Game.Check)
     {
