@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.AzureADB2C.UI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -63,6 +64,9 @@ namespace MjrChess.Trainer
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // Issue: https://github.com/dotnet/aspnetcore/issues/18865
+            app.UseRewriter(new RewriteOptions().AddRedirect("AzureADB2C/Account/SignedOut", "/"));
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
