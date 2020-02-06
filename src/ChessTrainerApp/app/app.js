@@ -21,10 +21,6 @@ library.add(faChessKing, faChessQueen, faCodeBranch, faQuestion);
 // Watch for <i> elements and update to appropriate <svg>
 dom.watch();
 
-window.onload = function (e) {
-    console.log('App loaded');
-};
-
 window.attachMDC = () => {
     const buttons = document.querySelectorAll('.mdc-button');
     for (const button of buttons) {
@@ -70,7 +66,6 @@ window.toggleDrawer = (drawerName) => {
 window.getBoundingRectangle = (componentId) => {
     var element = document.getElementById(componentId);
     if (element) {
-        console.log(element.getBoundingClientRect());
         var rect = element.getBoundingClientRect();
         return {
             // `| 0` truncates to int
