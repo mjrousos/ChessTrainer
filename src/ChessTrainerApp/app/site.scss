@@ -39,7 +39,11 @@
     margin-top: 0px;
 }
 
-.mdc-card .mdc-list-item {
+.mdc-text-field .mdc-floating-label--float-above {
+    transform: translateY(-106%) scale(0.75) !important;
+}
+
+.mdc-card-body .mdc-list-item {
     padding: 0px;
 }
 
@@ -264,7 +268,7 @@ html, body {
 }
 
 // MDC select elements need their width set explicitly
-.site-select-width-class {
+.full-width-input {
     width: 100%;
 }
 
