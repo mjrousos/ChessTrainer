@@ -8,8 +8,6 @@ namespace MjrChess.Trainer.Services
     {
         Task<IEnumerable<Player>> GetPreferredPlayersAsync(string userId);
 
-        Task<bool> AddPreferredPlayerAsync(string userId, string playerName, ChessSites playerSite);
-
         Task<bool> AddPreferredPlayerAsync(string userId, Player player);
 
         Task<bool> RemovePreferredPlayerAsync(string userId, int playerId);

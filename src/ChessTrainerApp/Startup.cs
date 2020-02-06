@@ -42,6 +42,7 @@ namespace MjrChess.Trainer
             services.AddScoped<IRepository<TacticsPuzzle>, TacticsPuzzleRepository>();
             services.AddScoped<IRepository<UserSettings>, UserSettingsRepository>();
 
+            services.AddScoped<IPlayerService, PlayerService>();
             services.AddScoped<IPuzzleService, PuzzleService>();
             services.AddScoped<IUserService, UserService>();
 

@@ -27,12 +27,12 @@
                 <div class="mdc-typography mdc-typography--body2">
                     <div class="mdc-list-group">
                         <ul class="mdc-list mdc-list--non-interactive mdc-list--two-line">
-                            @foreach (var player in Players)
+                            @foreach ((var player, var puzzleCount) in Players)
                             {
                                 <li class="mdc-list-item">
                                     <span class="mdc-list-item__text">
                                         <span class="mdc-list-item__primary-text">@player.Name (@player.Site.ToString())</span>
-                                        <span class="mdc-list-item__secondary-text">0 puzzles</span> <!-- TODO -->
+                                        <span class="mdc-list-item__secondary-text">@puzzleCount @(puzzleCount == 1 ? "puzzle" : "puzzles") </span> <!-- TODO -->
                                     </span>
                                     <div class="mdc-layout-grid--align-right">
                                         <button class="mdc-icon-button material-icons" @onclick="async () => await RemovePlayerAsync(player.Id)">clear</button>
@@ -67,9 +67,12 @@
     public IUserService UserService { get; set; } = default!;
 
     [Inject]
+    public IPlayerService PlayerService { get; set; } = default!;
+
+    [Inject]
     public CurrentUserService CurrentUserService { get; set; } = default!;
 
-    public ICollection<Player> Players { get; set; } = default!;
+    public ICollection<(Player, int)> Players { get; set; } = default!;
 
     public bool ShowAddPlayer { get; set; }
 
@@ -82,27 +85,34 @@
 
     private async Task RefreshPreferredPlayersAsync()
     {
+        Players = new List<(Player, int)>();
+
         if (!(CurrentUserService.CurrentUserId is null))
         {
-            Players = (await UserService.GetPreferredPlayersAsync(CurrentUserService.CurrentUserId)).ToList();
+            foreach (var player in (await UserService.GetPreferredPlayersAsync(CurrentUserService.CurrentUserId)).ToArray())
+            {
+                var puzzleCount = await PlayerService.GetPlayerPuzzleCountAsync(player);
+                Players.Add((player, puzzleCount));
+            }
         }
-        else
-        {
-            Players = new List<Player>();
-        }
+
         StateHasChanged();
     }
 
-    protected async Task AddNewPreferredPlayer(Player player)
+    protected async Task AddNewPreferredPlayer(string name, ChessSites site)
     {
         if (!(CurrentUserService.CurrentUserId is null))
         {
-            var result = await UserService.AddPreferredPlayerAsync(CurrentUserService.CurrentUserId, player.Name, player.Site);
-            if (result)
+            var player = await PlayerService.GetOrAddPlayerAsync(name, site);
+            if (player != null)
             {
-                ShowAddPlayer = false;
-                await RefreshPreferredPlayersAsync();
-                await JSRuntime.InvokeVoidAsync("notify", $"Player added!\n\nNote that if {player.Name}'s games are not alreaady analyzed, it may take some time before puzzles based on their games are available.");
+                var result = await UserService.AddPreferredPlayerAsync(CurrentUserService.CurrentUserId, player);
+                if (result)
+                {
+                    ShowAddPlayer = false;
+                    await RefreshPreferredPlayersAsync();
+                    await JSRuntime.InvokeVoidAsync("notify", $"Player added!\n\nNote that if {player.Name}'s games are not alreaady analyzed, it may take some time before puzzles based on their games are available.");
+                }
             }
         }
     }
@@ -112,6 +122,7 @@
         if (!(CurrentUserService.CurrentUserId is null))
         {
             await UserService.RemovePreferredPlayerAsync(CurrentUserService.CurrentUserId, playerId);
+            await PlayerService.CleanUpPlayerAsync(playerId);
             await RefreshPreferredPlayersAsync();
         }
     }

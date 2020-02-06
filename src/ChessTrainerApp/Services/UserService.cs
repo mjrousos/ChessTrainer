@@ -13,37 +13,15 @@ namespace MjrChess.Trainer.Services
     {
         public IRepository<UserSettings> UserSettingsRepository { get; }
 
-        public IRepository<Player> PlayersRepository { get; }
-
         public IRepository<PuzzleHistory> PuzzleHistoryRepository { get; }
 
         public ILogger<UserService> Logger { get; }
 
-        public UserService(IRepository<UserSettings> userSettingsRepository, IRepository<Player> playersRepository,
-                           IRepository<PuzzleHistory> puzzleHistoryRepository, ILogger<UserService> logger)
+        public UserService(IRepository<UserSettings> userSettingsRepository, IRepository<PuzzleHistory> puzzleHistoryRepository, ILogger<UserService> logger)
         {
             UserSettingsRepository = userSettingsRepository ?? throw new ArgumentNullException(nameof(userSettingsRepository));
-            PlayersRepository = playersRepository ?? throw new ArgumentNullException(nameof(playersRepository));
             PuzzleHistoryRepository = puzzleHistoryRepository ?? throw new ArgumentNullException(nameof(puzzleHistoryRepository));
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        }
-
-        public async Task<bool> AddPreferredPlayerAsync(string userId, string playerName, ChessSites playerSite)
-        {
-            if (string.IsNullOrEmpty(playerName))
-            {
-                Logger.LogError("Player name must not be null or empty");
-                throw new ArgumentException(nameof(playerName));
-            }
-
-            var player = await (await PlayersRepository.GetAllAsync()).FirstOrDefaultAsync(p => playerName.ToLower().Equals(p.Name.ToLower()) && playerSite == p.Site);
-            if (player is null)
-            {
-                player = await PlayersRepository.AddAsync(new Player(playerName) { Site = playerSite });
-                Logger.LogInformation("Added new player {PlayerId}", player.Id);
-            }
-
-            return await AddPreferredPlayerAsync(userId, player);
         }
 
         public async Task<bool> AddPreferredPlayerAsync(string userId, Player player)
@@ -128,7 +106,6 @@ namespace MjrChess.Trainer.Services
                 {
                     settings.PreferredPlayers.Remove(playerSetting);
                     await UserSettingsRepository.UpdateAsync(settings);
-                    await CleanUpPlayerAsync(playerSetting.Player);
                     Logger.LogInformation("Removed preferred player {PlayerId} from user {UserId}", playerId, userId);
                     return true;
                 }
@@ -163,11 +140,6 @@ namespace MjrChess.Trainer.Services
         private async Task<UserSettings> GetUserSettingsAsync(string userId)
         {
             return await (await UserSettingsRepository.GetAllAsync()).FirstOrDefaultAsync(s => userId.Equals(s.UserId));
-        }
-
-        private async Task CleanUpPlayerAsync(Player player)
-        {
-            // TODO : Remove the player entity if no users prefer them
         }
     }
 }

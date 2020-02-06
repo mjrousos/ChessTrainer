@@ -49,7 +49,7 @@
     private IJSRuntime JSRuntime { get; set; } = default!;
 
     [Parameter]
-    public Func<Player, Task>? OnAddPreferredPlayer { get; set; }
+    public Func<string, ChessSites, Task>? OnAddPreferredPlayer { get; set; }
 
     ElementReference SelectElement { get; set; }
 
@@ -68,10 +68,7 @@
             return;
         }
 
-        await (OnAddPreferredPlayer?.Invoke(new Player(PlayerName)
-        {
-            Site = Enum.Parse<ChessSites>(site)
-        }) ?? Task.CompletedTask);
+        await (OnAddPreferredPlayer?.Invoke(PlayerName, Enum.Parse<ChessSites>(site)) ?? Task.CompletedTask);
     }
 
     public string? PlayerName { get; set; }
