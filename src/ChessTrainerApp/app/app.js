@@ -9,6 +9,7 @@ import { library, dom } from '@fortawesome/fontawesome-svg-core'
 import { faChessKing } from '@fortawesome/free-solid-svg-icons/faChessKing';
 import { faChessQueen } from '@fortawesome/free-solid-svg-icons/faChessQueen';
 import { faCodeBranch } from '@fortawesome/free-solid-svg-icons/faCodeBranch';
+import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons/faExternalLinkAlt';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
 
 var primaryNotifier;
@@ -16,7 +17,7 @@ var copyNotifier;
 var copyButton;
 
 // Add FA icons to library
-library.add(faChessKing, faChessQueen, faCodeBranch, faQuestion);
+library.add(faChessKing, faChessQueen, faCodeBranch, faExternalLinkAlt, faQuestion);
 
 // Watch for <i> elements and update to appropriate <svg>
 dom.watch();

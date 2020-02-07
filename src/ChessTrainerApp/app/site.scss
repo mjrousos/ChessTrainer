@@ -39,6 +39,11 @@
     margin-top: 0px;
 }
 
+.mdc-typography--subtitle2 svg {
+    margin: 0px 0px 1px 3px;
+    color: $mdc-theme-text-secondary-on-background;
+}
+
 .mdc-text-field .mdc-floating-label--float-above {
     transform: translateY(-106%) scale(0.75) !important;
 }
