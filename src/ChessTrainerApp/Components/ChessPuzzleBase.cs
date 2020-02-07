@@ -42,7 +42,23 @@ namespace MjrChess.Trainer.Components
             }
         }
 
-        protected TacticsPuzzle? CurrentPuzzle { get; set; }
+        private TacticsPuzzle? _currentPuzzle;
+
+        protected TacticsPuzzle? CurrentPuzzle
+        {
+            get => _currentPuzzle;
+            set
+            {
+                _currentPuzzle = value;
+                if (value != null)
+                {
+                    PuzzleEngine.LoadPosition(value.Position);
+                    MakeMove(value.SetupMove);
+                    PuzzleEngine.Game.WhitePlayer = value.WhitePlayer?.Name ?? "White Player";
+                    PuzzleEngine.Game.BlackPlayer = value.BlackPlayer?.Name ?? "Black Player";
+                }
+            }
+        }
 
         protected PuzzleState CurrentPuzzleState { get; set; }
 
@@ -53,7 +69,6 @@ namespace MjrChess.Trainer.Components
             CurrentPuzzle = await PuzzleService.GetPuzzleAsync();
             CurrentPuzzleState = PuzzleState.Ongoing;
             FirstAttempt = true;
-            PuzzleEngine.LoadPosition(CurrentPuzzle.Position);
             Logger.LogInformation("Loaded puzzle ID {PuzzleId}", CurrentPuzzle.Id);
             StateHasChanged();
         }
@@ -83,22 +98,11 @@ namespace MjrChess.Trainer.Components
                     ResetPuzzle();
                 }
 
-                // Puzzle solutions only include where the piece should move.
-                // They don't include information about check, checkmate, etc.
-                // By finding the solution move with the current engine, that
-                // information is added.
-                var pieceMoved = new ChessPiece(CurrentPuzzle.PieceMoved, CurrentPuzzle.Solution.OriginalPosition);
-                var solution = PuzzleEngine.GetLegalMoves(pieceMoved).SingleOrDefault(m => m.FinalPosition == CurrentPuzzle.Solution.FinalPosition);
-                if (solution == null)
-                {
-                    Logger.LogError("Invalid puzzle {PuzzleId} has impossible solution {Solution}", CurrentPuzzle.Id, CurrentPuzzle.Solution);
-                    throw new InvalidOperationException($"Invalid puzzle {CurrentPuzzle.Id} has impossible solution");
-                }
-
                 // Users don't get credit for solving (or missing) a puzzle once they know the solution
                 FirstAttempt = false;
 
-                PuzzleEngine.Game.Move(solution);
+                MakeMove(CurrentPuzzle.Solution);
+
                 Logger.LogInformation("Revealed puzzle ID {PuzzleId} solution", CurrentPuzzle.Id);
                 CurrentPuzzleState = PuzzleState.Revealed;
                 StateHasChanged();
@@ -160,6 +164,28 @@ namespace MjrChess.Trainer.Components
                     FirstAttempt = false;
                 }
             }
+        }
+
+        private void MakeMove(Move move)
+        {
+            // Moves in puzzles only include where the piece should move.
+            // They don't include information about check, checkmate, etc.
+            // By finding the move with the current engine, that information
+            // is added (so that it will display correctly).
+            if (CurrentPuzzle is null)
+            {
+                return;
+            }
+
+            var pieceMoved = new ChessPiece(move.PieceMoved, move.OriginalPosition);
+            var resolvedMove = PuzzleEngine.GetLegalMoves(pieceMoved).SingleOrDefault(m => m.FinalPosition == move.FinalPosition);
+            if (resolvedMove == null)
+            {
+                Logger.LogError("Invalid puzzle move ({Move}) for {PuzzleId}", move, CurrentPuzzle.Id);
+                throw new InvalidOperationException($"Invalid move ({move}) for puzzle {CurrentPuzzle.Id}");
+            }
+
+            PuzzleEngine.Game.Move(resolvedMove);
         }
     }
 }

@@ -50,6 +50,9 @@ namespace MjrChess.Trainer.Data
                 .Ignore(p => p.Solution);
 
             modelBuilder.Entity<TacticsPuzzle>()
+                .Ignore(p => p.SetupMove);
+
+            modelBuilder.Entity<TacticsPuzzle>()
                 .Ignore(p => p.IncorrectMove);
 
             modelBuilder.Entity<TacticsPuzzle>()
@@ -62,6 +65,18 @@ namespace MjrChess.Trainer.Data
 
             modelBuilder.Entity<TacticsPuzzle>()
                 .Property(p => p.MovedTo)
+                .IsRequired();
+
+            modelBuilder.Entity<TacticsPuzzle>()
+                .Property(p => p.SetupPieceMoved)
+                .IsRequired();
+
+            modelBuilder.Entity<TacticsPuzzle>()
+                .Property(p => p.SetupMovedFrom)
+                .IsRequired();
+
+            modelBuilder.Entity<TacticsPuzzle>()
+                .Property(p => p.SetupMovedTo)
                 .IsRequired();
 
             modelBuilder.Entity<TacticsPuzzle>()
@@ -98,26 +113,69 @@ namespace MjrChess.Trainer.Data
         {
             modelBuilder.Entity<Player>()
                 .HasData(
-                    new Player("Hustler") { Id = 1 },
-                    new Player("Noobie") { Id = 2 });
+                    new Player("Hustler", ChessSites.Other) { Id = 1, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
+                    new Player("Noobie", ChessSites.Other) { Id = 2, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
+                    new Player("Vini700", ChessSites.LiChess) { Id = 3, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
+                    new Player("aupoil", ChessSites.LiChess) { Id = 4, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
+                    new Player("toskekg", ChessSites.LiChess) { Id = 5, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
+                    new Player("wolfwolf", ChessSites.LiChess) { Id = 6, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now });
 
             modelBuilder.Entity<TacticsPuzzle>()
                 .HasData(
                     new
                     {
                         Id = 1,
-                        Position = "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4",
+                        Position = "rnbqk1nr/pppp1ppp/8/2b1p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR b KQkq - 3 3",
                         CreatedDate = DateTimeOffset.Now,
                         LastModifiedDate = DateTimeOffset.Now,
                         PieceMoved = Engine.Models.ChessPieces.WhiteQueen,
                         MovedFrom = "f3",
                         MovedTo = "f7",
-                        IncorrectPieceMoved = Engine.Models.ChessPieces.WhitePawn,
-                        IncorrectMovedFrom = "d2",
-                        IncorrectMovedTo = "d4",
+                        SetupPieceMoved = Engine.Models.ChessPieces.BlackKnight,
+                        SetupMovedFrom = "b8",
+                        SetupMovedTo = "c6",
                         WhitePlayerId = 1,
                         BlackPlayerId = 2,
                         GameDate = new DateTimeOffset(2015, 2, 7, 0, 0, 0, TimeSpan.Zero)
+                    },
+                    new
+                    {
+                        Id = 2,
+                        Position = "r3r1k1/ppp2pp1/2n4p/3q4/3Pb3/B1P2N1P/P2Q1PP1/R3R1K1 w - - 4 16",
+                        CreatedDate = DateTimeOffset.Now,
+                        LastModifiedDate = DateTimeOffset.Now,
+                        PieceMoved = Engine.Models.ChessPieces.BlackKnight,
+                        MovedFrom = "c6",
+                        MovedTo = "a5",
+                        SetupPieceMoved = Engine.Models.ChessPieces.WhiteRook,
+                        SetupMovedFrom = "e1",
+                        SetupMovedTo = "e3",
+                        WhitePlayerId = 3,
+                        BlackPlayerId = 4,
+                        GameDate = new DateTimeOffset(2016, 8, 8, 0, 0, 0, TimeSpan.Zero),
+                        Site = "lichess.org",
+                        GameUrl = "https://lichess.org/3piQphpY"
+                    },
+                    new
+                    {
+                        Id = 3,
+                        Position = "r2q1rk1/1pp1b1pp/p7/4pp2/2PnB1P1/3PB2P/PP1Q1P2/R3K2R w KQ - 0 15",
+                        CreatedDate = DateTimeOffset.Now,
+                        LastModifiedDate = DateTimeOffset.Now,
+                        PieceMoved = Engine.Models.ChessPieces.BlackBishop,
+                        MovedFrom = "e7",
+                        MovedTo = "b4",
+                        SetupPieceMoved = Engine.Models.ChessPieces.WhitePawn,
+                        SetupMovedFrom = "g4",
+                        SetupMovedTo = "f5",
+                        IncorrectPieceMoved = Engine.Models.ChessPieces.BlackRook,
+                        IncorrectMovedFrom = "f8",
+                        IncorrectMovedTo = "f5",
+                        WhitePlayerId = 5,
+                        BlackPlayerId = 6,
+                        GameDate = new DateTimeOffset(2016, 10, 7, 0, 0, 0, TimeSpan.Zero),
+                        Site = "lichess.org",
+                        GameUrl = "https://lichess.org/HjVhr1Dn"
                     });
         }
 

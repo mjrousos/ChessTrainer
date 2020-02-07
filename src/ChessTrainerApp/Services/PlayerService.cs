@@ -47,7 +47,7 @@ namespace MjrChess.Trainer.Services
             if (player is null)
             {
                 // TODO: Validate that player exists
-                player = await PlayerRepository.AddAsync(new Player(name) { Site = site });
+                player = await PlayerRepository.AddAsync(new Player(name, site));
                 Logger.LogInformation("Added new player {PlayerId}", player.Id);
             }
 

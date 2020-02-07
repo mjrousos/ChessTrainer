@@ -13,7 +13,16 @@
                 v.
                 <ChessPieceComponent PieceType="ChessPieces.BlackPawn" File="7" /> @(Puzzle.BlackPlayer?.Name??"Black Player")
             </h2>
-            <h3 class="mdc-typography mdc-typography--subtitle2">@Description</h3>
+            <h3 class="mdc-typography mdc-typography--subtitle2">
+                @if (!string.IsNullOrWhiteSpace(Puzzle.GameUrl))
+                {
+                    <a href="@Puzzle.GameUrl" target="_blank">@Description</a>
+                }
+                else
+                {
+                    @Description
+                }
+            </h3>
         </div>
         @if (Puzzle.IncorrectMove != null)
         {
