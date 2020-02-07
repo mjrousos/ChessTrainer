@@ -70,7 +70,7 @@ namespace MjrChess.Trainer.Components
 
         protected async Task LoadNextPuzzleAsync()
         {
-            CurrentPuzzle = await PuzzleService.GetPuzzleAsync();
+            CurrentPuzzle = await PuzzleService.GetRandomPuzzleAsync();
             CurrentPuzzleState = PuzzleState.Ongoing;
             FirstAttempt = true;
             Logger.LogInformation("Loaded puzzle ID {PuzzleId}", CurrentPuzzle.Id);

@@ -31,7 +31,22 @@ namespace MjrChess.Trainer.Services
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<TacticsPuzzle> GetPuzzleAsync()
+        public async Task<TacticsPuzzle?> GetPuzzleAsync(int puzzleId)
+        {
+            var puzzle = await PuzzleRepository.GetAsync(puzzleId);
+            if (puzzle == null)
+            {
+                Logger.LogInformation("Puzzle {PuzzleId} not found", puzzleId);
+            }
+            else
+            {
+                Logger.LogInformation("Retrieved puzzle {PuzzleId}", puzzleId);
+            }
+
+            return puzzle;
+        }
+
+        public async Task<TacticsPuzzle?> GetRandomPuzzleAsync()
         {
             var puzzlesQuery = await GetPuzzlesForCurrentUserAsync();
             var puzzleCount = await puzzlesQuery.CountAsync();
@@ -43,12 +58,19 @@ namespace MjrChess.Trainer.Services
             }
 
             var skipCount = NumGen.Next(puzzleCount);
-            var puzzle = await puzzlesQuery.Skip(skipCount).FirstAsync();
-            Logger.LogInformation("Retrieved puzzle {PuzzleId} for user {UserId} (index {SkipCount} of {PuzzleCount} puzzles)",
-                puzzle.Id,
-                UserService.CurrentUserId ?? "Anonymous",
-                skipCount,
-                puzzleCount);
+            var puzzle = await puzzlesQuery.Skip(skipCount).FirstOrDefaultAsync();
+            if (puzzle == null)
+            {
+                Logger.LogError("No puzzles found");
+            }
+            else
+            {
+                Logger.LogInformation("Retrieved puzzle {PuzzleId} for user {UserId} (index {SkipCount} of {PuzzleCount} puzzles)",
+                    puzzle.Id,
+                    UserService.CurrentUserId ?? "Anonymous",
+                    skipCount,
+                    puzzleCount);
+            }
 
             return puzzle;
         }
