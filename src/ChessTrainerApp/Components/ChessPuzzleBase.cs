@@ -52,15 +52,19 @@ namespace MjrChess.Trainer.Components
                 _currentPuzzle = value;
                 if (value != null)
                 {
+                    PuzzleReady = false;
                     PuzzleEngine.LoadPosition(value.Position);
                     MakeMove(value.SetupMove);
                     PuzzleEngine.Game.WhitePlayer = value.WhitePlayer?.Name ?? "White Player";
                     PuzzleEngine.Game.BlackPlayer = value.BlackPlayer?.Name ?? "Black Player";
+                    PuzzleReady = true;
                 }
             }
         }
 
         protected PuzzleState CurrentPuzzleState { get; set; }
+
+        private bool PuzzleReady { get; set; }
 
         protected bool FirstAttempt { get; set; }
 
@@ -133,7 +137,7 @@ namespace MjrChess.Trainer.Components
 
         private async void HandleMove(ChessGame game, Move move)
         {
-            if (CurrentPuzzle != null)
+            if (CurrentPuzzle != null && PuzzleReady)
             {
                 if (move == CurrentPuzzle.Solution)
                 {
