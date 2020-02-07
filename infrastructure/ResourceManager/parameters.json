@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vulnerabilityAssessments_Default_storageContainerPath": {
+            "value": null
+        },
+        "serverfarms_EastUSPlan_name": {
+            "value": null
+        },
+        "sites_CTPlayerFunctions_name": {
+            "value": null
+        },
+        "workflows_PlayerWatcher_name": {
+            "value": null
+        },
+        "components_ChessTrainer_name": {
+            "value": null
+        },
+        "servers_chesstrainersqlserver_name": {
+            "value": null
+        },
+        "workspaces_ctanalytics_name": {
+            "value": null
+        },
+        "storageAccounts_chesstrainerstorage_name": {
+            "value": null
+        },
+        "registries_chessstraineracr_name": {
+            "value": null
+        },
+        "storageAccounts_playerfunctionstorage_name": {
+            "value": null
+        },
+        "solutions_LogicAppsManagement_ctanalytics__name": {
+            "value": null
+        },
+        "dashboards_b05f8c08_5abf_43eb_b90b_3aa68444ce16_dashboard_name": {
+            "value": null
+        },
+        "smartdetectoralertrules_failure_anomalies___chesstrainer_name": {
+            "value": null
+        },
+        "actiongroups_application_20insights_20smart_20detection_externalid": {
+            "value": null
+        }
+    }
+}
