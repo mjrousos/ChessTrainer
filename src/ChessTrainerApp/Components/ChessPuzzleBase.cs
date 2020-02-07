@@ -73,7 +73,7 @@ namespace MjrChess.Trainer.Components
             CurrentPuzzle = await PuzzleService.GetRandomPuzzleAsync();
             CurrentPuzzleState = PuzzleState.Ongoing;
             FirstAttempt = true;
-            Logger.LogInformation("Loaded puzzle ID {PuzzleId}", CurrentPuzzle.Id);
+            Logger.LogInformation("Loaded puzzle ID {PuzzleId}", CurrentPuzzle?.Id);
             StateHasChanged();
         }
 
