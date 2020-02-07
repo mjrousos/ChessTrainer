@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MjrChess.Engine;
 using MjrChess.Engine.Models;
@@ -10,17 +11,15 @@ using MjrChess.Trainer.Services;
 
 namespace MjrChess.Trainer.Components
 {
-    public class ChessPuzzleBase : ComponentBase
+    public class ChessPuzzleBase : OwningComponentBase
     {
         private ChessEngine _puzzleEngine = default!;
 
         [Inject]
         private ILogger<ChessPuzzleBase> Logger { get; set; } = default!;
 
-        [Inject]
         private IPuzzleService PuzzleService { get; set; } = default!;
 
-        [Inject]
         private IUserService UserService { get; set; } = default!;
 
         [Inject]
@@ -67,6 +66,14 @@ namespace MjrChess.Trainer.Components
         private bool PuzzleReady { get; set; }
 
         protected bool FirstAttempt { get; set; }
+
+        protected override void OnInitialized()
+        {
+            PuzzleService = ScopedServices.GetRequiredService<IPuzzleService>();
+            UserService = ScopedServices.GetRequiredService<IUserService>();
+
+            base.OnInitialized();
+        }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {

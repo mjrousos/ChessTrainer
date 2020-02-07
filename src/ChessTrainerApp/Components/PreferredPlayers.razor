@@ -1,6 +1,8 @@
-﻿@using MjrChess.Trainer.BlazorExtensions
+﻿@using Microsoft.Extensions.DependencyInjection 
+@using MjrChess.Trainer.BlazorExtensions
 @using MjrChess.Trainer.Models
 @using MjrChess.Trainer.Services
+@using Nito.AsyncEx 
 
 @inherits MaterialDesignComponentBase
 
@@ -68,10 +70,8 @@
     [Inject]
     public IJSRuntime JSRuntime { get; set; } = default!;
 
-    [Inject]
     public IUserService UserService { get; set; } = default!;
 
-    [Inject]
     public IPlayerService PlayerService { get; set; } = default!;
 
     [Inject]
@@ -83,8 +83,14 @@
 
     public bool ShowPlayerList { get; set; }
 
+    // UserService and PlayerService depend on an EF Core DBContext and, therefore, are not thread safe
+    private AsyncLock serviceLock = new AsyncLock();
+
     protected override async Task OnInitializedAsync()
     {
+        UserService = ScopedServices.GetRequiredService<IUserService>();
+        PlayerService = ScopedServices.GetRequiredService<IPlayerService>();
+
         await RefreshPreferredPlayersAsync();
     }
 
@@ -94,10 +100,13 @@
 
         if (!(CurrentUserService.CurrentUserId is null))
         {
-            foreach (var player in (await UserService.GetPreferredPlayersAsync(CurrentUserService.CurrentUserId)).ToArray())
+            using (await serviceLock.LockAsync())
             {
-                var puzzleCount = await PlayerService.GetPlayerPuzzleCountAsync(player);
-                Players.Add((player, puzzleCount));
+                foreach (var player in (await UserService.GetPreferredPlayersAsync(CurrentUserService.CurrentUserId)).ToArray())
+                {
+                    var puzzleCount = await PlayerService.GetPlayerPuzzleCountAsync(player);
+                    Players.Add((player, puzzleCount));
+                }
             }
         }
 
@@ -108,17 +117,27 @@
     {
         if (!(CurrentUserService.CurrentUserId is null))
         {
-            var player = await PlayerService.GetOrAddPlayerAsync(name, site);
-            if (player != null)
+            using (await serviceLock.LockAsync())
             {
-                var result = await UserService.AddPreferredPlayerAsync(CurrentUserService.CurrentUserId, player);
-                if (result)
+                var player = await PlayerService.GetOrAddPlayerAsync(name, site);
+                if (player != null)
                 {
-                    ShowAddPlayer = false;
-                    await RefreshPreferredPlayersAsync();
-                    await JSRuntime.InvokeVoidAsync("notify", $"Player added!\n\nNote that if {player.Name}'s games are not alreaady analyzed, it may take some time before puzzles based on their games are available.");
+                    var result = await UserService.AddPreferredPlayerAsync(CurrentUserService.CurrentUserId, player);
+                    if (result)
+                    {
+                        ShowAddPlayer = false;
+                        await JSRuntime.InvokeVoidAsync("notify", $"Player added!\n\nNote that if {player.Name}'s games are not alreaady analyzed, it may take some time before puzzles based on their games are available.");
+                    }
+                    else
+                    {
+                        await JSRuntime.InvokeVoidAsync("notify", $"Could not add {player.Name}. Are they already added?");
+                    }
                 }
             }
+
+            // Make sure RefreshPreferredPlayersAsync is called outside the lock
+            // since AsyncLock is not re-entrant.
+            await RefreshPreferredPlayersAsync();
         }
     }
 
@@ -126,8 +145,14 @@
     {
         if (!(CurrentUserService.CurrentUserId is null))
         {
-            await UserService.RemovePreferredPlayerAsync(CurrentUserService.CurrentUserId, playerId);
-            await PlayerService.CleanUpPlayerAsync(playerId);
+            using (await serviceLock.LockAsync())
+            {
+                await UserService.RemovePreferredPlayerAsync(CurrentUserService.CurrentUserId, playerId);
+                await PlayerService.CleanUpPlayerAsync(playerId);
+            }
+
+            // Make sure RefreshPreferredPlayersAsync is called outside the lock
+            // since AsyncLock is not re-entrant.
             await RefreshPreferredPlayersAsync();
         }
     }

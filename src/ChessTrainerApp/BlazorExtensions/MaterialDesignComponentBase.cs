@@ -4,7 +4,7 @@ using Microsoft.JSInterop;
 
 namespace MjrChess.Trainer.BlazorExtensions
 {
-    public class MaterialDesignComponentBase : ComponentBase
+    public class MaterialDesignComponentBase : OwningComponentBase
     {
         [Inject]
         private IJSRuntime JSRuntime { get; set; } = default!;
