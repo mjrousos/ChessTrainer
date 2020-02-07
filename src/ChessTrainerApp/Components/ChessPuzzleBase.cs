@@ -68,6 +68,28 @@ namespace MjrChess.Trainer.Components
 
         protected bool FirstAttempt { get; set; }
 
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            // Load initial puzzle in OnAfterRenderAsync instead of in OnInitializedAsync
+            // because the latter is invoked twice (once during pre-rendering and once
+            // after the client has connected to the server). Therefore, only stable,
+            // auth-agnostic initialization should happen there. This method may return different
+            // puzzles when called twice resulting in the puzzle the user sees changing
+            // after the client-server connection is established. Therefore, load the initial
+            // puzzle here instead.
+            //
+            // Pre-rendering docs and OnInitialized interactions:
+            // https://docs.microsoft.com/en-us/aspnet/core/blazor/hosting-models?view=aspnetcore-3.1#stateful-reconnection-after-prerendering
+            // Recommendation to use OnAfterRender for this scenario:
+            // https://github.com/dotnet/aspnetcore/issues/13711
+            if (firstRender)
+            {
+                await LoadNextPuzzleAsync();
+            }
+
+            await base.OnAfterRenderAsync(firstRender);
+        }
+
         protected async Task LoadNextPuzzleAsync()
         {
             CurrentPuzzle = await PuzzleService.GetRandomPuzzleAsync();
@@ -111,28 +133,6 @@ namespace MjrChess.Trainer.Components
                 CurrentPuzzleState = PuzzleState.Revealed;
                 StateHasChanged();
             }
-        }
-
-        protected override async Task OnAfterRenderAsync(bool firstRender)
-        {
-            // Load initial puzzle in OnAfterRenderAsync instead of in OnInitializedAsync
-            // because the latter is invoked twice (once during pre-rendering and once
-            // after the client has connected to the server). Therefore, only stable,
-            // auth-agnostic initialization should happen there. This method may return different
-            // puzzles when called twice resulting in the puzzle the user sees changing
-            // after the client-server connection is established. Therefore, load the initial
-            // puzzle here instead.
-            //
-            // Pre-rendering docs and OnInitialized interactions:
-            // https://docs.microsoft.com/en-us/aspnet/core/blazor/hosting-models?view=aspnetcore-3.1#stateful-reconnection-after-prerendering
-            // Recommendation to use OnAfterRender for this scenario:
-            // https://github.com/dotnet/aspnetcore/issues/13711
-            if (firstRender)
-            {
-                await LoadNextPuzzleAsync();
-            }
-
-            await base.OnAfterRenderAsync(firstRender);
         }
 
         private async void HandleMove(ChessGame game, Move move)
