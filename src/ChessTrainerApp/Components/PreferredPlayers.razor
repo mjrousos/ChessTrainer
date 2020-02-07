@@ -32,7 +32,12 @@
                                 <li class="mdc-list-item">
                                     <span class="mdc-list-item__text">
                                         <span class="mdc-list-item__primary-text">@player.Name (@player.Site.ToString())</span>
-                                        <span class="mdc-list-item__secondary-text">@puzzleCount @(puzzleCount == 1 ? "puzzle" : "puzzles") </span> <!-- TODO -->
+                                        <span class="mdc-chip mdc-info-chip-small" role="row">
+                                            <span role="gridcell">
+                                                <span class="mdc-chip__text">@puzzleCount @(puzzleCount == 1 ? "puzzle" : "puzzles")</span>
+                                            </span>
+                                        </span>
+                                        @*<span class="mdc-list-item__secondary-text">@puzzleCount @(puzzleCount == 1 ? "puzzle" : "puzzles")</span>*@
                                     </span>
                                     <div class="mdc-layout-grid--align-right">
                                         <button class="mdc-icon-button material-icons" @onclick="async () => await RemovePlayerAsync(player.Id)">clear</button>

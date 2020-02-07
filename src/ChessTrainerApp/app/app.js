@@ -1,4 +1,5 @@
-import { MDCRipple, MDCRippleFoundation, util } from '@material/ripple';
+import { MDCChipSet } from '@material/chips';
+import { MDCRipple } from '@material/ripple';
 import { MDCTextField } from '@material/textfield';
 import { MDCTopAppBar } from '@material/top-app-bar';
 import { MDCDrawer } from "@material/drawer";
@@ -51,6 +52,11 @@ window.attachMDC = () => {
     const selects = document.querySelectorAll('.mdc-select');
     for (const select of selects) {
         new MDCSelect(select);
+    }
+
+    const chipSets = document.querySelectorAll('.mdc-chip-set');
+    for (const chipSet of chipSets) {
+        new MDCChipSet(chipSet);
     }
 
     primaryNotifier = new MDCSnackbar(document.getElementById('PrimaryNotifier'));

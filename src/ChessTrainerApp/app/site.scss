@@ -5,6 +5,7 @@
 @import "@material/textfield/mdc-text-field";
 @import "@material/button/mdc-button";
 @import "@material/card/mdc-card";
+@import "@material/chips/mdc-chips";
 @import "@material/select/mdc-select";
 @import "@material/menu-surface/mdc-menu-surface";
 @import "@material/menu/mdc-menu";
@@ -46,6 +47,14 @@
 
 .mdc-text-field .mdc-floating-label--float-above {
     transform: translateY(-106%) scale(0.75) !important;
+}
+
+.mdc-info-chip-small {
+    height: 22px;
+    font-size: .75rem;
+    margin-top: 10px;
+    padding: 0px 10px 0px 10px;
+    cursor: default;
 }
 
 .mdc-card-body .mdc-list-item {
