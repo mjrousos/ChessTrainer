@@ -115,7 +115,7 @@ namespace MjrChess.Trainer.Components
                 // in the future, multi-step puzzles might make sense to reset while still
                 // ongoing.
                 CurrentPuzzleState = PuzzleState.Ongoing;
-                PuzzleEngine.LoadPosition(CurrentPuzzle.Position);
+                CurrentPuzzle = CurrentPuzzle;
                 Logger.LogInformation("Reset puzzle ID {PuzzleId}", CurrentPuzzle.Id);
                 StateHasChanged();
             }
