@@ -3,13 +3,24 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "acrName": {
-      "type": "String",
+      "type": "string",
       "minLength": 5,
       "maxLength": 50,
       "defaultValue": "chesstraineracr",
       "metadata": {
         "description": "Azure container registry name"
       }
+    },
+    "functionsName": {
+      "type": "string",
+      "defaultValue": "CTPlayerFunctions",
+      "metadata": {
+        "description": "Functions for queueing games from preferred players"
+      }
+    },
+    "storageName": {
+      "type": "string",
+      "defaultValue": "CTStorage"
     },
     "location": {
       "type": "string",
@@ -35,7 +46,7 @@
     },
 
     {
-      "name": "ChessTrainer",
+      "name": "CTInsights",
       "type": "Microsoft.Insights/components",
       "apiVersion": "2015-05-01",
       "location": "[parameters('location')]",
@@ -43,6 +54,104 @@
       "properties": {
         "Flow_Type": "Bluefield",
         "application_Type": "web"
+      }
+    },
+
+    {
+      "name": "[parameters('storageName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "StorageV2"
+    },
+
+
+    {
+      "name": "CTPlayerWatcher",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-07-01",
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "actions": {
+          },
+          "outputs": {
+          },
+          "parameters": {
+          },
+          "triggers": {
+          }
+        },
+        "parameters": {
+        }
+      }
+    },
+
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2018-02-01",
+      "name": "CTFunctionsServers",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic",
+        "size": "Y1",
+        "family": "Y",
+        "capacity": 0
+      },
+      "kind": "functionapp",
+      "properties": {
+        "reserved": false,
+        "maximumElasticWorkerCount": 1,
+        "targetWorkerCount": 0,
+        "targetWorkerSizeId": 0,
+        "perSiteScaling": false
+      }
+    },
+    {
+      "apiVersion": "2018-11-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[parameters('functionsName')]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', 'CTFunctionsServers')]"
+      ],
+      "properties": {
+        "enabled": true,
+        "hostNameSslStates": [
+          {
+            "name": "[concat(parameters('functionsName'), '.azurewebsites.net')]",
+            "sslState": "Disabled",
+            "hostType": "Standard"
+          },
+          {
+            "name": "[concat(parameters('functionsName'), '.scm.azurewebsites.net')]",
+            "sslState": "Disabled",
+            "hostType": "Repository"
+          }
+        ],
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', 'CTFunctionsServers')]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites/hostNameBindings",
+      "apiVersion": "2018-11-01",
+      "name": "[concat(parameters('functionsName'), '/', parameters('functionsName'), '.azurewebsites.net')]",
+      "location": "East US",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('functionsName'))]"
+      ],
+      "properties": {
+        "siteName": "parameters('functionsName')",
+        "hostNameType": "Verified"
       }
     }
   ],
