@@ -20,7 +20,7 @@
     },
     "storageName": {
       "type": "string",
-      "defaultValue": "CTStorage"
+      "defaultValue": "ctstorage"
     },
     "location": {
       "type": "string",
@@ -28,9 +28,21 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "sqlServerAdminLogin": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sqlServerAdminLoginPassword": {
+      "type": "securestring"
+    },
+    "sqlServerName": {
+      "type": "string",
+      "defaultValue": "CTSqlServer"
     }
   },
-  "variables": { },
+  "variables": {
+  },
   "resources": [
     {
       "name": "[parameters('acrName')]",
@@ -145,7 +157,7 @@
       "type": "Microsoft.Web/sites/hostNameBindings",
       "apiVersion": "2018-11-01",
       "name": "[concat(parameters('functionsName'), '/', parameters('functionsName'), '.azurewebsites.net')]",
-      "location": "East US",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', parameters('functionsName'))]"
       ],
@@ -153,12 +165,29 @@
         "siteName": "parameters('functionsName')",
         "hostNameType": "Verified"
       }
+    },
+
+    {
+      "name": "[parameters('sqlServerName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-05-01-preview",
+      "kind": "v12.0",
+      "properties": {
+        "administratorLogin": "[parameters('sqlServerAdminLogin')]",
+        "administratorLoginPassword": "[parameters('sqlServerAdminLoginPassword')]",
+        "version": "12.0"
+      }
     }
   ],
   "outputs": {
     "acrLoginServer": {
       "type": "string",
       "value": "[reference(resourceId('Microsoft.ContainerRegistry/registries',parameters('acrName')),'2019-05-01').loginServer]"
+    },
+    "sqlSvrFqdn": {
+      "type": "string",
+      "value": "[reference(concat('Microsoft.Sql/servers/', parameters('sqlServerName'))).fullyQualifiedDomainName]"
     }
   }
 }
