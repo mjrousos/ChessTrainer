@@ -104,7 +104,7 @@
             {
                 foreach (var player in (await UserService.GetPreferredPlayersAsync(CurrentUserService.CurrentUserId)).ToArray())
                 {
-                    var puzzleCount = await PlayerService.GetPlayerPuzzleCountAsync(player);
+                    var puzzleCount = await PlayerService.GetPlayerPuzzleCountAsync(player.Id);
                     Players.Add((player, puzzleCount));
                 }
             }

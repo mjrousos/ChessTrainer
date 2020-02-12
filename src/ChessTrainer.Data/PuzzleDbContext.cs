@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using MjrChess.Trainer.Models;
+using MjrChess.Trainer.Data.Models;
 
 namespace MjrChess.Trainer.Data
 {
@@ -113,12 +113,12 @@ namespace MjrChess.Trainer.Data
         {
             modelBuilder.Entity<Player>()
                 .HasData(
-                    new Player("Hustler", ChessSites.Other) { Id = 1, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
-                    new Player("Noobie", ChessSites.Other) { Id = 2, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
-                    new Player("Vini700", ChessSites.LiChess) { Id = 3, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
-                    new Player("aupoil", ChessSites.LiChess) { Id = 4, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
-                    new Player("toskekg", ChessSites.LiChess) { Id = 5, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
-                    new Player("wolfwolf", ChessSites.LiChess) { Id = 6, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now });
+                    new Player("Hustler", Trainer.Models.ChessSites.Other) { Id = 1, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
+                    new Player("Noobie", Trainer.Models.ChessSites.Other) { Id = 2, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
+                    new Player("Vini700", Trainer.Models.ChessSites.LiChess) { Id = 3, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
+                    new Player("aupoil", Trainer.Models.ChessSites.LiChess) { Id = 4, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
+                    new Player("toskekg", Trainer.Models.ChessSites.LiChess) { Id = 5, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
+                    new Player("wolfwolf", Trainer.Models.ChessSites.LiChess) { Id = 6, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now });
 
             modelBuilder.Entity<TacticsPuzzle>()
                 .HasData(

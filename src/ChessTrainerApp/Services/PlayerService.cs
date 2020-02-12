@@ -18,7 +18,10 @@ namespace MjrChess.Trainer.Services
 
         public ILogger<PlayerService> Logger { get; }
 
-        public PlayerService(IRepository<Player> playerRepository, IRepository<TacticsPuzzle> puzzleRepository, IRepository<UserSettings> userSettingsRepository, ILogger<PlayerService> logger)
+        public PlayerService(IRepository<Player> playerRepository,
+                             IRepository<TacticsPuzzle> puzzleRepository,
+                             IRepository<UserSettings> userSettingsRepository,
+                             ILogger<PlayerService> logger)
         {
             PlayerRepository = playerRepository ?? throw new ArgumentNullException(nameof(playerRepository));
             PuzzleRepository = puzzleRepository ?? throw new ArgumentNullException(nameof(puzzleRepository));
@@ -31,8 +34,8 @@ namespace MjrChess.Trainer.Services
             var player = await PlayerRepository.GetAsync(playerId);
 
             if (player is null ||
-                await GetPlayerPuzzleCountAsync(player) > 0 ||
-                await (await UserSettingsRepository.GetAllAsync()).Where(s => s.PreferredPlayers.Any(p => p.PlayerId == playerId)).AnyAsync())
+                await GetPlayerPuzzleCountAsync(player.Id) > 0 ||
+                await UserSettingsRepository.Query(s => s.PreferredPlayers.Any(p => p.PlayerId == playerId)).AnyAsync())
             {
                 return;
             }
@@ -43,7 +46,7 @@ namespace MjrChess.Trainer.Services
 
         public async Task<Player> GetOrAddPlayerAsync(string name, ChessSites site)
         {
-            var player = await (await PlayerRepository.GetAllAsync()).FirstOrDefaultAsync(p => name.ToLower().Equals(p.Name.ToLower()) && site == p.Site);
+            var player = await PlayerRepository.Query(p => name.ToLower().Equals(p.Name.ToLower()) && site == p.Site).FirstOrDefaultAsync();
             if (player is null)
             {
                 // TODO: Validate that player exists
@@ -54,9 +57,9 @@ namespace MjrChess.Trainer.Services
             return player;
         }
 
-        public async Task<int> GetPlayerPuzzleCountAsync(Player player) =>
-            await (await PuzzleRepository.GetAllAsync())
-                .Where(p => (p.BlackPlayer != null && p.BlackPlayer.Id == player.Id) || (p.WhitePlayer != null && p.WhitePlayer.Id == player.Id))
+        public async Task<int> GetPlayerPuzzleCountAsync(int playerId) =>
+            await PuzzleRepository
+                .Query(p => (p.BlackPlayer != null && p.BlackPlayer.Id == playerId) || (p.WhitePlayer != null && p.WhitePlayer.Id == playerId))
                 .CountAsync();
     }
 }

@@ -1,17 +1,14 @@
-﻿using System;
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.AzureADB2C.UI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Rewrite;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MjrChess.Engine;
 using MjrChess.Trainer.Data;
-using MjrChess.Trainer.Models;
 using MjrChess.Trainer.Services;
 
 namespace MjrChess.Trainer
@@ -32,16 +29,7 @@ namespace MjrChess.Trainer
             services.AddAuthentication(AzureADB2CDefaults.AuthenticationScheme)
                 .AddAzureADB2C(options => Configuration.Bind("AzureAdB2C", options));
 
-            services.AddDbContext<PuzzleDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("PuzzleDatabase"), options =>
-                {
-                    options.EnableRetryOnFailure(maxRetryCount: 15, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
-                }));
-
-            services.AddScoped<IRepository<Player>, EFRepository<Player>>();
-            services.AddScoped<IRepository<PuzzleHistory>, EFRepository<PuzzleHistory>>();
-            services.AddScoped<IRepository<TacticsPuzzle>, TacticsPuzzleRepository>();
-            services.AddScoped<IRepository<UserSettings>, UserSettingsRepository>();
+            services.AddChessTrainerData(Configuration);
 
             services.AddScoped<IPlayerService, PlayerService>();
             services.AddScoped<IPuzzleService, PuzzleService>();

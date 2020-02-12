@@ -53,7 +53,7 @@ namespace MjrChess.Trainer.Services
             if (puzzleCount == 0)
             {
                 Logger.LogInformation("None of user {UserId}'s preferred players have games in the database", UserService.CurrentUserId ?? "Anonymous");
-                puzzlesQuery = await PuzzleRepository.GetAllAsync();
+                puzzlesQuery = PuzzleRepository.Query(null);
                 puzzleCount = await puzzlesQuery.CountAsync();
             }
 
@@ -77,19 +77,18 @@ namespace MjrChess.Trainer.Services
 
         private async Task<IQueryable<TacticsPuzzle>> GetPuzzlesForCurrentUserAsync()
         {
-            var puzzles = await PuzzleRepository.GetAllAsync();
+            var puzzles = PuzzleRepository.Query(null);
 
             if (UserService.CurrentUserId != null)
             {
-                var userSettings = await (await UserSettingsRepository.GetAllAsync())
-                    .Where(s => string.Equals(UserService.CurrentUserId, s.UserId))
+                var userSettings = await UserSettingsRepository.Query(s => string.Equals(UserService.CurrentUserId, s.UserId))
                     .SingleOrDefaultAsync();
 
                 if (userSettings?.PreferredPlayers != null && userSettings.PreferredPlayers.Count > 0)
                 {
                     var preferredIds = userSettings.PreferredPlayers.Select(p => p.PlayerId);
                     Logger.LogInformation("Retrieving puzzles for {UserId} with {PreferredPlayerCount} preferred players", UserService.CurrentUserId, preferredIds.Count());
-                    puzzles = puzzles.Where(p =>
+                    puzzles = PuzzleRepository.Query(p =>
                         (p.WhitePlayer != null && preferredIds.Contains(p.WhitePlayer.Id)) ||
                         (p.BlackPlayer != null && preferredIds.Contains(p.BlackPlayer.Id)));
                 }

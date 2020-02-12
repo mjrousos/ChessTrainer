@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using MjrChess.Trainer.Models;
 
@@ -9,7 +11,7 @@ namespace MjrChess.Trainer.Data
     {
         Task<T?> GetAsync(int id);
 
-        Task<IQueryable<T>> GetAllAsync();
+        IQueryable<T> Query(Expression<Func<T, bool>>? filter);
 
         Task<T> AddAsync(T item);
 

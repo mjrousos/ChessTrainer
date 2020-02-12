@@ -7,7 +7,7 @@ namespace MjrChess.Trainer.Services
     {
         Task<Player> GetOrAddPlayerAsync(string name, ChessSites site);
 
-        Task<int> GetPlayerPuzzleCountAsync(Player player);
+        Task<int> GetPlayerPuzzleCountAsync(int playerId);
 
         Task CleanUpPlayerAsync(int playerId);
     }

@@ -120,7 +120,7 @@ namespace MjrChess.Trainer.Services
                 throw new ArgumentException(nameof(userId));
             }
 
-            var history = await (await PuzzleHistoryRepository.GetAllAsync()).Where(h => string.Equals(userId, h.UserId)).ToArrayAsync();
+            var history = await PuzzleHistoryRepository.Query(h => string.Equals(userId, h.UserId)).ToArrayAsync();
             Logger.LogInformation("Found {PuzzleCount} puzzle attempts for user {UserId}", history.Length, userId);
 
             return history;
@@ -139,7 +139,8 @@ namespace MjrChess.Trainer.Services
 
         private async Task<UserSettings> GetUserSettingsAsync(string userId)
         {
-            return await (await UserSettingsRepository.GetAllAsync()).FirstOrDefaultAsync(s => userId.Equals(s.UserId));
+            var settings = await UserSettingsRepository.Query(s => userId.Equals(s.UserId)).FirstOrDefaultAsync();
+            return settings;
         }
     }
 }

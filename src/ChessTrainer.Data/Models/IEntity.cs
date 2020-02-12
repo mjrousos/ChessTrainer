@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MjrChess.Trainer.Models
+namespace MjrChess.Trainer.Data.Models
 {
     public class IEntity
     {
