@@ -11,7 +11,10 @@ namespace MjrChess.Trainer.Data
     {
         public static IServiceCollection AddChessTrainerData(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddAutoMapper(typeof(DataExtensions));
+            services.AddScoped(provider => new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile(new AutoMapperProfile(provider.GetRequiredService<PuzzleDbContext>()));
+            }).CreateMapper());
 
             services.AddScoped<IRepository<Player>, EFRepository<Data.Models.Player, Player>>();
             services.AddScoped<IRepository<PuzzleHistory>, EFRepository<Data.Models.PuzzleHistory, PuzzleHistory>>();

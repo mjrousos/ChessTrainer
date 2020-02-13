@@ -86,7 +86,7 @@ namespace MjrChess.Trainer.Services
 
                 if (userSettings?.PreferredPlayers != null && userSettings.PreferredPlayers.Count > 0)
                 {
-                    var preferredIds = userSettings.PreferredPlayers.Select(p => p.PlayerId);
+                    var preferredIds = userSettings.PreferredPlayers.Select(p => p.Id);
                     Logger.LogInformation("Retrieving puzzles for {UserId} with {PreferredPlayerCount} preferred players", UserService.CurrentUserId, preferredIds.Count());
                     puzzles = PuzzleRepository.Query(p =>
                         (p.WhitePlayer != null && preferredIds.Contains(p.WhitePlayer.Id)) ||

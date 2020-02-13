@@ -35,7 +35,7 @@ namespace MjrChess.Trainer.Services
 
             if (player is null ||
                 await GetPlayerPuzzleCountAsync(player.Id) > 0 ||
-                await UserSettingsRepository.Query(s => s.PreferredPlayers.Any(p => p.PlayerId == playerId)).AnyAsync())
+                await UserSettingsRepository.Query(s => s.PreferredPlayers.Any(p => p.Id == playerId)).AnyAsync())
             {
                 return;
             }

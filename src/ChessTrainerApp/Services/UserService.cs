@@ -48,13 +48,13 @@ namespace MjrChess.Trainer.Services
                 Logger.LogInformation("Created user settings for new user {UserId}", userId);
             }
 
-            if (settings.PreferredPlayers.Select(x => x.Player.Id).Contains(player.Id))
+            if (settings.PreferredPlayers.Select(p => p.Id).Contains(player.Id))
             {
                 Logger.LogInformation("Not adding player {PlayerId} to user {UserId} preferences, because player is already preferred by that user", player.Id, userId);
                 return false;
             }
 
-            settings.PreferredPlayers.Add(new UserSettingsXPlayer { UserSettings = settings, Player = player });
+            settings.PreferredPlayers.Add(player);
             await UserSettingsRepository.UpdateAsync(settings);
             Logger.LogInformation("Player {PlayerId} added to user {UserId} preferences", player.Id, userId);
 
@@ -77,7 +77,7 @@ namespace MjrChess.Trainer.Services
                 return Enumerable.Empty<Player>();
             }
 
-            return settings.PreferredPlayers.Select(p => p.Player);
+            return settings.PreferredPlayers;
         }
 
         public async Task<bool> RemovePreferredPlayerAsync(string userId, int playerId)
@@ -96,7 +96,7 @@ namespace MjrChess.Trainer.Services
             }
             else
             {
-                var playerSetting = settings.PreferredPlayers.FirstOrDefault(x => x.PlayerId == playerId);
+                var playerSetting = settings.PreferredPlayers.FirstOrDefault(p => p.Id == playerId);
                 if (playerSetting == null)
                 {
                     Logger.LogInformation("Could not remove preferred player {PlayerId} from user {UserId} because the user does not prefer that player", playerId, userId);
