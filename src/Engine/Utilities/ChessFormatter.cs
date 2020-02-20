@@ -179,6 +179,44 @@ namespace MjrChess.Engine.Utilities
         }
 
         /// <summary>
+        /// Formats a chess move in the UCI protocol format.
+        /// The UCI protocol calls this format long algebraic notation, but it
+        /// differs from standard long algebraic notation in several ways. It does
+        /// not separate original and final positions with - or x and it does denotes
+        /// castling by just returning the beginning and ending square for the king.
+        /// http://wbec-ridderkerk.nl/html/UCIProtocol.html.
+        /// </summary>
+        /// <param name="move">The move to format for UCI use.</param>
+        /// <returns>A chess move in UCI format.</returns>
+        public static string MoveToUCINotation(Move move) =>
+            $"{move.OriginalPosition}{move.FinalPosition}{(move.PiecePromotedTo.HasValue ? PieceToString(move.PiecePromotedTo.Value, false, false).ToLowerInvariant() : string.Empty)}";
+
+        /// <summary>
+        /// Formats a chess move in the long algebraic notation.
+        /// https://en.wikipedia.org/wiki/Algebraic_notation_(chess)#Long_algebraic_notation.
+        /// </summary>
+        /// <param name="move">The move to format in long algebraic notation.</param>
+        /// <returns>A standard long algebraic representation of the move.</returns>
+        public static string MoveToLongAlgebraicNotation(Move move)
+        {
+            if (move.ShortCastle)
+            {
+                return "O-O";
+            }
+
+            if (move.LongCastle)
+            {
+                return "O-O-O";
+            }
+
+            return $"{PieceToString(move.PieceMoved, false, false)}" + // Piece moved
+                   $"{move.OriginalPosition}" + // Original position
+                   $"{(move.Capture ? "x" : "-")}" + // Capture or move
+                   $"{move.FinalPosition}" + // Final position
+                   $"{(move.PiecePromotedTo.HasValue ? $"={PieceToString(move.PiecePromotedTo.Value, false, false)}" : string.Empty)}"; // Promotion disabiguation
+        }
+
+        /// <summary>
         /// Format a chess move in standard algebraic notation. https://en.wikipedia.org/wiki/Algebraic_notation_(chess).
         /// </summary>
         /// <param name="move">The move to convert to a string.</param>
