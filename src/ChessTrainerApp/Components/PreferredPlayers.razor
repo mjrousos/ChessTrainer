@@ -70,9 +70,9 @@
     [Inject]
     public IJSRuntime JSRuntime { get; set; } = default!;
 
-    public IUserService UserService { get; set; } = default!;
+    private IUserService UserService { get; set; } = default!;
 
-    public IPlayerService PlayerService { get; set; } = default!;
+    private IPlayerService PlayerService { get; set; } = default!;
 
     [Inject]
     public CurrentUserService CurrentUserService { get; set; } = default!;

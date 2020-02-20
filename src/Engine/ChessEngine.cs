@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using MjrChess.Engine.Models;
 using MjrChess.Engine.Utilities;
 
@@ -11,6 +13,19 @@ namespace MjrChess.Engine
     /// </summary>
     public class ChessEngine
     {
+        private static readonly Regex PgnRegex =
+
+            // :       Tag pairs with the form `[Name "Value"]`          Move list with the form `#. WhiteMove BlackMove `                Result with the form `1-0|0-1|1/2-1/2`
+            new Regex("(?:\\[(?'key'.+?)\\s+\\\"(?'value'.+)\\\"\\]\\s+)+(?:\\d+\\.\\s*(?'whiteMove'\\S+)\\s+(?:(?'blackMove'\\S+)\\s+)?)+(?'result'1\\-0|0\\-1|1\\/2\\-1\\/2)?", RegexOptions.Compiled);
+
+        // This doesn't capture whether the move checks, checkmates, or captures since those aren't necessary to find the move from legal moves
+        // If we needed that information, the x could be captured and `(?:(?'checks'\+)|(?'checkmates'#))?` could be added to the end of the expression
+        // (after wrapping it as a non-capturing group). Doing that now, though, would just make the expressions a bit slower and more complicated unnecessarilly.
+        private static readonly Regex AlgebraicNotationRegex =
+
+            // :       Long castle `O-O-O`       Short castle `O-O`   Piece moved       File disambiguator     Rank disambiguator     Capture?  Final position              Piece promoted to
+            new Regex("(?'longCastle'O\\-O\\-O)|(?'shortCastle'O\\-O)|(?'piece'[KQRBN])?(?'originalFile'[a-h])?(?'originalRank'[1-8])?(?:\\-|x)?(?'finalPosition'[a-h][1-8])(=(?'promotedTo'[QRBN]))?");
+
         private static IEnumerable<Func<BoardPosition, BoardPosition>> RookMovements => new Func<BoardPosition, BoardPosition>[]
         {
             position => new BoardPosition(position.File + 1, position.Rank),
@@ -57,9 +72,97 @@ namespace MjrChess.Engine
         /// Loads chess game into the analysis engine.
         /// </summary>
         /// <param name="fen">A FEN description of the game to load.</param>
-        public void LoadPosition(string fen)
+        public void LoadFEN(string fen)
         {
             Game.LoadFEN(fen);
+        }
+
+        /// <summary>
+        /// Loads chess game from a PGN string.
+        /// </summary>
+        /// <param name="pgn">A PGN description of the game to load.</param>
+        public void LoadPGN(string pgn)
+        {
+            if (pgn is null)
+            {
+                throw new ArgumentNullException(nameof(pgn));
+            }
+
+            // Parse PGN
+            var match = PgnRegex.Match(pgn);
+            if (!match.Success)
+            {
+                throw new ArgumentException("Invalid PGN string; could not be parsed.", nameof(pgn));
+            }
+
+            // Get tag pairs, moves, and result from the parsed output.
+            var tagKeys = match.Groups["key"].Captures.OfType<Capture>().Select(c => c.Value).ToArray();
+            var tagValues = match.Groups["value"].Captures.OfType<Capture>().Select(c => c.Value).ToArray();
+            var whiteMoves = match.Groups["whiteMove"].Captures.OfType<Capture>().Select(c => c.Value).ToArray();
+            var blackMoves = match.Groups["blackMove"].Captures.OfType<Capture>().Select(c => c.Value).ToArray();
+            var result = match.Groups["result"].Value;
+
+            if (tagKeys.Length != tagValues.Length)
+            {
+                throw new ArgumentException("Invalid PGN string; invalid tag pairs.", nameof(pgn));
+            }
+
+            // Create new game and assign properties based on PGN tag pairs
+            Game = new ChessGame();
+            for (var i = 0; i < tagKeys.Length; i++)
+            {
+                var val = tagValues[i];
+                switch (tagKeys[i].ToLowerInvariant())
+                {
+                    case "event":
+                        Game.Event = val;
+                        break;
+                    case "site":
+                        Game.Site = val;
+                        break;
+                    case "date":
+                        Game.StartDate = DateTimeOffset.ParseExact(val, "yyyy.MM.dd", CultureInfo.InvariantCulture);
+                        break;
+                    case "round":
+                        Game.Round = val;
+                        break;
+                    case "white":
+                        Game.WhitePlayer = val;
+                        break;
+                    case "black":
+                        Game.BlackPlayer = val;
+                        break;
+                    case "result":
+                        Game.Result = ChessFormatter.ResultFromString(val);
+                        break;
+                    case "fen":
+                        Game.LoadFEN(val);
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            // Game.Result defaults to Ongoing. If it has that value after evaluating
+            // tag pairs, check whether the result notation at the end of the move list
+            // gives the result.
+            if (Game.Result == GameResult.Ongoing)
+            {
+                Game.Result = ChessFormatter.ResultFromString(result);
+            }
+
+            // Apply moves
+            for (var i = 0; i < whiteMoves.Length; i++)
+            {
+                var whiteMove = MoveFromAlgebraicNotation(whiteMoves[i]);
+                Game.Move(whiteMove);
+
+                if (i < blackMoves.Length)
+                {
+                    var blackMove = MoveFromAlgebraicNotation(blackMoves[i]);
+                    Game.Move(blackMove);
+                }
+            }
         }
 
         /// <summary>
@@ -394,6 +497,124 @@ namespace MjrChess.Engine
                 Capture = capture,
                 PiecePromotedTo = promoted ? (ChessFormatter.IsPieceWhite(piece.PieceType) ? ChessPieces.WhiteQueen : ChessPieces.BlackQueen) : (ChessPieces?)null
             };
+        }
+
+        /// <summary>
+        /// Gets a move from the algebraic representation of the move. Uses the current game state to resolve ambiguity (like which piece was moved).
+        /// </summary>
+        /// <param name="move">A string representing a move in algebraic notation.</param>
+        /// <returns>The move indicated by the input string.</returns>
+        public Move MoveFromAlgebraicNotation(string move)
+        {
+            if (move is null)
+            {
+                throw new ArgumentNullException(nameof(move));
+            }
+
+            var match = AlgebraicNotationRegex.Match(move);
+
+            if (!match.Success)
+            {
+                throw new ArgumentException("Move is not valid algebraic notation", nameof(move));
+            }
+
+            // These locals will store what we know about the move from the parsed string
+            // and will be used to look up the move from legal possibilities.
+            ChessPieces? pieceMoved = null;
+            ChessPieces? promotedTo = null;
+            int? originalRank = null;
+            int? originalFile = null;
+            BoardPosition finalPosition = default;
+
+            if (match.Groups["longCastle"].Success)
+            {
+                // Check for castling
+                (pieceMoved, finalPosition) = Game.WhiteToMove
+                    ? (ChessPieces.WhiteKing, new BoardPosition(2, 0))
+                    : (ChessPieces.BlackKing, new BoardPosition(2, 7));
+            }
+            else if (match.Groups["shortCastle"].Success)
+            {
+                (pieceMoved, finalPosition) = Game.WhiteToMove
+                    ? (ChessPieces.WhiteKing, new BoardPosition(6, 0))
+                    : (ChessPieces.BlackKing, new BoardPosition(6, 7));
+            }
+            else
+            {
+                // If not castling, identify piece type, disambiguators, final position, and promotion
+                var pieceMatch = match.Groups["piece"];
+                var pieceString = pieceMatch.Success ? match.Groups["piece"].Value : "P";
+
+                // If black is to move next, make the piece string lower case so that it
+                // is interpretted by the formatted as a black piece.
+                if (!Game.WhiteToMove)
+                {
+                    pieceString = pieceString.ToLowerInvariant();
+                }
+
+                pieceMoved = ChessFormatter.PieceFromString(pieceString);
+
+                finalPosition = new BoardPosition(match.Groups["finalPosition"].Value);
+
+                // Note the original file if specified
+                if (match.Groups["originalFile"].Success)
+                {
+                    originalFile = ChessFormatter.FileFromString(match.Groups["originalFile"].Value);
+                }
+
+                // Note the original rank if specified
+                if (match.Groups["originalRank"].Success)
+                {
+                    originalFile = ChessFormatter.RankFromString(match.Groups["originalRank"].Value);
+                }
+
+                // Note the piece promoted to if specified
+                if (match.Groups["promotedTo"].Success)
+                {
+                    var promotedToString = match.Groups["promotedTo"].Value;
+                    if (!Game.WhiteToMove)
+                    {
+                        promotedToString = promotedToString.ToLowerInvariant();
+                    }
+
+                    promotedTo = ChessFormatter.PieceFromString(promotedToString);
+                }
+            }
+
+            // Identify possible pieces moved
+            var possiblePieces = Game.Pieces.Where(p => p.PieceType == pieceMoved);
+            if (originalFile.HasValue)
+            {
+                possiblePieces = possiblePieces.Where(p => p.Position.File == originalFile);
+            }
+
+            if (originalRank.HasValue)
+            {
+                possiblePieces = possiblePieces.Where(p => p.Position.Rank == originalRank);
+            }
+
+            // Find move
+            var possibleMoves = possiblePieces.SelectMany(p => GetLegalMoves(p))
+                .Where(m => m.FinalPosition == finalPosition);
+
+            if (possibleMoves.Count() > 1)
+            {
+                throw new ArgumentException($"The move {move} is ambiguous", nameof(move));
+            }
+
+            if (possibleMoves.Count() == 0)
+            {
+                throw new ArgumentException($"The move {move} is impossible", nameof(move));
+            }
+
+            var resolvedMove = possibleMoves.First();
+
+            if (promotedTo.HasValue)
+            {
+                resolvedMove.PiecePromotedTo = promotedTo;
+            }
+
+            return resolvedMove;
         }
     }
 }

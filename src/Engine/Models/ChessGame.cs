@@ -149,7 +149,6 @@ namespace MjrChess.Engine.Models
             Moves = new List<Move>();
             WhitePlayer = "White Player";
             BlackPlayer = "Black Player";
-            Site = "Mike's Chess App";
             Round = "-";
             StartDate = DateTimeOffset.Now;
             WhiteToMove = true;

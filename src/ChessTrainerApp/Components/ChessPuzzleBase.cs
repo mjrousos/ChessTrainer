@@ -52,7 +52,7 @@ namespace MjrChess.Trainer.Components
                 if (value != null)
                 {
                     PuzzleReady = false;
-                    PuzzleEngine.LoadPosition(value.Position);
+                    PuzzleEngine.LoadFEN(value.Position);
                     MakeMove(value.SetupMove);
                     PuzzleEngine.Game.WhitePlayer = value.WhitePlayer?.Name ?? "White Player";
                     PuzzleEngine.Game.BlackPlayer = value.BlackPlayer?.Name ?? "Black Player";
