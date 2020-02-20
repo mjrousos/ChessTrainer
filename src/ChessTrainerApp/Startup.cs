@@ -29,7 +29,7 @@ namespace MjrChess.Trainer
             services.AddAuthentication(AzureADB2CDefaults.AuthenticationScheme)
                 .AddAzureADB2C(options => Configuration.Bind("AzureAdB2C", options));
 
-            services.AddChessTrainerData(Configuration);
+            services.AddChessTrainerData(Configuration.GetConnectionString("PuzzleDatabase"));
 
             services.AddScoped<IPlayerService, PlayerService>();
             services.AddScoped<IPuzzleService, PuzzleService>();

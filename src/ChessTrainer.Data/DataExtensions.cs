@@ -1,7 +1,6 @@
 ﻿using System;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MjrChess.Trainer.Models;
 
@@ -9,7 +8,7 @@ namespace MjrChess.Trainer.Data
 {
     public static class DataExtensions
     {
-        public static IServiceCollection AddChessTrainerData(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddChessTrainerData(this IServiceCollection services, string dbConnectionString)
         {
             services.AddScoped(provider => new MapperConfiguration(cfg =>
             {
@@ -22,7 +21,7 @@ namespace MjrChess.Trainer.Data
             services.AddScoped<IRepository<UserSettings>, UserSettingsRepository>();
 
             services.AddDbContext<PuzzleDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("PuzzleDatabase"), options =>
+                options.UseSqlServer(dbConnectionString, options =>
                 {
                     options.EnableRetryOnFailure(maxRetryCount: 15, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
                 }));
