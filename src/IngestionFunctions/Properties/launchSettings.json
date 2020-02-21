@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "IngestionFunctions": {
+      "commandName": "Project"
+    }
+  }
+}

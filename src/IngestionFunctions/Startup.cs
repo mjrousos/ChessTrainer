@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using Azure.Storage.Queues;
 using IngestionFunctions.Services;
 using Microsoft.Azure.Cosmos.Table;
