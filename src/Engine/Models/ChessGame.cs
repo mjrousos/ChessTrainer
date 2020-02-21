@@ -43,7 +43,7 @@ namespace MjrChess.Engine.Models
         /// <summary>
         /// Gets or sets the day the game started.
         /// </summary>
-        public DateTimeOffset? StartDate { get; set; }
+        public DateTimeOffset StartDate { get; set; }
 
         /// <summary>
         /// Gets pieces currently on the board.
@@ -522,7 +522,7 @@ namespace MjrChess.Engine.Models
             pgn.AppendLine($"[Event \"{Event ?? "-"}\"]");
             pgn.AppendLine($"[Site \"{Site ?? "-"}\"]");
             pgn.AppendLine($"[Round \"{Round ?? "-"}\"]");
-            pgn.AppendLine($"[Date \"{StartDate?.ToString("yyyy.MM.dd", CultureInfo.InvariantCulture) ?? "??"}\"]");
+            pgn.AppendLine($"[Date \"{StartDate.ToString("yyyy.MM.dd", CultureInfo.InvariantCulture) ?? "??"}\"]");
             pgn.AppendLine($"[White \"{WhitePlayer}\"]");
             pgn.AppendLine($"[Black \"{BlackPlayer}\"]");
             pgn.AppendLine($"[Result \"{ChessFormatter.ResultToString(Result)}\"]");
