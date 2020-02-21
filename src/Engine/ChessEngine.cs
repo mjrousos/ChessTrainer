@@ -321,7 +321,8 @@ namespace MjrChess.Engine
             // Special case castling as the king can't move out of or through a threatened square while castling
             if (move.LongCastle || move.ShortCastle)
             {
-                var traversedSquares = Enumerable.Range(move.OriginalPosition.File, move.FinalPosition.File).Select(file => new BoardPosition(file, move.OriginalPosition.Rank));
+                var traversedFiles = move.LongCastle ? new int[] { 4, 3 } : new int[] { 4, 5 };
+                var traversedSquares = traversedFiles.Select(file => new BoardPosition(file, move.OriginalPosition.Rank));
                 kingVulnerable |= traversedSquares.Any(traversedSquare =>
                     opposingPieces.Any(piece => prospectiveEngine.GetMoveOptions(piece).Select(m => m.FinalPosition).Contains(traversedSquare)));
             }
@@ -565,7 +566,7 @@ namespace MjrChess.Engine
                 // Note the original rank if specified
                 if (match.Groups["originalRank"].Success)
                 {
-                    originalFile = ChessFormatter.RankFromString(match.Groups["originalRank"].Value);
+                    originalRank = ChessFormatter.RankFromString(match.Groups["originalRank"].Value);
                 }
 
                 // Note the piece promoted to if specified
