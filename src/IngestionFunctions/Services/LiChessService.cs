@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MjrChess.Engine;
 using MjrChess.Engine.Models;
@@ -48,33 +50,73 @@ namespace IngestionFunctions.Services
 
             // Query LiChess's /games/user endpoint
             var uri = new Uri(string.Format(CultureInfo.InvariantCulture, UrlFormatString, playerName, max, sinceClause));
-            using var response = await HttpClient.GetStreamAsync(uri);
 
-            if (response == null)
+            var response = await HttpClient.GetAsync(uri);
+
+            if (response.StatusCode == HttpStatusCode.TooManyRequests)
             {
-                Logger.LogError("HTTP request to {URI} failed", uri);
+                // If we are rate-limited, wait 5 seconds and rety once
+                await Task.Delay(5000);
+                response = await HttpClient.GetAsync(uri);
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Logger.LogError("HTTP request to {URI} failed: {StatusCode}: {ErrorMessage}", uri, response.StatusCode, response.ReasonPhrase);
             }
             else
             {
-                using var responseReader = new StreamReader(response);
+                using var responseBody = await response.Content.ReadAsStreamAsync();
 
-                // Read the response one line at a time
-                var line = await responseReader.ReadLineAsync();
-
-                while (line != null)
+                if (response == null)
                 {
-                    pgnLines.Add(line);
-                    if (line.StartsWith("1."))
-                    {
-                        // If the line contains game moves, then return the game and reset the PGN line collection
-                        Engine.LoadPGN(string.Join('\n', pgnLines));
-                        pgnLines = new List<string>();
-                        Logger.LogInformation("Read game {GamePath}", Engine.Game.Site);
-                        yield return Engine.Game;
-                    }
+                    Logger.LogError("HTTP request to {URI} failed", uri);
+                }
+                else
+                {
+                    using var responseReader = new StreamReader(responseBody);
 
-                    // Read the next line
-                    line = await responseReader.ReadLineAsync();
+                    // Read the response one line at a time
+                    var line = await responseReader.ReadLineAsync();
+                    const string utcDatePrefix = "[UTCDate \"";
+                    const string utcTimePrefix = "[UTCTime \"";
+                    string? utcDate = null;
+                    string? utcTime = null;
+
+                    while (line != null)
+                    {
+                        pgnLines.Add(line);
+                        if (line.StartsWith(utcDatePrefix))
+                        {
+                            utcDate = line.Substring(utcDatePrefix.Length, 10);
+                        }
+                        else if (line.StartsWith(utcTimePrefix))
+                        {
+                            utcTime = line.Substring(utcTimePrefix.Length, 8);
+                        }
+                        else if (line.StartsWith("1."))
+                        {
+                            // If the line contains game moves, then return the game and reset the PGN line collection
+                            Engine.LoadPGN(string.Join('\n', pgnLines));
+
+                            // Set the game time more precisely
+                            if (utcDate != null && utcTime != null)
+                            {
+                                Engine.Game.StartDate = DateTimeOffset.ParseExact($"{utcDate}|{utcTime}", "yyyy.MM.dd|HH:mm:ss", CultureInfo.InvariantCulture);
+                            }
+
+                            // Reset variables
+                            pgnLines = new List<string>();
+                            utcDate = null;
+                            utcTime = null;
+
+                            Logger.LogInformation("Read game {GamePath}", Engine.Game.Site);
+                            yield return Engine.Game;
+                        }
+
+                        // Read the next line
+                        line = await responseReader.ReadLineAsync();
+                    }
                 }
             }
         }
