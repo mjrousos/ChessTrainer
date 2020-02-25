@@ -68,6 +68,12 @@ namespace MjrChess.Trainer.Data
             return result;
         }
 
+        public virtual IQueryable<T> Query()
+        {
+            Logger.LogInformation("Querying items from database {EntityType}", typeof(TData).Name);
+            return Mapper.ProjectTo<T>(DbSetWithRelatedEntities);
+        }
+
         public virtual IQueryable<T> Query(Expression<Func<T, bool>>? filter)
         {
             Logger.LogInformation("Querying items from database {EntityType}", typeof(TData).Name);

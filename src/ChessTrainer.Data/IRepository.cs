@@ -11,6 +11,8 @@ namespace MjrChess.Trainer.Data
     {
         Task<T?> GetAsync(int id);
 
+        IQueryable<T> Query();
+
         IQueryable<T> Query(Expression<Func<T, bool>>? filter);
 
         Task<T> AddAsync(T item);
