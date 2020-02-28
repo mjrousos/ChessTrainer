@@ -40,7 +40,10 @@ namespace IngestionFunctions
             builder.Services.AddHttpClient<LiChessService>(client =>
             {
                 client.DefaultRequestHeaders.Add("Authorization", $"Bearer {config[LichessTokenName]}");
-            });
+            })
+                .AddPolicyHandler(HttpPolicies.RetryPolicy)
+                .AddPolicyHandler(HttpPolicies.CircuitBreakerPolicy);
+
             builder.Services.AddHttpClient<ChessComService>();
             builder.Services.AddTransient<ChessServiceResolver>(sp => site =>
                 site switch

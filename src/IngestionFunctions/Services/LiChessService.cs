@@ -53,13 +53,6 @@ namespace IngestionFunctions.Services
 
             var response = await HttpClient.GetAsync(uri);
 
-            if (response.StatusCode == HttpStatusCode.TooManyRequests)
-            {
-                // If we are rate-limited, wait 5 seconds and rety once
-                await Task.Delay(5000);
-                response = await HttpClient.GetAsync(uri);
-            }
-
             if (!response.IsSuccessStatusCode)
             {
                 Logger.LogError("HTTP request to {URI} failed: {StatusCode}: {ErrorMessage}", uri, response.StatusCode, response.ReasonPhrase);
