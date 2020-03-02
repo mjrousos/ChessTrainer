@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data.Common;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Storage.Queues;
@@ -16,7 +17,7 @@ using MjrChess.Trainer.Models;
 
 namespace IngestionFunctions
 {
-    public class GameIngestion
+    public class GameIngestionFunctions
     {
         private const string PlayerIdQueryKey = "PlayerId";
 
@@ -28,9 +29,9 @@ namespace IngestionFunctions
 
         private ChessServiceResolver ServiceResolver { get; }
 
-        private ILogger<GameIngestion> Logger { get; }
+        private ILogger<GameIngestionFunctions> Logger { get; }
 
-        public GameIngestion(IRepository<Player> playerRepository, CloudTable gameTable, QueueClient gameQueue, ChessServiceResolver serviceResolver, ILogger<GameIngestion> logger)
+        public GameIngestionFunctions(IRepository<Player> playerRepository, CloudTable gameTable, QueueClient gameQueue, ChessServiceResolver serviceResolver, ILogger<GameIngestionFunctions> logger)
         {
             PlayerRepository = playerRepository ?? throw new ArgumentNullException(nameof(playerRepository));
             GameTable = gameTable ?? throw new ArgumentNullException(nameof(gameTable));
@@ -53,6 +54,31 @@ namespace IngestionFunctions
             }
 
             Logger.LogInformation("Player review done. Will check next at {ScheduleTime}", timer.Schedule.GetNextOccurrence(DateTime.Now));
+        }
+
+        [FunctionName("HealthCheck")]
+        public async Task<IActionResult> HealthCheck([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequest req)
+        {
+            try
+            {
+                await PlayerRepository.Query().FirstOrDefaultAsync();
+            }
+            catch (DbException)
+            {
+                return new ServiceUnavailableObjectResult("Player repository unavailable");
+            }
+
+            if (!await GameTable.ExistsAsync())
+            {
+                return new ServiceUnavailableObjectResult("Most recent game ingested table unavailable");
+            }
+
+            if ((await GameQueue.CreateAsync()).Status / 100 == 2)
+            {
+                return new ServiceUnavailableObjectResult("Ingestion queue unavailable");
+            }
+
+            return new OkResult();
         }
 
         [FunctionName("AddNewPlayersGames")]
