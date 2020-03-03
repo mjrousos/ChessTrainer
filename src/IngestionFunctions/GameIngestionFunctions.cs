@@ -73,7 +73,7 @@ namespace IngestionFunctions
                 return new ServiceUnavailableObjectResult("Most recent game ingested table unavailable");
             }
 
-            if ((await GameQueue.CreateAsync()).Status / 100 == 2)
+            if ((await GameQueue.CreateAsync()).Status / 100 != 2)
             {
                 return new ServiceUnavailableObjectResult("Ingestion queue unavailable");
             }
@@ -81,8 +81,8 @@ namespace IngestionFunctions
             return new OkResult();
         }
 
-        [FunctionName("AddNewPlayersGames")]
-        public async Task<IActionResult> AddNewPlayersGames([HttpTrigger(AuthorizationLevel.Function, "put", Route = "AddPlayer")] HttpRequest req)
+        [FunctionName("AddPlayersGames")]
+        public async Task<IActionResult> AddPlayersGames([HttpTrigger(AuthorizationLevel.Function, "put", Route = "AddPlayer")] HttpRequest req)
         {
             var playerIdString = req.Query[PlayerIdQueryKey].ToString();
             if (!int.TryParse(playerIdString, out var playerId))
@@ -101,7 +101,7 @@ namespace IngestionFunctions
             var count = await IngestGamesForPlayerAsync(player);
             Logger.LogInformation("Queued {GameCount} games for ingestion for player {PlayerId}", count, player.Id);
 
-            return new OkResult();
+            return new OkObjectResult($"Queued {count} games for player {player.Name}");
         }
 
         private async Task<int> IngestGamesForPlayerAsync(Player player)
