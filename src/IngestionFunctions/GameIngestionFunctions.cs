@@ -20,6 +20,8 @@ namespace IngestionFunctions
     public class GameIngestionFunctions
     {
         private const string PlayerIdQueryKey = "PlayerId";
+        private const string PlayerIngestionQueueSettingName = "%PlayerIngestionQueue%";
+        private const string StorageConnectionStringSettingName = "StorageConnectionString";
 
         private IRepository<Player> PlayerRepository { get; }
 
@@ -81,7 +83,23 @@ namespace IngestionFunctions
             return new OkResult();
         }
 
-        [FunctionName("AddPlayersGames")]
+        [FunctionName("AddQueuedPlayer")]
+        public async Task ProcessQueuedPlayer([QueueTrigger(PlayerIngestionQueueSettingName, Connection = StorageConnectionStringSettingName)] int playerId)
+        {
+            Logger.LogInformation("Finding games for player {PlayerId}", playerId);
+
+            var player = await PlayerRepository.GetAsync(playerId);
+            if (player == null)
+            {
+                Logger.LogInformation("Player {PlayerId} not found", playerId);
+                return;
+            }
+
+            var count = await IngestGamesForPlayerAsync(player);
+            Logger.LogInformation("Queued {GameCount} games for ingestion for player {PlayerId}", count, player.Id);
+        }
+
+        [FunctionName("AddPlayer")]
         public async Task<IActionResult> AddPlayersGames([HttpTrigger(AuthorizationLevel.Function, "put", Route = "AddPlayer")] HttpRequest req)
         {
             var playerIdString = req.Query[PlayerIdQueryKey].ToString();
@@ -109,6 +127,12 @@ namespace IngestionFunctions
             Logger.LogInformation("Finding games for {PlayerId}", player.Id);
 
             var mostRecentGame = await GetMostRecentGameAsync(player);
+            if (mostRecentGame.HasValue)
+            {
+                // Add a small buffer to make sure we don't re-process the most recent game.
+                mostRecentGame = mostRecentGame.Value.AddMinutes(1);
+            }
+
             var newMostRecentGame = mostRecentGame;
             var ingestedCount = 0;
 
