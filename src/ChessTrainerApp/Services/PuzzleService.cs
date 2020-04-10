@@ -65,6 +65,12 @@ namespace MjrChess.Trainer.Services
             }
             else
             {
+                // Automapper doesn't map the puzzle's history's puzzles properly, so fix that up here.
+                foreach (var history in puzzle.History)
+                {
+                    history.Puzzle = puzzle;
+                }
+
                 Logger.LogInformation("Retrieved puzzle {PuzzleId} for user {UserId} (index {SkipCount} of {PuzzleCount} puzzles)",
                     puzzle.Id,
                     UserService.CurrentUserId ?? "Anonymous",
