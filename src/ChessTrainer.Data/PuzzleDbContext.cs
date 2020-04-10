@@ -194,7 +194,7 @@ namespace MjrChess.Trainer.Data
         private void UpdateTimestamps()
         {
             var updateTime = DateTimeOffset.Now;
-            foreach (var change in ChangeTracker.Entries<IEntity>())
+            foreach (var change in ChangeTracker.Entries<EntityBase>())
             {
                 switch (change.State)
                 {

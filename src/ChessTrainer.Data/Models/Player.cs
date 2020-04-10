@@ -2,7 +2,7 @@
 
 namespace MjrChess.Trainer.Data.Models
 {
-    public class Player : IEntity
+    public class Player : EntityBase
     {
         public Player(string name, ChessSites site)
         {

@@ -4,7 +4,7 @@ using MjrChess.Engine.Models;
 
 namespace MjrChess.Trainer.Data.Models
 {
-    public class TacticsPuzzle : IEntity
+    public class TacticsPuzzle : EntityBase
     {
         public TacticsPuzzle(string position)
         {

@@ -12,7 +12,7 @@ namespace MjrChess.Trainer.Data
 {
     public class EFRepository<TData, T> : IRepository<T>
         where T : IEntity
-        where TData : Data.Models.IEntity
+        where TData : Data.Models.EntityBase
     {
         protected PuzzleDbContext Context { get; }
 
