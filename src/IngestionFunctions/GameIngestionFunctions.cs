@@ -171,16 +171,15 @@ namespace IngestionFunctions
                         Logger.LogInformation("No games ingested yet for player {PlayerId}", player.Id);
                         return null;
                     case 200:
-                        var ingestionRecord = result.Result as IngestionRecord;
-                        if (ingestionRecord == null)
-                        {
-                            Logger.LogInformation("No games ingested yet for player {PlayerId}", player.Id);
-                            return null;
-                        }
-                        else
+                        if (result.Result is IngestionRecord ingestionRecord)
                         {
                             Logger.LogInformation("Most recent game ingested for player {PlayerId}: {IngestionDate}", player.Id, ingestionRecord.MostRecentGame);
                             return ingestionRecord.MostRecentGame;
+                        }
+                        else
+                        {
+                            Logger.LogInformation("No games ingested yet for player {PlayerId}", player.Id);
+                            return null;
                         }
 
                     default:

@@ -71,21 +71,21 @@ namespace IngestionFunctions.Services
 
                     // Read the response one line at a time
                     var line = await responseReader.ReadLineAsync();
-                    const string utcDatePrefix = "[UTCDate \"";
-                    const string utcTimePrefix = "[UTCTime \"";
+                    const string UtcDatePrefix = "[UTCDate \"";
+                    const string UtcTimePrefix = "[UTCTime \"";
                     string? utcDate = null;
                     string? utcTime = null;
 
                     while (line != null)
                     {
                         pgnLines.Add(line);
-                        if (line.StartsWith(utcDatePrefix))
+                        if (line.StartsWith(UtcDatePrefix))
                         {
-                            utcDate = line.Substring(utcDatePrefix.Length, 10);
+                            utcDate = line.Substring(UtcDatePrefix.Length, 10);
                         }
-                        else if (line.StartsWith(utcTimePrefix))
+                        else if (line.StartsWith(UtcTimePrefix))
                         {
-                            utcTime = line.Substring(utcTimePrefix.Length, 8);
+                            utcTime = line.Substring(UtcTimePrefix.Length, 8);
                         }
                         else if (line.StartsWith("1."))
                         {

@@ -5,7 +5,7 @@ namespace MjrChess.Trainer.Services
 {
     public interface IPuzzleService
     {
-        Task<TacticsPuzzle?> GetRandomPuzzleAsync();
+        Task<TacticsPuzzle?> GetRandomPuzzleAsync(string? userId);
 
         Task<TacticsPuzzle?> GetPuzzleAsync(int puzzleId);
     }

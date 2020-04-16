@@ -16,18 +16,14 @@ namespace MjrChess.Trainer.Services
 
         private IRepository<UserSettings> UserSettingsRepository { get; }
 
-        public CurrentUserService UserService { get; }
-
         private ILogger<PuzzleService> Logger { get; }
 
         public PuzzleService(IRepository<TacticsPuzzle> puzzleRepository,
                              IRepository<UserSettings> userSettingsRepository,
-                             CurrentUserService userService,
                              ILogger<PuzzleService> logger)
         {
             PuzzleRepository = puzzleRepository ?? throw new ArgumentNullException(nameof(puzzleRepository));
             UserSettingsRepository = userSettingsRepository ?? throw new ArgumentNullException(nameof(userSettingsRepository));
-            UserService = userService ?? throw new ArgumentNullException(nameof(userService));
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -46,13 +42,13 @@ namespace MjrChess.Trainer.Services
             return puzzle;
         }
 
-        public async Task<TacticsPuzzle?> GetRandomPuzzleAsync()
+        public async Task<TacticsPuzzle?> GetRandomPuzzleAsync(string? userId)
         {
-            var puzzlesQuery = await GetPuzzlesForCurrentUserAsync();
+            var puzzlesQuery = await GetPuzzlesAsync(userId);
             var puzzleCount = await puzzlesQuery.CountAsync();
             if (puzzleCount == 0)
             {
-                Logger.LogInformation("None of user {UserId}'s preferred players have games in the database", UserService.CurrentUserId ?? "Anonymous");
+                Logger.LogInformation("None of user {UserId}'s preferred players have games in the database", userId ?? "Anonymous");
                 puzzlesQuery = PuzzleRepository.Query(null);
                 puzzleCount = await puzzlesQuery.CountAsync();
             }
@@ -73,7 +69,7 @@ namespace MjrChess.Trainer.Services
 
                 Logger.LogInformation("Retrieved puzzle {PuzzleId} for user {UserId} (index {SkipCount} of {PuzzleCount} puzzles)",
                     puzzle.Id,
-                    UserService.CurrentUserId ?? "Anonymous",
+                    userId ?? "Anonymous",
                     skipCount,
                     puzzleCount);
             }
@@ -81,26 +77,26 @@ namespace MjrChess.Trainer.Services
             return puzzle;
         }
 
-        private async Task<IQueryable<TacticsPuzzle>> GetPuzzlesForCurrentUserAsync()
+        private async Task<IQueryable<TacticsPuzzle>> GetPuzzlesAsync(string? userId)
         {
             var puzzles = PuzzleRepository.Query(null);
 
-            if (UserService.CurrentUserId != null)
+            if (userId != null)
             {
-                var userSettings = await UserSettingsRepository.Query(s => string.Equals(UserService.CurrentUserId, s.UserId))
+                var userSettings = await UserSettingsRepository.Query(s => string.Equals(userId, s.UserId))
                     .SingleOrDefaultAsync();
 
                 if (userSettings?.PreferredPlayers != null && userSettings.PreferredPlayers.Count > 0)
                 {
                     var preferredIds = userSettings.PreferredPlayers.Select(p => p.Id);
-                    Logger.LogInformation("Retrieving puzzles for {UserId} with {PreferredPlayerCount} preferred players", UserService.CurrentUserId, preferredIds.Count());
+                    Logger.LogInformation("Retrieving puzzles for {UserId} with {PreferredPlayerCount} preferred players", userId, preferredIds.Count());
                     puzzles = PuzzleRepository.Query(p =>
                         (p.WhitePlayer != null && preferredIds.Contains(p.WhitePlayer.Id)) ||
                         (p.BlackPlayer != null && preferredIds.Contains(p.BlackPlayer.Id)));
                 }
                 else
                 {
-                    Logger.LogInformation("Retrieving puzzles for {UserId} with {PreferredPlayerCount} preferred players", UserService.CurrentUserId, 0);
+                    Logger.LogInformation("Retrieving puzzles for {UserId} with {PreferredPlayerCount} preferred players", userId, 0);
                 }
             }
             else

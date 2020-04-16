@@ -74,8 +74,10 @@
 
     private IPlayerService PlayerService { get; set; } = default!;
 
-    [Inject]
-    public CurrentUserService CurrentUserService { get; set; } = default!;
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = default!;
+
+    private async Task<string?> GetUserIdAsync() => (await authenticationStateTask).User?.GetUserId();
 
     public ICollection<(Player, int)> Players { get; set; } = default!;
 
@@ -97,12 +99,13 @@
     private async Task RefreshPreferredPlayersAsync()
     {
         Players = new List<(Player, int)>();
+        var userId = await GetUserIdAsync();
 
-        if (!(CurrentUserService.CurrentUserId is null))
+        if (!(userId is null))
         {
             using (await serviceLock.LockAsync())
             {
-                foreach (var player in (await UserService.GetPreferredPlayersAsync(CurrentUserService.CurrentUserId)).ToArray())
+                foreach (var player in (await UserService.GetPreferredPlayersAsync(userId)).ToArray())
                 {
                     var puzzleCount = await PlayerService.GetPlayerPuzzleCountAsync(player.Id);
                     Players.Add((player, puzzleCount));
@@ -115,14 +118,15 @@
 
     protected async Task AddNewPreferredPlayer(string name, ChessSites site)
     {
-        if (!(CurrentUserService.CurrentUserId is null))
+        var userId = await GetUserIdAsync();
+        if (!(userId is null))
         {
             using (await serviceLock.LockAsync())
             {
                 var player = await PlayerService.GetOrAddPlayerAsync(name, site);
                 if (player != null)
                 {
-                    var result = await UserService.AddPreferredPlayerAsync(CurrentUserService.CurrentUserId, player);
+                    var result = await UserService.AddPreferredPlayerAsync(userId, player);
                     if (result)
                     {
                         ShowAddPlayer = false;
@@ -143,11 +147,12 @@
 
     protected async Task RemovePlayerAsync(int playerId)
     {
-        if (!(CurrentUserService.CurrentUserId is null))
+        var userId = await GetUserIdAsync();
+        if (!(userId is null))
         {
             using (await serviceLock.LockAsync())
             {
-                await UserService.RemovePreferredPlayerAsync(CurrentUserService.CurrentUserId, playerId);
+                await UserService.RemovePreferredPlayerAsync(userId, playerId);
                 await PlayerService.CleanUpPlayerAsync(playerId);
             }
 

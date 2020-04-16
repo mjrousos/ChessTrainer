@@ -36,7 +36,6 @@ namespace MjrChess.Trainer
             services.AddScoped<IPuzzleService, PuzzleService>();
             services.AddScoped<IUserService, UserService>();
 
-            services.AddHttpContextAccessor();
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddResponseCompression(options =>
@@ -47,7 +46,6 @@ namespace MjrChess.Trainer
             });
             services.AddHealthChecks();
 
-            services.AddTransient<CurrentUserService>();
             services.AddTransient<ChessEngine>();
             services.AddApplicationInsightsTelemetry(Configuration["ApplicationInsights:InstrumentationKey"]);
         }

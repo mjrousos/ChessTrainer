@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MjrChess.Engine;
@@ -22,8 +23,12 @@ namespace MjrChess.Trainer.Components
 
         private IUserService UserService { get; set; } = default!;
 
-        [Inject]
-        private CurrentUserService CurrentUserService { get; set; } = default!;
+        [CascadingParameter]
+#pragma warning disable SA1300 // Element should begin with upper-case letter
+        private Task<AuthenticationState> authenticationStateTask { get; set; } = default!;
+#pragma warning restore SA1300 // Element should begin with upper-case letter
+
+        private async Task<string?> GetUserId() => (await authenticationStateTask)?.User?.GetUserId();
 
         [Inject]
         protected ChessEngine PuzzleEngine
@@ -99,7 +104,7 @@ namespace MjrChess.Trainer.Components
 
         protected async Task LoadNextPuzzleAsync()
         {
-            CurrentPuzzle = await PuzzleService.GetRandomPuzzleAsync();
+            CurrentPuzzle = await PuzzleService.GetRandomPuzzleAsync(await GetUserId());
             CurrentPuzzleState = PuzzleState.Ongoing;
             FirstAttempt = true;
             Logger.LogInformation("Loaded puzzle ID {PuzzleId}", CurrentPuzzle?.Id);
@@ -144,17 +149,18 @@ namespace MjrChess.Trainer.Components
 
         private async void HandleMove(ChessGame game, Move move)
         {
+            var userId = await GetUserId();
             if (CurrentPuzzle != null && PuzzleReady)
             {
                 if (move == CurrentPuzzle.Solution)
                 {
-                    Logger.LogInformation("Puzzle {PuzzleId} solved by {UserId}", CurrentPuzzle.Id, CurrentUserService.CurrentUserId ?? "Anonymous");
+                    Logger.LogInformation("Puzzle {PuzzleId} solved by {UserId}", CurrentPuzzle.Id, userId ?? "Anonymous");
                     CurrentPuzzleState = PuzzleState.Solved;
                     StateHasChanged();
                 }
                 else
                 {
-                    Logger.LogInformation("Puzzle {PuzzleId} missed by {UserId}", CurrentPuzzle.Id, CurrentUserService.CurrentUserId ?? "Anonymous");
+                    Logger.LogInformation("Puzzle {PuzzleId} missed by {UserId}", CurrentPuzzle.Id, userId ?? "Anonymous");
                     CurrentPuzzleState = PuzzleState.Missed;
                     StateHasChanged();
                 }
@@ -162,11 +168,11 @@ namespace MjrChess.Trainer.Components
                 // Record the user's first attempt in puzzle history
                 if (FirstAttempt)
                 {
-                    if (!(CurrentUserService.CurrentUserId is null))
+                    if (!(userId is null))
                     {
                         await UserService.RecordPuzzleHistoryAsync(new PuzzleHistory
                         {
-                            UserId = CurrentUserService.CurrentUserId,
+                            UserId = userId,
                             Puzzle = CurrentPuzzle,
                             Solved = CurrentPuzzleState == PuzzleState.Solved
                         });
