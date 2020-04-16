@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.AzureADB2C.UI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -48,9 +49,10 @@ namespace MjrChess.Trainer
 
             services.AddTransient<CurrentUserService>();
             services.AddTransient<ChessEngine>();
+            services.AddApplicationInsightsTelemetry(Configuration["ApplicationInsights:InstrumentationKey"]);
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, TelemetryConfiguration aiConfig)
         {
             // Issue: https://github.com/dotnet/aspnetcore/issues/18865
             app.UseRewriter(new RewriteOptions().AddRedirect("AzureADB2C/Account/SignedOut", "/"));
@@ -58,6 +60,7 @@ namespace MjrChess.Trainer
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                aiConfig.DisableTelemetry = true;
             }
             else
             {
