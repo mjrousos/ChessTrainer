@@ -194,8 +194,7 @@ namespace MjrChess.Trainer.Components
                 return;
             }
 
-            var pieceMoved = new ChessPiece(move.PieceMoved, move.OriginalPosition);
-            var resolvedMove = PuzzleEngine.GetLegalMoves(pieceMoved).SingleOrDefault(m => m.FinalPosition == move.FinalPosition);
+            var resolvedMove = PuzzleEngine.GetLegalMoves(move.OriginalPosition).SingleOrDefault(m => m.FinalPosition == move.FinalPosition);
             if (resolvedMove == null)
             {
                 Logger.LogError("Invalid puzzle move ({Move}) for {PuzzleId}", move, CurrentPuzzle.Id);

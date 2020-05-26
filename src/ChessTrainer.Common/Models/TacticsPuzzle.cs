@@ -6,7 +6,17 @@ namespace MjrChess.Trainer.Models
 {
     public class TacticsPuzzle : IEntity
     {
-        public TacticsPuzzle(string position)
+        public TacticsPuzzle(
+            string position,
+            string setupMovedFrom,
+            string setupMovedTo,
+            ChessPieces? setupPiecePromotedTo,
+            string movedFrom,
+            string movedTo,
+            ChessPieces? piecePromotedTo,
+            string? incorrectMovedFrom,
+            string? incorrectMovedTo,
+            ChessPieces? incorrectPiecePromotedTo)
         {
             if (string.IsNullOrWhiteSpace(position))
             {
@@ -14,44 +24,59 @@ namespace MjrChess.Trainer.Models
             }
 
             Position = position;
+            SetupMovedFrom = setupMovedFrom;
+            SetupMovedTo = setupMovedTo;
+            SetupPiecePromotedTo = setupPiecePromotedTo;
+            MovedFrom = movedFrom;
+            MovedTo = movedTo;
+            PiecePromotedTo = piecePromotedTo;
+            IncorrectMovedFrom = incorrectMovedFrom;
+            IncorrectMovedTo = incorrectMovedTo;
+            IncorrectPiecePromotedTo = incorrectPiecePromotedTo;
+
+            var game = new ChessGame();
+            game.LoadFEN(Position);
+            SetupPieceMoved = game.GetPiece(new BoardPosition(SetupMovedFrom))?.PieceType ?? throw new InvalidOperationException($"Invalid puzzle; no piece at position {Position}");
+            game.Move(SetupMove);
+
+            PieceMoved = game.GetPiece(new BoardPosition(MovedFrom))?.PieceType ?? throw new InvalidOperationException($"Invalid puzzle; no piece at position {Position}");
+            IncorrectPieceMoved = IncorrectMovedFrom == null ? (ChessPieces?)null :
+                game.GetPiece(new BoardPosition(IncorrectMovedFrom))?.PieceType ?? throw new InvalidOperationException($"Invalid puzzle; no piece at position {Position}");
         }
 
-        public string Position { get; set; }
+        public string Position { get; }
 
-        public ChessPieces SetupPieceMoved { get; set; } = default!;
+        public string SetupMovedFrom { get; }
 
-        public string SetupMovedFrom { get; set; } = default!;
+        public string SetupMovedTo { get; }
 
-        public string SetupMovedTo { get; set; } = default!;
+        public ChessPieces? SetupPiecePromotedTo { get; }
 
-        public ChessPieces? SetupPiecePromotedTo { get; set; }
+        public string MovedFrom { get; }
 
-        public ChessPieces PieceMoved { get; set; }
+        public string MovedTo { get; }
 
-        public string MovedFrom { get; set; } = default!; // https://github.com/dotnet/csharplang/issues/2869
+        public ChessPieces? PiecePromotedTo { get; }
 
-        public string MovedTo { get; set; } = default!; // https://github.com/dotnet/csharplang/issues/2869
+        public string? IncorrectMovedFrom { get; }
 
-        public ChessPieces? PiecePromotedTo { get; set; }
+        public string? IncorrectMovedTo { get; }
 
-        public ChessPieces? IncorrectPieceMoved { get; set; }
+        public ChessPieces? IncorrectPiecePromotedTo { get; }
 
-        public string? IncorrectMovedFrom { get; set; }
+        // Return the opposite of what the position FEN indicates, since that's the state
+        // before the setup move is made
+        public bool WhiteToMove => !Position.Split()[1].Equals("w", StringComparison.OrdinalIgnoreCase);
 
-        public string? IncorrectMovedTo { get; set; }
+        private ChessPieces SetupPieceMoved { get; }
 
-        public ChessPieces? IncorrectPiecePromotedTo { get; set; }
+        private ChessPieces? IncorrectPieceMoved { get; }
+
+        private ChessPieces PieceMoved { get; }
 
         public Move Solution
         {
             get => new Move(PieceMoved, new BoardPosition(MovedFrom), new BoardPosition(MovedTo), PiecePromotedTo);
-            set
-            {
-                PieceMoved = value.PieceMoved;
-                MovedFrom = value.OriginalPosition.ToString();
-                MovedTo = value.FinalPosition.ToString();
-                PiecePromotedTo = value.PiecePromotedTo;
-            }
         }
 
         public Move? IncorrectMove
@@ -59,25 +84,11 @@ namespace MjrChess.Trainer.Models
             get => (IncorrectPieceMoved != null && IncorrectMovedFrom != null && IncorrectMovedTo != null) ?
                 new Move(IncorrectPieceMoved.Value, new BoardPosition(IncorrectMovedFrom), new BoardPosition(IncorrectMovedTo), IncorrectPiecePromotedTo) :
                 null;
-            set
-            {
-                IncorrectPieceMoved = value?.PieceMoved;
-                IncorrectMovedFrom = value?.OriginalPosition.ToString();
-                IncorrectMovedTo = value?.FinalPosition.ToString();
-                IncorrectPiecePromotedTo = value?.PiecePromotedTo;
-            }
         }
 
         public Move SetupMove
         {
             get => new Move(SetupPieceMoved, new BoardPosition(SetupMovedFrom), new BoardPosition(SetupMovedTo), SetupPiecePromotedTo);
-            set
-            {
-                SetupPieceMoved = value.PieceMoved;
-                SetupMovedFrom = value.OriginalPosition.ToString();
-                SetupMovedTo = value.FinalPosition.ToString();
-                SetupPiecePromotedTo = value.PiecePromotedTo;
-            }
         }
 
         public Player? WhitePlayer { get; set; }

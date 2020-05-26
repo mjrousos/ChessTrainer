@@ -177,10 +177,11 @@ namespace MjrChess.Engine
         /// <summary>
         /// Retrieves potential legal moves for a given piece.
         /// </summary>
-        /// <param name="pieceToMove">The piece to move.</param>
+        /// <param name="position">The position of the piece to move.</param>
         /// <returns>All possible legal moves for the piece.</returns>
-        public IEnumerable<Move> GetLegalMoves(ChessPiece? pieceToMove)
+        public IEnumerable<Move> GetLegalMoves(BoardPosition position)
         {
+            var pieceToMove = Game.GetPiece(position);
             if (pieceToMove != null)
             {
                 var possibleMoves = GetMoveOptions(pieceToMove).Where(IsLegal);
@@ -595,7 +596,7 @@ namespace MjrChess.Engine
             }
 
             // Find move
-            var possibleMoves = possiblePieces.SelectMany(p => GetLegalMoves(p))
+            var possibleMoves = possiblePieces.SelectMany(p => GetLegalMoves(p.Position))
                 .Where(m => m.FinalPosition == finalPosition);
 
             if (possibleMoves.Count() > 1)

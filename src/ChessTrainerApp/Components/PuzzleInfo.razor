@@ -24,18 +24,18 @@
         @if (Puzzle.IncorrectMove != null)
         {
             <div class="mdc-typography mdc-typography--body2">
-                In this position, @(ChessFormatter.IsPieceWhite(Puzzle.PieceMoved) ? "white" : "black") blundered by playing <strong>@(Puzzle.IncorrectMove.ToString())</strong>. Can you do better?
+                In this position, @(Puzzle.WhiteToMove ? "white" : "black") blundered by playing <strong>@(Puzzle.IncorrectMove.ToString())</strong>. Can you do better?
             </div>
         }
         else
         {
             <div class="mdc-typography mdc-typography--body2">
-                In this position, @(ChessFormatter.IsPieceWhite(Puzzle.PieceMoved) ? "white" : "black") successfully took advantage of a poor move by @(ChessFormatter.IsPieceWhite(Puzzle.PieceMoved) ? "black" : "white").
+                In this position, @(Puzzle.WhiteToMove ? "white" : "black") successfully took advantage of a poor move by @(Puzzle.WhiteToMove ? "black" : "white").
             </div>
         }
         <br />
         <div class="mdc-typography mdc-typography--body2">
-            Find the best move for @(ChessFormatter.IsPieceWhite(Puzzle.PieceMoved) ? "white" : "black")!
+            Find the best move for @(Puzzle.WhiteToMove ? "white" : "black")!
         </div>
         @switch (PuzzleState)
         {

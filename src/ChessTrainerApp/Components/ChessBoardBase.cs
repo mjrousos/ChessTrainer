@@ -52,7 +52,7 @@ namespace MjrChess.Trainer.Components
                 // Storing an enumerable in state used by Blazor was causing the enumerable
                 // to be evaluated multiple times. Therefore, store as an array to make sure
                 // that the evaluation is only done once.
-                LegalMovesForSelectedPiece = Engine.GetLegalMoves(_selectedPiece).ToArray();
+                LegalMovesForSelectedPiece = _selectedPiece == null ? new Move[0] : Engine.GetLegalMoves(_selectedPiece.Position).ToArray();
             }
         }
 

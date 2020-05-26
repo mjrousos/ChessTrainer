@@ -25,7 +25,7 @@
 </div>
 
 @code {
-    bool WhiteToMove => ChessFormatter.IsPieceWhite(CurrentPuzzle?.PieceMoved ?? ChessPieces.WhiteKing);
+    bool WhiteToMove => CurrentPuzzle?.WhiteToMove ?? true;
 
     // Use this instead of Task.Run so that short synchronous tasks aren't queued on
     // the ThreadPool just to wrap them as Tasks.

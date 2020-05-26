@@ -24,6 +24,7 @@ namespace MjrChess.Trainer.Data
                 options.UseSqlServer(dbConnectionString, options =>
                 {
                     options.EnableRetryOnFailure(maxRetryCount: 15, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+                    options.MigrationsAssembly("MjrChess.Trainer"); // TODO : Move migrations to the ChessTrainer.Data project
                 }));
 
             return services;

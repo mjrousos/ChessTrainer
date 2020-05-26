@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MjrChess.Trainer.Data;
 
 namespace MjrChess.Trainer.Migrations
 {
     [DbContext(typeof(PuzzleDbContext))]
-    partial class PuzzleDbContextModelSnapshot : ModelSnapshot
+    [Migration("20200526205648_RemovePuzzlePieceType")]
+    partial class RemovePuzzlePieceType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

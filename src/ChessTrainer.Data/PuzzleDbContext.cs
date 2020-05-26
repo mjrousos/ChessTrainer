@@ -47,28 +47,11 @@ namespace MjrChess.Trainer.Data
                 .IsRequired();
 
             modelBuilder.Entity<TacticsPuzzle>()
-                .Ignore(p => p.Solution);
-
-            modelBuilder.Entity<TacticsPuzzle>()
-                .Ignore(p => p.SetupMove);
-
-            modelBuilder.Entity<TacticsPuzzle>()
-                .Ignore(p => p.IncorrectMove);
-
-            modelBuilder.Entity<TacticsPuzzle>()
-                .Property(p => p.PieceMoved)
-                .IsRequired();
-
-            modelBuilder.Entity<TacticsPuzzle>()
                 .Property(p => p.MovedFrom)
                 .IsRequired();
 
             modelBuilder.Entity<TacticsPuzzle>()
                 .Property(p => p.MovedTo)
-                .IsRequired();
-
-            modelBuilder.Entity<TacticsPuzzle>()
-                .Property(p => p.SetupPieceMoved)
                 .IsRequired();
 
             modelBuilder.Entity<TacticsPuzzle>()
