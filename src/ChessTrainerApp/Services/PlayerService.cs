@@ -59,7 +59,7 @@ namespace MjrChess.Trainer.Services
 
         public async Task<int> GetPlayerPuzzleCountAsync(int playerId) =>
             await PuzzleRepository
-                .Query(p => (p.BlackPlayer != null && p.BlackPlayer.Id == playerId) || (p.WhitePlayer != null && p.WhitePlayer.Id == playerId))
+                .Query(p => p.AssociatedPlayerId == playerId)
                 .CountAsync();
     }
 }

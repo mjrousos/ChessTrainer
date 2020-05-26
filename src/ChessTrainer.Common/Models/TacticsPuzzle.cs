@@ -91,9 +91,11 @@ namespace MjrChess.Trainer.Models
             get => new Move(SetupPieceMoved, new BoardPosition(SetupMovedFrom), new BoardPosition(SetupMovedTo), SetupPiecePromotedTo);
         }
 
-        public Player? WhitePlayer { get; set; }
+        public string? WhitePlayerName { get; set; }
 
-        public Player? BlackPlayer { get; set; }
+        public string? BlackPlayerName { get; set; }
+
+        public int AssociatedPlayerId { get; set; }
 
         public DateTimeOffset? GameDate { get; set; }
 

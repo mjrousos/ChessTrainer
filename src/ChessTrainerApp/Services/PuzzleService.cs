@@ -90,9 +90,7 @@ namespace MjrChess.Trainer.Services
                 {
                     var preferredIds = userSettings.PreferredPlayers.Select(p => p.Id);
                     Logger.LogInformation("Retrieving puzzles for {UserId} with {PreferredPlayerCount} preferred players", userId, preferredIds.Count());
-                    puzzles = PuzzleRepository.Query(p =>
-                        (p.WhitePlayer != null && preferredIds.Contains(p.WhitePlayer.Id)) ||
-                        (p.BlackPlayer != null && preferredIds.Contains(p.BlackPlayer.Id)));
+                    puzzles = PuzzleRepository.Query(p => preferredIds.Contains(p.AssociatedPlayerId));
                 }
                 else
                 {

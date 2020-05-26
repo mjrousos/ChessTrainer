@@ -36,9 +36,11 @@ namespace MjrChess.Trainer.Data.Models
 
         public ChessPieces? IncorrectPiecePromotedTo { get; set; }
 
-        public Player? WhitePlayer { get; set; }
+        public string? WhitePlayerName { get; set; }
 
-        public Player? BlackPlayer { get; set; }
+        public string? BlackPlayerName { get; set; }
+
+        public int AssociatedPlayerId { get; set; }
 
         public DateTimeOffset? GameDate { get; set; }
 

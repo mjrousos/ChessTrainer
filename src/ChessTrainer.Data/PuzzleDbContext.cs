@@ -96,12 +96,8 @@ namespace MjrChess.Trainer.Data
         {
             modelBuilder.Entity<Player>()
                 .HasData(
-                    new Player("Hustler", Trainer.Models.ChessSites.Other) { Id = 1, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
-                    new Player("Noobie", Trainer.Models.ChessSites.Other) { Id = 2, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
-                    new Player("Vini700", Trainer.Models.ChessSites.LiChess) { Id = 3, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
-                    new Player("aupoil", Trainer.Models.ChessSites.LiChess) { Id = 4, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
-                    new Player("toskekg", Trainer.Models.ChessSites.LiChess) { Id = 5, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
-                    new Player("wolfwolf", Trainer.Models.ChessSites.LiChess) { Id = 6, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now });
+                    new Player("aupoil", Trainer.Models.ChessSites.LiChess) { Id = 1, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
+                    new Player("toskekg", Trainer.Models.ChessSites.LiChess) { Id = 2, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now });
 
             modelBuilder.Entity<TacticsPuzzle>()
                 .HasData(
@@ -117,9 +113,10 @@ namespace MjrChess.Trainer.Data
                         SetupPieceMoved = Engine.Models.ChessPieces.BlackKnight,
                         SetupMovedFrom = "b8",
                         SetupMovedTo = "c6",
-                        WhitePlayerId = 1,
-                        BlackPlayerId = 2,
-                        GameDate = new DateTimeOffset(2015, 2, 7, 0, 0, 0, TimeSpan.Zero)
+                        WhitePlayerName = "Hustler",
+                        BlackPlayerId = "Noobie",
+                        GameDate = new DateTimeOffset(2015, 2, 7, 0, 0, 0, TimeSpan.Zero),
+                        AssociatedPlayerId = 0
                     },
                     new
                     {
@@ -133,11 +130,12 @@ namespace MjrChess.Trainer.Data
                         SetupPieceMoved = Engine.Models.ChessPieces.WhiteRook,
                         SetupMovedFrom = "e1",
                         SetupMovedTo = "e3",
-                        WhitePlayerId = 3,
-                        BlackPlayerId = 4,
+                        WhitePlayerName = "Vini700",
+                        BlackPlayerName = "aupoil",
                         GameDate = new DateTimeOffset(2016, 8, 8, 0, 0, 0, TimeSpan.Zero),
                         Site = "lichess.org",
-                        GameUrl = "https://lichess.org/3piQphpY"
+                        GameUrl = "https://lichess.org/3piQphpY",
+                        AssociatedPlayerId = 1
                     },
                     new
                     {
@@ -154,11 +152,12 @@ namespace MjrChess.Trainer.Data
                         IncorrectPieceMoved = Engine.Models.ChessPieces.BlackRook,
                         IncorrectMovedFrom = "f8",
                         IncorrectMovedTo = "f5",
-                        WhitePlayerId = 5,
-                        BlackPlayerId = 6,
+                        WhitePlayerName = "toskekg",
+                        BlackPlayerName = "wolfwolf",
                         GameDate = new DateTimeOffset(2016, 10, 7, 0, 0, 0, TimeSpan.Zero),
                         Site = "lichess.org",
-                        GameUrl = "https://lichess.org/HjVhr1Dn"
+                        GameUrl = "https://lichess.org/HjVhr1Dn",
+                        AssociatedPlayerId = 2
                     });
         }
 

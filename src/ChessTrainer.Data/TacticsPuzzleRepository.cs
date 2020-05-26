@@ -14,6 +14,6 @@ namespace MjrChess.Trainer.Data
         }
 
         protected override IQueryable<Data.Models.TacticsPuzzle> DbSetWithRelatedEntities =>
-            base.DbSetWithRelatedEntities.Include(p => p.WhitePlayer).Include(p => p.BlackPlayer).Include(p => p.History);
+            base.DbSetWithRelatedEntities.Include(p => p.History);
     }
 }
