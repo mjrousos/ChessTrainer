@@ -145,7 +145,7 @@ namespace IngestionFunctions
                     newMostRecentGame = game.StartDate;
                 }
 
-                var ingestionRequest = new IngestionRequest(game, player.Site, game.Site);
+                var ingestionRequest = new IngestionRequest(game, player.Id, player.Site, game.Site);
                 await QueueIngestionRequestAsync(ingestionRequest);
                 ingestedCount++;
             }

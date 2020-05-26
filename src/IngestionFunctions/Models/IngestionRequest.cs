@@ -21,11 +21,14 @@ namespace IngestionFunctions.Models
 
         public string BlackPlayer { get; set; }
 
+        public int AssociatedPlayerId { get; set; }
+
         public string[] UCIMoves { get; set; }
 
-        public IngestionRequest(ChessGame game, ChessSites site, string? gamePath)
+        public IngestionRequest(ChessGame game, int playerId, ChessSites site, string? gamePath)
         {
             Site = site;
+            AssociatedPlayerId = playerId;
             GameDate = game.StartDate;
             GameUrl = gamePath;
             WhitePlayer = game.WhitePlayer;
