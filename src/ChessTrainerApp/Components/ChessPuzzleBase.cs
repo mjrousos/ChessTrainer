@@ -15,7 +15,7 @@ namespace MjrChess.Trainer.Components
 {
     public class ChessPuzzleBase : OwningComponentBase
     {
-        const int HistoryCount = 10;
+        private const int HistoryCount = 10;
         private ChessEngine _puzzleEngine = default!;
 
         [Inject]
