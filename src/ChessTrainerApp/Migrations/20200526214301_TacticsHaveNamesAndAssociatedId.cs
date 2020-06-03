@@ -146,6 +146,7 @@ namespace MjrChess.Trainer.Migrations
             migrationBuilder.InsertData(
                 table: "Players",
                 columns: new[] { "Id", "CreatedDate", "LastModifiedDate", "Name", "Site" },
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
                 values: new object[,]
                 {
                     { 3, new DateTimeOffset(new DateTime(2020, 5, 26, 16, 56, 47, 677, DateTimeKind.Unspecified).AddTicks(7651), new TimeSpan(0, -4, 0, 0, 0)), new DateTimeOffset(new DateTime(2020, 5, 26, 16, 56, 47, 677, DateTimeKind.Unspecified).AddTicks(7666), new TimeSpan(0, -4, 0, 0, 0)), "Vini700", 0 },
@@ -153,6 +154,7 @@ namespace MjrChess.Trainer.Migrations
                     { 5, new DateTimeOffset(new DateTime(2020, 5, 26, 16, 56, 47, 677, DateTimeKind.Unspecified).AddTicks(7708), new TimeSpan(0, -4, 0, 0, 0)), new DateTimeOffset(new DateTime(2020, 5, 26, 16, 56, 47, 677, DateTimeKind.Unspecified).AddTicks(7721), new TimeSpan(0, -4, 0, 0, 0)), "toskekg", 0 },
                     { 6, new DateTimeOffset(new DateTime(2020, 5, 26, 16, 56, 47, 677, DateTimeKind.Unspecified).AddTicks(7736), new TimeSpan(0, -4, 0, 0, 0)), new DateTimeOffset(new DateTime(2020, 5, 26, 16, 56, 47, 677, DateTimeKind.Unspecified).AddTicks(7749), new TimeSpan(0, -4, 0, 0, 0)), "wolfwolf", 0 }
                 });
+#pragma warning restore CA1814 // Prefer jagged arrays over multidimensional
 
             migrationBuilder.UpdateData(
                 table: "Puzzles",

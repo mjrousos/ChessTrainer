@@ -208,3 +208,6 @@ csharp_preserve_single_line_statements = true
 
 # CA1819: Properties should not return arrays
 dotnet_diagnostic.CA1819.severity = none
+
+# SA1118: Parameters should not span multiple lines
+dotnet_diagnostic.SA1118.severity = none
