@@ -36,12 +36,12 @@ namespace MjrChess.Trainer.Models
 
             var game = new ChessGame();
             game.LoadFEN(Position);
-            SetupPieceMoved = game.GetPiece(new BoardPosition(SetupMovedFrom))?.PieceType ?? throw new InvalidOperationException($"Invalid puzzle; no piece at position {Position}");
+            SetupPieceMoved = game.GetPiece(new BoardPosition(SetupMovedFrom))?.PieceType ?? throw new InvalidOperationException($"Invalid puzzle; no piece at position {SetupMovedFrom} ({game.GetFEN()})");
             game.Move(SetupMove);
 
-            PieceMoved = game.GetPiece(new BoardPosition(MovedFrom))?.PieceType ?? throw new InvalidOperationException($"Invalid puzzle; no piece at position {Position}");
+            PieceMoved = game.GetPiece(new BoardPosition(MovedFrom))?.PieceType ?? throw new InvalidOperationException($"Invalid puzzle; no piece at position {MovedFrom} ({game.GetFEN()})");
             IncorrectPieceMoved = IncorrectMovedFrom == null ? (ChessPieces?)null :
-                game.GetPiece(new BoardPosition(IncorrectMovedFrom))?.PieceType ?? throw new InvalidOperationException($"Invalid puzzle; no piece at position {Position}");
+                game.GetPiece(new BoardPosition(IncorrectMovedFrom))?.PieceType ?? throw new InvalidOperationException($"Invalid puzzle; no piece at position {IncorrectMovedFrom} ({game.GetFEN()})");
         }
 
         public string Position { get; }
