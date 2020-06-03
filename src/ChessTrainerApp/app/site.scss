@@ -106,6 +106,10 @@
     color: $mdc-theme-primary;
 }
 
+.selectable-list-item {
+    padding-left: 4px;
+}
+
 /* Preserve white space in snackbar labels */
 .mdc-snackbar__label {
     white-space: pre-wrap;

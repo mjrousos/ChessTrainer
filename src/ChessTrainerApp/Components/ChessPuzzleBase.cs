@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
@@ -14,6 +15,7 @@ namespace MjrChess.Trainer.Components
 {
     public class ChessPuzzleBase : OwningComponentBase
     {
+        const int HistoryCount = 10;
         private ChessEngine _puzzleEngine = default!;
 
         [Inject]
@@ -68,6 +70,8 @@ namespace MjrChess.Trainer.Components
 
         protected PuzzleState CurrentPuzzleState { get; set; }
 
+        protected IList<PuzzleHistory>? PuzzleHistory { get; set; }
+
         private bool PuzzleReady { get; set; }
 
         protected bool FirstAttempt { get; set; }
@@ -97,18 +101,30 @@ namespace MjrChess.Trainer.Components
             if (firstRender)
             {
                 await LoadNextPuzzleAsync();
+                var userId = await GetUserId();
+                PuzzleHistory = userId is null
+                    ? new List<PuzzleHistory>()
+                    : (await UserService.GetPuzzleHistoryAsync(userId))?.OrderByDescending(h => h.LastModifiedDate).Take(HistoryCount).ToList() ?? new List<PuzzleHistory>();
+                StateHasChanged();
             }
 
             await base.OnAfterRenderAsync(firstRender);
         }
 
-        protected async Task LoadNextPuzzleAsync()
+        protected async Task LoadNextPuzzleAsync() => LoadPuzzle(await PuzzleService.GetRandomPuzzleAsync(await GetUserId()));
+
+        protected async Task LoadPuzzleByIdAsync(int id) => LoadPuzzle(await PuzzleService.GetPuzzleAsync(id));
+
+        private void LoadPuzzle(TacticsPuzzle? puzzle)
         {
-            CurrentPuzzle = await PuzzleService.GetRandomPuzzleAsync(await GetUserId());
-            CurrentPuzzleState = PuzzleState.Ongoing;
-            FirstAttempt = true;
-            Logger.LogInformation("Loaded puzzle ID {PuzzleId}", CurrentPuzzle?.Id);
-            StateHasChanged();
+            if (puzzle != null)
+            {
+                CurrentPuzzle = puzzle;
+                CurrentPuzzleState = PuzzleState.Ongoing;
+                FirstAttempt = true;
+                Logger.LogInformation("Loaded puzzle ID {PuzzleId}", CurrentPuzzle?.Id);
+                StateHasChanged();
+            }
         }
 
         protected void ResetPuzzle()
@@ -156,30 +172,38 @@ namespace MjrChess.Trainer.Components
                 {
                     Logger.LogInformation("Puzzle {PuzzleId} solved by {UserId}", CurrentPuzzle.Id, userId ?? "Anonymous");
                     CurrentPuzzleState = PuzzleState.Solved;
-                    StateHasChanged();
                 }
                 else
                 {
                     Logger.LogInformation("Puzzle {PuzzleId} missed by {UserId}", CurrentPuzzle.Id, userId ?? "Anonymous");
                     CurrentPuzzleState = PuzzleState.Missed;
-                    StateHasChanged();
                 }
 
                 // Record the user's first attempt in puzzle history
                 if (FirstAttempt)
                 {
+                    var puzzleHistory = new PuzzleHistory
+                    {
+                        UserId = userId,
+                        Puzzle = CurrentPuzzle,
+                        Solved = CurrentPuzzleState == PuzzleState.Solved
+                    };
+
+                    PuzzleHistory?.Insert(0, puzzleHistory);
+                    while (PuzzleHistory?.Count > HistoryCount)
+                    {
+                        PuzzleHistory.RemoveAt(HistoryCount);
+                    }
+
                     if (!(userId is null))
                     {
-                        await UserService.RecordPuzzleHistoryAsync(new PuzzleHistory
-                        {
-                            UserId = userId,
-                            Puzzle = CurrentPuzzle,
-                            Solved = CurrentPuzzleState == PuzzleState.Solved
-                        });
+                        await UserService.RecordPuzzleHistoryAsync(puzzleHistory);
                     }
 
                     FirstAttempt = false;
                 }
+
+                StateHasChanged();
             }
         }
 

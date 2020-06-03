@@ -3,6 +3,7 @@ import { MDCRipple } from '@material/ripple';
 import { MDCTextField } from '@material/textfield';
 import { MDCTopAppBar } from '@material/top-app-bar';
 import { MDCDrawer } from "@material/drawer";
+import { MDCList } from '@material/list';
 import { MDCMenu } from '@material/menu';
 import { MDCSelect } from '@material/select';
 import { MDCSnackbar } from '@material/snackbar';
@@ -57,6 +58,11 @@ window.attachMDC = () => {
     const chipSets = document.querySelectorAll('.mdc-chip-set');
     for (const chipSet of chipSets) {
         new MDCChipSet(chipSet);
+    }
+
+    const lists = document.querySelectorAll('.mdc-list');
+    for (const list of lists) {
+        new MDCList(list);
     }
 
     primaryNotifier = new MDCSnackbar(document.getElementById('PrimaryNotifier'));

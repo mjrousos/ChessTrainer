@@ -1,10 +1,47 @@
 ﻿@using MjrChess.Trainer.BlazorExtensions
+@using MjrChess.Trainer.Models
 
 @inherits MaterialDesignComponentBase
 
-<h2 mdc-typography mdc-typography--headline6>History</h2>
-<ol>
-    <li>Puzzle 1</li>
-    <li>Puzzle 2</li>
-    <li>Puzzle 3</li>
-</ol>
+<div class="mdc-card">
+    <div class="mdc-card-body mdc-typography mdc-typography--body2">
+        <div class="mdc-list-group">
+            <ul class="mdc-list">
+                @if (CurrentPuzzle != null)
+                {
+                    <li class="mdc-list-item mdc-list-item--selected">
+                        <strong>
+                            <PuzzleLink Puzzle="CurrentPuzzle" />
+                        </strong>
+                    </li>
+                }
+                @if (History != null)
+                {
+                    @foreach (var puzzle in History)
+                    {
+                        <li class="mdc-list-item" @onclick="() => OnPuzzleSelect?.Invoke(puzzle.Puzzle.Id)">
+                            <PuzzleLink Puzzle="puzzle.Puzzle" Solved="puzzle.Solved" />
+                        </li>
+                    }
+                }
+                else
+                {
+                    <li>
+                        <LoadingSpinner />
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public IEnumerable<PuzzleHistory>? History { get; set; } = default!;
+
+    [Parameter]
+    public TacticsPuzzle? CurrentPuzzle { get; set; }
+
+    [Parameter]
+    public Func<int, Task>? OnPuzzleSelect { get; set; }
+}

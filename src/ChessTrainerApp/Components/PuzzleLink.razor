@@ -1,0 +1,29 @@
+﻿@using MjrChess.Trainer.BlazorExtensions
+@using MjrChess.Trainer.Models
+
+@inherits MaterialDesignComponentBase
+
+<span class="mdc-list-item__text selectable-list-item">Puzzle @Puzzle.Id</span>
+@if (Solved.HasValue)
+{
+    @if (Solved.Value)
+    {
+        <span class="mdc-layout-grid--align-right puzzleMessage correctMessage">
+            <i class="material-icons" aria-hidden="true">check</i>
+        </span>
+    }
+    else
+    {
+        <span class="mdc-layout-grid--align-right puzzleMessage incorrectMessage">
+            <i class="material-icons md-48" aria-hidden="true">clear</i>
+        </span>
+    }
+}
+
+@code {
+    [Parameter]
+    public TacticsPuzzle Puzzle { get; set; } = default!;
+
+    [Parameter]
+    public bool? Solved { get; set; }
+}

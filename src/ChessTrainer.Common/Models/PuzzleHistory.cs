@@ -2,7 +2,7 @@
 {
     public class PuzzleHistory : IEntity
     {
-        public string UserId { get; set; } = default!;
+        public string? UserId { get; set; } = default!;
 
         public TacticsPuzzle Puzzle { get; set; } = default!;
 

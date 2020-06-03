@@ -1,5 +1,8 @@
 ﻿@inherits ChessPuzzleBase
 
+<div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-2-desktop mdc-layout-grid__cell--span-2-tablet mdc-layout-grid__cell--span-4-phone">
+    <PuzzleHistoryList CurrentPuzzle="CurrentPuzzle" History="PuzzleHistory" OnPuzzleSelect="LoadPuzzleByIdAsync" />
+</div>
 <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-7-desktop mdc-layout-grid__cell--span-6-tablet mdc-layout-grid__cell--span-4-phone">
     @if(CurrentPuzzle == null)
     {
