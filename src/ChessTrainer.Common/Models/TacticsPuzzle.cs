@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using MjrChess.Engine;
 using MjrChess.Engine.Models;
+using MjrChess.Engine.Utilities;
 
 namespace MjrChess.Trainer.Models
 {
@@ -34,14 +36,15 @@ namespace MjrChess.Trainer.Models
             IncorrectMovedTo = incorrectMovedTo;
             IncorrectPiecePromotedTo = incorrectPiecePromotedTo;
 
-            var game = new ChessGame();
-            game.LoadFEN(Position);
-            SetupPieceMoved = game.GetPiece(new BoardPosition(SetupMovedFrom))?.PieceType ?? throw new InvalidOperationException($"Invalid puzzle; no piece at position {SetupMovedFrom} ({game.GetFEN()})");
-            game.Move(SetupMove);
-
-            PieceMoved = game.GetPiece(new BoardPosition(MovedFrom))?.PieceType ?? throw new InvalidOperationException($"Invalid puzzle; no piece at position {MovedFrom} ({game.GetFEN()})");
-            IncorrectPieceMoved = IncorrectMovedFrom == null ? (ChessPieces?)null :
-                game.GetPiece(new BoardPosition(IncorrectMovedFrom))?.PieceType ?? throw new InvalidOperationException($"Invalid puzzle; no piece at position {IncorrectMovedFrom} ({game.GetFEN()})");
+            var engine = new ChessEngine();
+            engine.LoadFEN(Position);
+            SetupMove = engine.MoveFromAlgebraicNotation($"{SetupMovedFrom}{SetupMovedTo}{(SetupPiecePromotedTo.HasValue ? $"={ChessFormatter.PieceToString(SetupPiecePromotedTo.Value, false)}" : string.Empty)}");
+            engine.Game.Move(SetupMove);
+            Solution = engine.MoveFromAlgebraicNotation($"{MovedFrom}{MovedTo}{(PiecePromotedTo.HasValue ? $"={ChessFormatter.PieceToString(PiecePromotedTo.Value, false)}" : string.Empty)}");
+            if (IncorrectMovedFrom != null && IncorrectMovedTo != null)
+            {
+                IncorrectMove = engine.MoveFromAlgebraicNotation($"{IncorrectMovedFrom}{IncorrectMovedTo}{(IncorrectPiecePromotedTo.HasValue ? $"={ChessFormatter.PieceToString(IncorrectPiecePromotedTo.Value, false)}" : string.Empty)}");
+            }
         }
 
         public string Position { get; }
@@ -68,28 +71,11 @@ namespace MjrChess.Trainer.Models
         // before the setup move is made
         public bool WhiteToMove => !Position.Split()[1].Equals("w", StringComparison.OrdinalIgnoreCase);
 
-        private ChessPieces SetupPieceMoved { get; }
+        public Move Solution { get; }
 
-        private ChessPieces? IncorrectPieceMoved { get; }
+        public Move? IncorrectMove { get; }
 
-        private ChessPieces PieceMoved { get; }
-
-        public Move Solution
-        {
-            get => new Move(PieceMoved, new BoardPosition(MovedFrom), new BoardPosition(MovedTo), PiecePromotedTo);
-        }
-
-        public Move? IncorrectMove
-        {
-            get => (IncorrectPieceMoved != null && IncorrectMovedFrom != null && IncorrectMovedTo != null) ?
-                new Move(IncorrectPieceMoved.Value, new BoardPosition(IncorrectMovedFrom), new BoardPosition(IncorrectMovedTo), IncorrectPiecePromotedTo) :
-                null;
-        }
-
-        public Move SetupMove
-        {
-            get => new Move(SetupPieceMoved, new BoardPosition(SetupMovedFrom), new BoardPosition(SetupMovedTo), SetupPiecePromotedTo);
-        }
+        public Move SetupMove { get; }
 
         public string? WhitePlayerName { get; set; }
 

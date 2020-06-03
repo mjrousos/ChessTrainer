@@ -544,18 +544,6 @@ namespace MjrChess.Engine
             else
             {
                 // If not castling, identify piece type, disambiguators, final position, and promotion
-                var pieceMatch = match.Groups["piece"];
-                var pieceString = pieceMatch.Success ? match.Groups["piece"].Value : "P";
-
-                // If black is to move next, make the piece string lower case so that it
-                // is interpretted by the formatted as a black piece.
-                if (!Game.WhiteToMove)
-                {
-                    pieceString = pieceString.ToLowerInvariant();
-                }
-
-                pieceMoved = ChessFormatter.PieceFromString(pieceString);
-
                 finalPosition = new BoardPosition(match.Groups["finalPosition"].Value);
 
                 // Note the original file if specified
@@ -580,6 +568,35 @@ namespace MjrChess.Engine
                     }
 
                     promotedTo = ChessFormatter.PieceFromString(promotedToString);
+                }
+
+                var pieceMatch = match.Groups["piece"];
+                if (pieceMatch.Success)
+                {
+                    // If the piece type was specified, use that to identify piece moved.
+                    var pieceString = match.Groups["piece"].Value;
+
+                    // If black is to move next, make the piece string lower case so that it
+                    // is interpretted by the formatted as a black piece.
+                    if (!Game.WhiteToMove)
+                    {
+                        pieceString = pieceString.ToLowerInvariant();
+                    }
+
+                    pieceMoved = ChessFormatter.PieceFromString(pieceString);
+                }
+                else if (originalRank.HasValue && originalFile.HasValue)
+                {
+                    // If the piece type isn't specified, look for original rank and file since some algebraic
+                    // notations include these but omit piece type.
+                    var originalPosition = new BoardPosition(originalFile.Value, originalRank.Value);
+                    pieceMoved = Game.GetPiece(originalPosition)?.PieceType
+                        ?? throw new ArgumentException($"Cannot make move {move} from {originalPosition}; there is no piece there.", nameof(move));
+                }
+                else
+                {
+                    // Default to pawn
+                    pieceMoved = Game.WhiteToMove ? ChessPieces.WhitePawn : ChessPieces.BlackPawn;
                 }
             }
 
