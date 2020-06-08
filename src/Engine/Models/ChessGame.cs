@@ -276,22 +276,6 @@ namespace MjrChess.Engine.Models
         }
 
         /// <summary>
-        /// Initialize the board to a position given in PGN format. https://en.wikipedia.org/wiki/Portable_Game_Notation, https://www.chessclub.com/help/PGN-spec.
-        /// </summary>
-        /// <param name="pgn">The PGN-formatted game state to load.</param>
-        public void LoadPGN(string pgn)
-        {
-            ClearGameState();
-
-            // TODO
-            //
-            // 1. Set game state based on tags
-            // 2. LoadFEN (either one specified in the PGN or InitialGameFEN
-            // 3. Apply moves
-            throw new NotImplementedException("NYI");
-        }
-
-        /// <summary>
         /// Gets the chess piece at a particular board position.
         /// </summary>
         /// <param name="position">The position to retrieve a piece from.</param>
