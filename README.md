@@ -1,6 +1,6 @@
 # Chess Trainer Blazor Sample
 
-This project uses data from [LiChess](https://lichess.org/) to construct chess puzzles from users' game history.
+This project uses present chess tactics puzzles.
 
 ## Project purpose
 
