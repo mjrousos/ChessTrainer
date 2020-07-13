@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -29,18 +28,9 @@ namespace MjrChess.Trainer.Services
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task CleanUpPlayerAsync(int playerId)
+        public async Task DeletePlayerAsync(int playerId)
         {
-            var player = await PlayerRepository.GetAsync(playerId);
-
-            if (player is null ||
-                await GetPlayerPuzzleCountAsync(player.Id) > 0 ||
-                await UserSettingsRepository.Query(s => s.PreferredPlayers.Any(p => p.Id == playerId)).AnyAsync())
-            {
-                return;
-            }
-
-            Logger.LogInformation("Removing player {PlayerId} because it is no longer used by any puzzle or player", playerId);
+            Logger.LogInformation("Removing player {PlayerId}", playerId);
             await PlayerRepository.DeleteAsync(playerId);
         }
 

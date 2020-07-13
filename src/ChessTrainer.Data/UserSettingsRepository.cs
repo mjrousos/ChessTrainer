@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using AutoMapper;
-using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
 using MjrChess.Trainer.Models;
 
@@ -11,8 +9,5 @@ namespace MjrChess.Trainer.Data
         public UserSettingsRepository(PuzzleDbContext context, IMapper mapper, ILogger<EFRepository<Data.Models.UserSettings, UserSettings>> logger)
             : base(context, mapper, logger)
         { }
-
-        protected override IQueryable<Data.Models.UserSettings> DbSetWithRelatedEntities =>
-            base.DbSetWithRelatedEntities.Include(s => s.PreferredPlayers).ThenInclude(p => p.Player);
     }
 }

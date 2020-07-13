@@ -9,6 +9,6 @@ namespace MjrChess.Trainer.Services
 
         Task<int> GetPlayerPuzzleCountAsync(int playerId);
 
-        Task CleanUpPlayerAsync(int playerId);
+        Task DeletePlayerAsync(int playerId);
     }
 }

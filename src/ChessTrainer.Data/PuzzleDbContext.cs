@@ -71,18 +71,12 @@ namespace MjrChess.Trainer.Data
                 .Property(s => s.UserId)
                 .IsRequired();
 
-            modelBuilder.Entity<UserSettings>()
-                .HasMany(s => s.PreferredPlayers)
-                .WithOne();
-
             // User settings x Players join configuration
             modelBuilder.Entity<UserSettingsXPlayer>()
                 .HasKey(x => new { x.UserSettingsId, x.PlayerId });
 
             modelBuilder.Entity<UserSettingsXPlayer>()
-                .HasOne(x => x.UserSettings)
-                .WithMany(s => s.PreferredPlayers)
-                .HasForeignKey(x => x.UserSettingsId);
+                .HasOne(x => x.UserSettings);
 
             modelBuilder.Entity<UserSettingsXPlayer>()
                 .HasOne(x => x.Player)
