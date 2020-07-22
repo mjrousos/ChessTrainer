@@ -1,5 +1,8 @@
 ﻿namespace MjrChess.Trainer.Models
 {
+    /// <summary>
+    /// Popular internet chess sites where the games the puzzles come from may have been played.
+    /// </summary>
     public enum ChessSites
     {
         /// <summary>

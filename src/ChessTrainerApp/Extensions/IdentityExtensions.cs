@@ -4,11 +4,14 @@ namespace MjrChess.Trainer
 {
     public static class IdentityExtensions
     {
-        private const string UserIdClaimType = ClaimTypes.NameIdentifier;
-
+        /// <summary>
+        /// Helper method for getting user ID from a ClaimsPrincipal.
+        /// </summary>
+        /// <param name="principal">A ClaimsPrincipal representing a user.</param>
+        /// <returns>The user's ID or null if no name ID claim exists.</returns>
         public static string? GetUserId(this ClaimsPrincipal principal)
         {
-            return principal?.FindFirstValue(UserIdClaimType);
+            return principal?.FindFirstValue(ClaimTypes.NameIdentifier);
         }
     }
 }

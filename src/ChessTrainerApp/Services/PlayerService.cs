@@ -46,10 +46,5 @@ namespace MjrChess.Trainer.Services
 
             return player;
         }
-
-        public async Task<int> GetPlayerPuzzleCountAsync(int playerId) =>
-            await PuzzleRepository
-                .Query(p => p.AssociatedPlayerId == playerId)
-                .CountAsync();
     }
 }
