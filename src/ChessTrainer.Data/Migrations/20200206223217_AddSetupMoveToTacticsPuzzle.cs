@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace MjrChess.Trainer.Migrations
+namespace MjrChess.Trainer.Data.Migrations
 {
     /// <summary>
     /// Migration for adding SetupMove to tactices puzzles.
