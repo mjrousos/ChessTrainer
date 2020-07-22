@@ -23,7 +23,7 @@ namespace MjrChess.Trainer.Components
 
         private IPuzzleService PuzzleService { get; set; } = default!;
 
-        private IUserService UserService { get; set; } = default!;
+        private IHistoryService UserService { get; set; } = default!;
 
         [CascadingParameter]
 #pragma warning disable SA1300 // Element should begin with upper-case letter
@@ -79,7 +79,7 @@ namespace MjrChess.Trainer.Components
         protected override void OnInitialized()
         {
             PuzzleService = ScopedServices.GetRequiredService<IPuzzleService>();
-            UserService = ScopedServices.GetRequiredService<IUserService>();
+            UserService = ScopedServices.GetRequiredService<IHistoryService>();
 
             base.OnInitialized();
         }

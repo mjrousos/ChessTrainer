@@ -13,18 +13,14 @@ namespace MjrChess.Trainer.Services
 
         public IRepository<TacticsPuzzle> PuzzleRepository { get; }
 
-        public IRepository<UserSettings> UserSettingsRepository { get; }
-
         public ILogger<PlayerService> Logger { get; }
 
         public PlayerService(IRepository<Player> playerRepository,
                              IRepository<TacticsPuzzle> puzzleRepository,
-                             IRepository<UserSettings> userSettingsRepository,
                              ILogger<PlayerService> logger)
         {
             PlayerRepository = playerRepository ?? throw new ArgumentNullException(nameof(playerRepository));
             PuzzleRepository = puzzleRepository ?? throw new ArgumentNullException(nameof(puzzleRepository));
-            UserSettingsRepository = userSettingsRepository ?? throw new ArgumentNullException(nameof(userSettingsRepository));
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -39,7 +35,7 @@ namespace MjrChess.Trainer.Services
             var player = await PlayerRepository.Query(p => name.ToLower().Equals(p.Name.ToLower()) && site == p.Site).FirstOrDefaultAsync();
             if (player is null)
             {
-                // TODO: Validate that player exists
+                // TODO: Validate that player exists on the given site
                 player = await PlayerRepository.AddAsync(new Player(name, site));
                 Logger.LogInformation("Added new player {PlayerId}", player.Id);
             }

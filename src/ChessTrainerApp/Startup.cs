@@ -34,7 +34,7 @@ namespace MjrChess.Trainer
 
             services.AddScoped<IPlayerService, PlayerService>();
             services.AddScoped<IPuzzleService, PuzzleService>();
-            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IHistoryService, HistoryService>();
 
             services.AddRazorPages();
             services.AddServerSideBlazor();

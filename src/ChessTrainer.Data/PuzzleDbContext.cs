@@ -14,10 +14,6 @@ namespace MjrChess.Trainer.Data
 
         public DbSet<TacticsPuzzle> Puzzles { get; set; } = default!;
 
-        public DbSet<UserSettings> UserSettings { get; set; } = default!;
-
-        public DbSet<UserSettingsXPlayer> UserSettingsXPlayers { get; set; } = default!;
-
         public PuzzleDbContext(DbContextOptions<PuzzleDbContext> options)
             : base(options)
         { }
@@ -65,23 +61,6 @@ namespace MjrChess.Trainer.Data
             modelBuilder.Entity<TacticsPuzzle>()
                 .HasMany(p => p.History)
                 .WithOne(h => h.Puzzle);
-
-            // User settings configuration
-            modelBuilder.Entity<UserSettings>()
-                .Property(s => s.UserId)
-                .IsRequired();
-
-            // User settings x Players join configuration
-            modelBuilder.Entity<UserSettingsXPlayer>()
-                .HasKey(x => new { x.UserSettingsId, x.PlayerId });
-
-            modelBuilder.Entity<UserSettingsXPlayer>()
-                .HasOne(x => x.UserSettings);
-
-            modelBuilder.Entity<UserSettingsXPlayer>()
-                .HasOne(x => x.Player)
-                .WithMany()
-                .HasForeignKey(x => x.PlayerId);
 
             SeedData(modelBuilder);
         }

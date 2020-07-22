@@ -14,15 +14,12 @@ namespace MjrChess.Trainer.Data
             CreateMap<Data.Models.Player, Trainer.Models.Player>();
             CreateMap<Data.Models.PuzzleHistory, Trainer.Models.PuzzleHistory>();
             CreateMap<Data.Models.TacticsPuzzle, Trainer.Models.TacticsPuzzle>();
-            CreateMap<Data.Models.UserSettings, Trainer.Models.UserSettings>();
             CreateMap<Trainer.Models.Player, Data.Models.Player>()
                 .ConstructUsing((p, resolutonContext) => GetDbObjectOrCreate(p, new Data.Models.Player(p.Name, p.Site)));
             CreateMap<Trainer.Models.PuzzleHistory, Data.Models.PuzzleHistory>()
                 .ConstructUsing((p, resolutonContext) => GetDbObjectOrCreate(p, new Data.Models.PuzzleHistory()));
             CreateMap<Trainer.Models.TacticsPuzzle, Data.Models.TacticsPuzzle>()
                 .ConstructUsing((p, resolutonContext) => GetDbObjectOrCreate(p, new Data.Models.TacticsPuzzle(p.Position)));
-            CreateMap<Trainer.Models.UserSettings, Data.Models.UserSettings>()
-                .ConstructUsing((p, resolutonContext) => GetDbObjectOrCreate(p, new Data.Models.UserSettings()));
         }
 
         private TDomainType GetDbObjectOrCreate<TDtoType, TDomainType>(TDtoType dto, TDomainType defaultObject)

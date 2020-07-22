@@ -4,7 +4,7 @@ using MjrChess.Trainer.Models;
 
 namespace MjrChess.Trainer.Services
 {
-    public interface IUserService
+    public interface IHistoryService
     {
         Task<IEnumerable<PuzzleHistory>> GetPuzzleHistoryAsync(string userId);
 

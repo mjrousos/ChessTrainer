@@ -8,17 +8,14 @@ using MjrChess.Trainer.Models;
 
 namespace MjrChess.Trainer.Services
 {
-    public class UserService : IUserService
+    public class HistoryService : IHistoryService
     {
-        public IRepository<UserSettings> UserSettingsRepository { get; }
-
         public IRepository<PuzzleHistory> PuzzleHistoryRepository { get; }
 
-        public ILogger<UserService> Logger { get; }
+        public ILogger<HistoryService> Logger { get; }
 
-        public UserService(IRepository<UserSettings> userSettingsRepository, IRepository<PuzzleHistory> puzzleHistoryRepository, ILogger<UserService> logger)
+        public HistoryService(IRepository<PuzzleHistory> puzzleHistoryRepository, ILogger<HistoryService> logger)
         {
-            UserSettingsRepository = userSettingsRepository ?? throw new ArgumentNullException(nameof(userSettingsRepository));
             PuzzleHistoryRepository = puzzleHistoryRepository ?? throw new ArgumentNullException(nameof(puzzleHistoryRepository));
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
