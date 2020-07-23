@@ -3,10 +3,19 @@ using MjrChess.Engine.Utilities;
 
 namespace MjrChess.Engine.Models
 {
+    /// <summary>
+    /// Represents a square on a chess board.
+    /// </summary>
     public readonly struct BoardPosition : IEquatable<BoardPosition>
     {
+        /// <summary>
+        /// Gets the 0-based index of the file of the position.
+        /// </summary>
         public int File { get; }
 
+        /// <summary>
+        /// Gets the 0-based index of the rank of the position.
+        /// </summary>
         public int Rank { get; }
 
         public BoardPosition(int file, int rank)
@@ -38,7 +47,7 @@ namespace MjrChess.Engine.Models
         // faster since the default uses reflection.
         public bool Equals(BoardPosition other) => File == other.File && Rank == other.Rank;
 
-        public override bool Equals(object obj) => (obj is BoardPosition pos) ? Equals(pos) : false;
+        public override bool Equals(object obj) => (obj is BoardPosition pos) && Equals(pos);
 
         public override int GetHashCode() => (File * 100) + Rank;
 

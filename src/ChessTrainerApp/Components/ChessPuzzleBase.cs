@@ -16,7 +16,7 @@ namespace MjrChess.Trainer.Components
     public class ChessPuzzleBase : OwningComponentBase
     {
         private const int HistoryCount = 10;
-        private ChessEngine _puzzleEngine = default!;
+        private ChessEngine puzzleEngine = default!;
 
         [Inject]
         private ILogger<ChessPuzzleBase> Logger { get; set; } = default!;
@@ -27,35 +27,37 @@ namespace MjrChess.Trainer.Components
 
         [CascadingParameter]
 #pragma warning disable SA1300 // Element should begin with upper-case letter
+#pragma warning disable IDE1006 // Apply .editorconfig rules
         private Task<AuthenticationState> authenticationStateTask { get; set; } = default!;
 #pragma warning restore SA1300 // Element should begin with upper-case letter
+#pragma warning restore IDE1006 // Apply .editorconfig rules
 
         private async Task<string?> GetUserId() => (await authenticationStateTask)?.User?.GetUserId();
 
         [Inject]
         protected ChessEngine PuzzleEngine
         {
-            get => _puzzleEngine;
+            get => puzzleEngine;
             set
             {
-                if (_puzzleEngine != null)
+                if (puzzleEngine != null)
                 {
-                    _puzzleEngine.Game.OnMove -= HandleMove;
+                    puzzleEngine.Game.OnMove -= HandleMove;
                 }
 
-                _puzzleEngine = value;
-                _puzzleEngine.Game.OnMove += HandleMove;
+                puzzleEngine = value;
+                puzzleEngine.Game.OnMove += HandleMove;
             }
         }
 
-        private TacticsPuzzle? _currentPuzzle;
+        private TacticsPuzzle? currentPuzzle;
 
         protected TacticsPuzzle? CurrentPuzzle
         {
-            get => _currentPuzzle;
+            get => currentPuzzle;
             set
             {
-                _currentPuzzle = value;
+                currentPuzzle = value;
                 if (value != null)
                 {
                     PuzzleReady = false;

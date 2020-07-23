@@ -2,6 +2,9 @@
 
 namespace MjrChess.Engine.Models
 {
+    /// <summary>
+    /// Castling options players may have availble.
+    /// </summary>
     [Flags]
     public enum CastlingOptions
     {

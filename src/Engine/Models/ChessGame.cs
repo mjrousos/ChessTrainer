@@ -7,23 +7,32 @@ using MjrChess.Engine.Utilities;
 
 namespace MjrChess.Engine.Models
 {
+    /// <summary>
+    /// Represents a chess game, including initial starting position, moves, and metadata.
+    /// </summary>
     public class ChessGame
     {
-        public const int DefaultBoardSize = 8;
+        private const int DefaultBoardSize = 8;
         private const string InitialGameFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         private const char FenRankDelimiter = '/';
 
         // Stores which piece (if any) is on each board space
-        private ChessPiece?[][] boardState = default!; // https://github.com/dotnet/csharplang/issues/2869
+        private ChessPiece?[][] boardState = new ChessPiece[DefaultBoardSize][];
 
+        /// <summary>
+        /// Gets or sets the number of squares on one side of the chess board.
+        /// </summary>
         public int BoardSize { get; set; } = DefaultBoardSize;
 
-        public string StartingFEN { get; set; } = default!; // https://github.com/dotnet/csharplang/issues/2869
+        /// <summary>
+        /// Gets or sets the position the game began from in FEN notation.
+        /// </summary>
+        public string StartingFEN { get; set; } = InitialGameFEN;
 
         /// <summary>
         /// Gets or sets moves since initial position.
         /// </summary>
-        public IList<Move> Moves { get; set; } = default!; // https://github.com/dotnet/csharplang/issues/2869
+        public IList<Move> Moves { get; set; } = new List<Move>();
 
         /// <summary>
         /// Gets or sets the name of the event this game was a part of.
@@ -81,12 +90,12 @@ namespace MjrChess.Engine.Models
         /// <summary>
         /// Gets or sets name of the player with the white pieces (if known).
         /// </summary>
-        public string WhitePlayer { get; set; } = default!; // https://github.com/dotnet/csharplang/issues/2869
+        public string? WhitePlayer { get; set; }
 
         /// <summary>
         /// Gets or sets name of the player with the black pieces (if known).
         /// </summary>
-        public string BlackPlayer { get; set; } = default!; // https://github.com/dotnet/csharplang/issues/2869
+        public string? BlackPlayer { get; set; }
 
         /// <summary>
         /// Gets an integer representing white's advantage (or disadvantage).

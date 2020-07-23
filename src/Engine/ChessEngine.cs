@@ -13,19 +13,28 @@ namespace MjrChess.Engine
     /// </summary>
     public class ChessEngine
     {
+        /// <summary>
+        /// Regex for parsing a PGN representation of a chess game.
+        /// </summary>
         private static readonly Regex PgnRegex =
 
             // :       Tag pairs with the form `[Name "Value"]`          Move list with the form `#. WhiteMove BlackMove `                Result with the form `1-0|0-1|1/2-1/2`
             new Regex("(?:\\[(?'key'.+?)\\s+\\\"(?'value'.+)\\\"\\]\\s+)+(?:\\d+\\.\\s*(?'whiteMove'\\S+)\\s+(?:(?'blackMove'\\S+)\\s+)?)+(?'result'1\\-0|0\\-1|1\\/2\\-1\\/2)?", RegexOptions.Compiled);
 
-        // This doesn't capture whether the move checks, checkmates, or captures since those aren't necessary to find the move from legal moves
-        // If we needed that information, the x could be captured and `(?:(?'checks'\+)|(?'checkmates'#))?` could be added to the end of the expression
-        // (after wrapping it as a non-capturing group). Doing that now, though, would just make the expressions a bit slower and more complicated unnecessarilly.
+        /// <summary>
+        /// Regex for parsing a chess move from (long or short) algebraic notation.
+        /// </summary>
         private static readonly Regex AlgebraicNotationRegex =
 
+            // This doesn't capture whether the move checks, checkmates, or captures since those aren't necessary to find the move from legal moves
+            // If we needed that information, the x could be captured and `(?:(?'checks'\+)|(?'checkmates'#))?` could be added to the end of the expression
+            // (after wrapping it as a non-capturing group). Doing that now, though, would just make the expressions a bit slower and more complicated unnecessarilly.
             // :       Long castle `O-O-O`       Short castle `O-O`   Piece moved       File disambiguator     Rank disambiguator     Capture?  Final position              Piece promoted to
             new Regex("(?'longCastle'O\\-O\\-O)|(?'shortCastle'O\\-O)|(?'piece'[KQRBN])?(?'originalFile'[a-h])?(?'originalRank'[1-8])?(?:\\-|x)?(?'finalPosition'[a-h][1-8])(=(?'promotedTo'[QRBN]))?");
 
+        /// <summary>
+        /// Gets legal moves for a rook.
+        /// </summary>
         private static IEnumerable<Func<BoardPosition, BoardPosition>> RookMovements => new Func<BoardPosition, BoardPosition>[]
         {
             position => new BoardPosition(position.File + 1, position.Rank),
@@ -34,6 +43,9 @@ namespace MjrChess.Engine
             position => new BoardPosition(position.File, position.Rank - 1)
         };
 
+        /// <summary>
+        /// Gets legal moves for a bishop.
+        /// </summary>
         private static IEnumerable<Func<BoardPosition, BoardPosition>> BishopMovements => new Func<BoardPosition, BoardPosition>[]
         {
             position => new BoardPosition(position.File + 1, position.Rank + 1),
@@ -42,6 +54,9 @@ namespace MjrChess.Engine
             position => new BoardPosition(position.File - 1, position.Rank - 1)
         };
 
+        /// <summary>
+        /// Gets legal moves for a knight.
+        /// </summary>
         private static IEnumerable<Func<BoardPosition, BoardPosition>> KnightMovements => new Func<BoardPosition, BoardPosition>[]
         {
             position => new BoardPosition(position.File + 2, position.Rank + 1),
@@ -54,8 +69,14 @@ namespace MjrChess.Engine
             position => new BoardPosition(position.File - 1, position.Rank - 2)
         };
 
+        /// <summary>
+        /// Gets legal moves for a king or queen.
+        /// </summary>
         private static IEnumerable<Func<BoardPosition, BoardPosition>> RoyalMovements => RookMovements.Union(BishopMovements);
 
+        /// <summary>
+        /// Gets the chess game being analyzed by the engine.
+        /// </summary>
         public ChessGame Game { get; internal set; }
 
         // This is created as an instance class (even though identifying legal moves
@@ -166,7 +187,7 @@ namespace MjrChess.Engine
         }
 
         /// <summary>
-        /// Loads chess game into the analysis engine.
+        /// Loads a chess game into the analysis engine.
         /// </summary>
         /// <param name="game">The game to load.</param>
         public void LoadPosition(ChessGame game)
@@ -220,6 +241,10 @@ namespace MjrChess.Engine
                 _ => Enumerable.Empty<Move>()
             };
 
+        /// <summary>
+        /// Checks whether a move would be amgibuous expressed in short algebraic notation and sets ambiguous properties, if necessary.
+        /// </summary>
+        /// <param name="move">The move to check.</param>
         private void CheckForAmbiguousMove(Move move)
         {
             var similarPieces = Game.Pieces.Where(p => p.PieceType == move.PieceMoved);
@@ -245,6 +270,10 @@ namespace MjrChess.Engine
             }
         }
 
+        /// <summary>
+        /// Checks whether the given move gives check.
+        /// </summary>
+        /// <param name="move">The move to check.</param>
         private void CheckForCheck(Move move)
         {
             var whiteMoving = ChessFormatter.IsPieceWhite(move.PieceMoved);
@@ -277,6 +306,10 @@ namespace MjrChess.Engine
             }
         }
 
+        /// <summary>
+        /// Checks whether a given move gives checkmate.
+        /// </summary>
+        /// <param name="move">The move to check.</param>
         private void CheckForMate(Move move)
         {
             // Create a hypothetical board state if the propose move was made
@@ -303,6 +336,11 @@ namespace MjrChess.Engine
             }
         }
 
+        /// <summary>
+        /// Check whether a given possible move is legal (based on whether it leaves the king in check).
+        /// </summary>
+        /// <param name="move">The move to analyze.</param>
+        /// <returns>True if the move is legal, false otherwise.</returns>
         private bool IsLegal(Move move)
         {
             var whiteMoving = ChessFormatter.IsPieceWhite(move.PieceMoved);
@@ -332,7 +370,7 @@ namespace MjrChess.Engine
         }
 
         /// <summary>
-        /// Gets possible (unvalidated) moves for a pawn based on board position.
+        /// Gets possible (unvalidated) moves for a pawn based on the current board position.
         /// </summary>
         /// <remarks>If the pawn would be promoted, indicate queen promotion with the intention that the caller will see this and adjust, if necessary.</remarks>
         /// <param name="pawn">The pawn to move.</param>
@@ -369,6 +407,11 @@ namespace MjrChess.Engine
             }
         }
 
+        /// <summary>
+        /// Gets possible (unvalidated) moves for a king based on the current board position.
+        /// </summary>
+        /// <param name="king">The king to move.</param>
+        /// <returns>Possible squares to move to (considering the position of the king and other pieces, but not considering check).</returns>
         private IEnumerable<Move> GetKingMoves(ChessPiece king)
         {
             var whiteKing = ChessFormatter.IsPieceWhite(king.PieceType);
@@ -431,6 +474,11 @@ namespace MjrChess.Engine
             }
         }
 
+        /// <summary>
+        /// Gets possible (unvalidated) moves for a knight based on the current board position.
+        /// </summary>
+        /// <param name="knight">The knight to move.</param>
+        /// <returns>Possible squares to move to (considering the position of the knight and other pieces, but not considering check).</returns>
         private IEnumerable<Move> GetKnightMoves(ChessPiece knight)
         {
             foreach (var applyMovement in KnightMovements)
@@ -454,11 +502,26 @@ namespace MjrChess.Engine
             }
         }
 
+        /// <summary>
+        /// Gets possible (unvalidated) moves for a rook based on the current board position.
+        /// </summary>
+        /// <param name="rook">The rook to move.</param>
+        /// <returns>Possible squares to move to (considering the position of the rook and other pieces, but not considering check).</returns>
         private IEnumerable<Move> GetRookMoves(ChessPiece rook) => GetStraightPieceMoves(rook, RookMovements);
 
-        private IEnumerable<Move> GetBishopMoves(ChessPiece rook) => GetStraightPieceMoves(rook, BishopMovements);
+        /// <summary>
+        /// Gets possible (unvalidated) moves for a bishop based on the current board position.
+        /// </summary>
+        /// <param name="bishop">The bishop to move.</param>
+        /// <returns>Possible squares to move to (considering the position of the bishop and other pieces, but not considering check).</returns>
+        private IEnumerable<Move> GetBishopMoves(ChessPiece bishop) => GetStraightPieceMoves(bishop, BishopMovements);
 
-        private IEnumerable<Move> GetQueenMoves(ChessPiece rook) => GetStraightPieceMoves(rook, RoyalMovements);
+        /// <summary>
+        /// Gets possible (unvalidated) moves for a queen based on the current board position.
+        /// </summary>
+        /// <param name="queen">The queen to move.</param>
+        /// <returns>Possible squares to move to (considering the position of the queen and other pieces, but not considering check).</returns>
+        private IEnumerable<Move> GetQueenMoves(ChessPiece queen) => GetStraightPieceMoves(queen, RoyalMovements);
 
         private IEnumerable<Move> GetStraightPieceMoves(ChessPiece piece, IEnumerable<Func<BoardPosition, BoardPosition>> movements)
         {
@@ -491,6 +554,13 @@ namespace MjrChess.Engine
             }
         }
 
+        /// <summary>
+        /// Creates a move based on piece to be moved, final position, and whether the move is a capture.
+        /// </summary>
+        /// <param name="piece">The piece to be moved.</param>
+        /// <param name="finalPosition">The board square to move the piece to.</param>
+        /// <param name="capture">Whether the move captures another piece.</param>
+        /// <returns>A move representing the indicated piece movement.</returns>
         private Move CreateMoveFromPiece(ChessPiece piece, BoardPosition finalPosition, bool capture)
         {
             var promoted = (piece.PieceType == ChessPieces.WhitePawn || piece.PieceType == ChessPieces.BlackPawn) && finalPosition.Rank % (Game.BoardSize - 1) == 0;
@@ -626,7 +696,7 @@ namespace MjrChess.Engine
                 throw new ArgumentException($"The move {move} is impossible", nameof(move));
             }
 
-            var resolvedMove = possibleMoves.First();
+            var resolvedMove = possibleMoves.Single();
 
             if (promotedTo.HasValue)
             {

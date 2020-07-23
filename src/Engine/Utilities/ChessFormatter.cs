@@ -12,7 +12,10 @@ namespace MjrChess.Engine.Utilities
     /// </summary>
     public static class ChessFormatter
     {
-        public static ChessPieces[] WhitePieces => new[]
+        /// <summary>
+        /// Gets a collection of chess pieces controlled by the white player.
+        /// </summary>
+        public static ChessPieces[] WhitePieces { get; } = new[]
         {
             ChessPieces.WhiteKing,
             ChessPieces.WhiteQueen,
@@ -22,7 +25,17 @@ namespace MjrChess.Engine.Utilities
             ChessPieces.WhitePawn
         };
 
-        public static ChessPieces[] StartingWhitePieces => new[]
+        /// <summary>
+        /// Determines whether a given chess piece is controlled by the white player.
+        /// </summary>
+        /// <param name="piece">The type of chess piece.</param>
+        /// <returns>True if the piece belongs to the white player and false otherwise.</returns>
+        public static bool IsPieceWhite(ChessPieces piece) => WhitePieces.Contains(piece);
+
+        /// <summary>
+        /// Gets a collection of chess pieces the white player controls at the beginning of the game.
+        /// </summary>
+        public static ChessPieces[] StartingWhitePieces { get; } = new[]
         {
             ChessPieces.WhitePawn,
             ChessPieces.WhitePawn,
@@ -42,7 +55,10 @@ namespace MjrChess.Engine.Utilities
             ChessPieces.WhiteRook
         };
 
-        public static ChessPieces[] StartingBlackPieces => new[]
+        /// <summary>
+        /// Gets a collection of chess pieces the black player controls at the beginning of the game.
+        /// </summary>
+        public static ChessPieces[] StartingBlackPieces { get; } = new[]
         {
             ChessPieces.BlackPawn,
             ChessPieces.BlackPawn,
@@ -62,16 +78,46 @@ namespace MjrChess.Engine.Utilities
             ChessPieces.BlackRook
         };
 
+        /// <summary>
+        /// Converts a rank index to its string equivalent.
+        /// </summary>
+        /// <param name="rank">The 0-based index of the rank.</param>
+        /// <returns>A string description of the rank.</returns>
         public static string RankToString(int rank) => $"{rank + 1}";
 
+        /// <summary>
+        /// Converts a rank to its 0-based index.
+        /// </summary>
+        /// <param name="rank">A string description of the rank.</param>
+        /// <returns>An integer representing the 0-based index of the rank.</returns>
         public static int RankFromString(string rank) => int.Parse(rank, CultureInfo.InvariantCulture) - 1;
 
+        /// <summary>
+        /// Converts a rank to its 0-based index.
+        /// </summary>
+        /// <param name="rank">A one character description of the rank.</param>
+        /// <returns>An integer representing the 0-based index of the rank.</returns>
         public static int RankFromChar(char rank) => RankFromString(rank.ToString(CultureInfo.InvariantCulture));
 
+        /// <summary>
+        /// Converts a file index to its string equivalent.
+        /// </summary>
+        /// <param name="file">The 0-based index of the file.</param>
+        /// <returns>A string description of the file.</returns>
         public static string FileToString(int file) => $"{(char)(file + 0x61)}";
 
+        /// <summary>
+        /// Converts a file to its 0-based index.
+        /// </summary>
+        /// <param name="file">A string description of the file.</param>
+        /// <returns>An integer representing the 0-based index of the file.</returns>
         public static int FileFromString(string file) => FileFromChar(file[0]);
 
+        /// <summary>
+        /// Converts a file to its 0-based index.
+        /// </summary>
+        /// <param name="file">A one character description of the file.</param>
+        /// <returns>An integer representing the 0-based index of the file.</returns>
         public static int FileFromChar(char file) => file - 0x61;
 
         /// <summary>
@@ -99,6 +145,11 @@ namespace MjrChess.Engine.Utilities
                 _ => 0
             };
 
+        /// <summary>
+        /// Formats a game result as a string.
+        /// </summary>
+        /// <param name="result">The game result.</param>
+        /// <returns>A common string representation of the game result.</returns>
         public static string ResultToString(GameResult result) =>
             result switch
             {
@@ -108,6 +159,11 @@ namespace MjrChess.Engine.Utilities
                 _ => "*"
             };
 
+        /// <summary>
+        /// Parses a game result from a string.
+        /// </summary>
+        /// <param name="result">String representation of the game result.</param>
+        /// <returns>The game result.</returns>
         public static GameResult ResultFromString(string result) =>
             result switch
             {
@@ -278,6 +334,12 @@ namespace MjrChess.Engine.Utilities
             return output.ToString();
         }
 
+        /// <summary>
+        /// Formats a series of chess moves into a string using standard algebraic notation.
+        /// </summary>
+        /// <param name="moves">The collection of moves to convert to a string.</param>
+        /// <param name="firstMoveCount">The move number for the first move in moves.</param>
+        /// <returns>A string with standard algebraic notation of the moves preceeded by the move count.</returns>
         public static string MovesToString(IEnumerable<Move> moves, int firstMoveCount = 1)
         {
             var movesString = new StringBuilder();
@@ -320,7 +382,5 @@ namespace MjrChess.Engine.Utilities
 
             return movesString.ToString().TrimEnd();
         }
-
-        public static bool IsPieceWhite(ChessPieces piece) => WhitePieces.Contains(piece);
     }
 }

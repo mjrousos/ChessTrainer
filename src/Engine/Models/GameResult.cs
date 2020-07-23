@@ -1,5 +1,8 @@
 ﻿namespace MjrChess.Engine.Models
 {
+    /// <summary>
+    /// Possible results for a chess game.
+    /// </summary>
     public enum GameResult
     {
         /// <summary>

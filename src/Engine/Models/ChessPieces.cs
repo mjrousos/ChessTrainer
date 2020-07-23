@@ -1,5 +1,8 @@
 ﻿namespace MjrChess.Engine.Models
 {
+    /// <summary>
+    /// Chess pieces.
+    /// </summary>
     public enum ChessPieces
     {
         /// <summary>
