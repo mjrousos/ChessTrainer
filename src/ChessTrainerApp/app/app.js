@@ -14,16 +14,13 @@ import { faCodeBranch } from '@fortawesome/free-solid-svg-icons/faCodeBranch';
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons/faExternalLinkAlt';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
 
-var primaryNotifier;
-var copyNotifier;
-var copyButton;
-
 // Add FA icons to library
 library.add(faChessKing, faChessQueen, faCodeBranch, faExternalLinkAlt, faQuestion);
 
 // Watch for <i> elements and update to appropriate <svg>
 dom.watch();
 
+// Attach MDC elements
 window.attachMDC = () => {
     const buttons = document.querySelectorAll('.mdc-button');
     for (const button of buttons) {
@@ -64,18 +61,15 @@ window.attachMDC = () => {
     for (const list of lists) {
         new MDCList(list);
     }
-
-    primaryNotifier = new MDCSnackbar(document.getElementById('PrimaryNotifier'));
-    copyNotifier = new MDCSnackbar(document.getElementById('CopyNotifier'));
-    copyNotifier.timeoutMs = 10000;
-    copyButton = document.getElementById("CopyButton");
 };
 
+// Toggle drawer open/close by element name
 window.toggleDrawer = (drawerName) => {
     var drawer = MDCDrawer.attachTo(document.querySelector('#' + drawerName));
     drawer.open = !drawer.open;
 };
 
+// Get the bounding rectangle for a component
 window.getBoundingRectangle = (componentId) => {
     var element = document.getElementById(componentId);
     if (element) {
@@ -96,8 +90,12 @@ window.getBoundingRectangle = (componentId) => {
     }
 };
 
+// Show notification with 'copy' button
 window.notifyWithCopy = (text, copyText) => {
+    var copyNotifier = new MDCSnackbar(document.getElementById('CopyNotifier'));
+    copyNotifier.timeoutMs = 10000;
     copyNotifier.labelText = text;
+    var copyButton = document.getElementById("CopyButton");
     copyButton.onclick = () => {
         window.copyToClipboard(text);
         window.notify(copyText);
@@ -105,19 +103,23 @@ window.notifyWithCopy = (text, copyText) => {
     copyNotifier.open();
 };
 
+// Show notification
 window.notify = (text) => {
+    var primaryNotifier = new MDCSnackbar(document.getElementById('PrimaryNotifier'));
     primaryNotifier.labelText = text;
     primaryNotifier.open();
 };
 
+// Copies text to the clipboard
 window.copyToClipboard = (text) => {
-    // Note that this doesn't work with (pre-beta) Edge or Safari
-    // If I want to support browsers other than Chrome, FireFox, and Edge Beta,
+    // Note that this doesn't work with (old) Edge or Safari
+    // If I want to support browsers other than Chrome, FireFox, and new Edge,
     // I'll need to replace this with a more general solution.
     // https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText
     return navigator.clipboard.writeText(text);
 };
 
+// Gets the selected data-value of an MDC list
 window.getSelectValue = (selectElement) => {
     var selected = selectElement.querySelector('.mdc-list-item--selected');
     return (selected ? selected.getAttribute('data-value') : null);
