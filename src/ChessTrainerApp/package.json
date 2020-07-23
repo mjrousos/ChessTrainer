@@ -1,7 +1,7 @@
 {
   "name": "chesstrainerapp",
   "description": "Blazor web app for practicing chess tactics",
-  "repository": "https://dotnetcst.visualstudio.com/DefaultCollection/LearningProjects/_git/ChessTrainer",
+  "repository": "https://github.com/mjrousos/chesstrainer",
   "version": "1.0.0",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.12.0",
