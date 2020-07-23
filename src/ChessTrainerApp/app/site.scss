@@ -174,7 +174,7 @@ html, body {
     height: auto;
     z-index: 0;
 }
-
+// Style for square decorators like check and legal move outlines
 .boardSquareDecorator {
     pointer-events: none;
     width: 12.5%;
@@ -185,6 +185,7 @@ html, body {
     left: 0px;
 }
 
+// Style for captured pieces shown next to board
 .capturedPieces {
     min-height: 32px;
 }
@@ -199,6 +200,7 @@ html, body {
     margin-top: -3.6px; // Line up with <h2> text
 }
 
+// Style for chess pieces on a chess board
 .piece {
     pointer-events: none;
     width: 12.5%;
@@ -209,6 +211,7 @@ html, body {
     left: 0px;
 }
 
+// Styles for positioning pieces on different board squares
 .a1 { top: 87.5%; left: 0%;}
 .a2 { top: 75%; left: 0%;}
 .a3 { top: 62.5%; left: 0%;}
