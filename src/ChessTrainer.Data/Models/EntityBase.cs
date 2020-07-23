@@ -4,6 +4,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MjrChess.Trainer.Data.Models
 {
+    /// <summary>
+    /// Base type for EF entities with common ID, date created, and date modified properties.
+    /// </summary>
     public class EntityBase
     {
         [Key]

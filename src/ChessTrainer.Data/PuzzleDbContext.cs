@@ -65,13 +65,19 @@ namespace MjrChess.Trainer.Data
             SeedData(modelBuilder);
         }
 
+        /// <summary>
+        /// Populates the DB context with seed data (some initial puzzles and players).
+        /// </summary>
+        /// <param name="modelBuilder">The model builder to seed.</param>
         private void SeedData(ModelBuilder modelBuilder)
         {
+            // Some initial players
             modelBuilder.Entity<Player>()
                 .HasData(
                     new Player("aupoil", Trainer.Models.ChessSites.LiChess) { Id = 1, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
                     new Player("toskekg", Trainer.Models.ChessSites.LiChess) { Id = 2, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now });
 
+            // Some initial puzzles
             modelBuilder.Entity<TacticsPuzzle>()
                 .HasData(
                     new
@@ -88,8 +94,7 @@ namespace MjrChess.Trainer.Data
                         SetupMovedTo = "c6",
                         WhitePlayerName = "Hustler",
                         BlackPlayerId = "Noobie",
-                        GameDate = new DateTimeOffset(2015, 2, 7, 0, 0, 0, TimeSpan.Zero),
-                        AssociatedPlayerId = 0
+                        GameDate = new DateTimeOffset(2015, 2, 7, 0, 0, 0, TimeSpan.Zero)
                     },
                     new
                     {
@@ -107,8 +112,7 @@ namespace MjrChess.Trainer.Data
                         BlackPlayerName = "aupoil",
                         GameDate = new DateTimeOffset(2016, 8, 8, 0, 0, 0, TimeSpan.Zero),
                         Site = "lichess.org",
-                        GameUrl = "https://lichess.org/3piQphpY",
-                        AssociatedPlayerId = 1
+                        GameUrl = "https://lichess.org/3piQphpY"
                     },
                     new
                     {
@@ -129,23 +133,34 @@ namespace MjrChess.Trainer.Data
                         BlackPlayerName = "wolfwolf",
                         GameDate = new DateTimeOffset(2016, 10, 7, 0, 0, 0, TimeSpan.Zero),
                         Site = "lichess.org",
-                        GameUrl = "https://lichess.org/HjVhr1Dn",
-                        AssociatedPlayerId = 2
+                        GameUrl = "https://lichess.org/HjVhr1Dn"
                     });
         }
 
+        /// <summary>
+        /// Update timestamps and save changes to the database.
+        /// </summary>
+        /// <returns>The number of state entries written to the database.</returns>
         public override int SaveChanges()
         {
             UpdateTimestamps();
             return base.SaveChanges();
         }
 
+        /// <summary>
+        /// Update timestamps and save changes to the database.
+        /// </summary>
+        /// <param name="cancellationToken">A System.Threading.CancellationToken to observe while waiting for the task to complete.</param>
+        /// <returns>The number of state entries written to the database.</returns>
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             UpdateTimestamps();
             return base.SaveChangesAsync(cancellationToken);
         }
 
+        /// <summary>
+        /// Update created date and modified timestamps, as appropriate with the current time.
+        /// </summary>
         private void UpdateTimestamps()
         {
             var updateTime = DateTimeOffset.Now;
