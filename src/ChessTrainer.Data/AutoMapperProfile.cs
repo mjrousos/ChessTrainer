@@ -22,14 +22,11 @@ namespace MjrChess.Trainer.Data
             Context = context ?? throw new ArgumentNullException(nameof(context));
 
             // Map data models to domain models
-            CreateMap<Data.Models.Player, Trainer.Models.Player>();
             CreateMap<Data.Models.PuzzleHistory, Trainer.Models.PuzzleHistory>();
             CreateMap<Data.Models.TacticsPuzzle, Trainer.Models.TacticsPuzzle>();
 
             // Map domain models to data models. Uses entities from the DB context if they exist (so that already
             // tracked entities are used, if possible) and creates new entities if they don't.
-            CreateMap<Trainer.Models.Player, Data.Models.Player>()
-                .ConstructUsing((p, resolutonContext) => FindDbObjectOrCreate(p, new Data.Models.Player(p.Name, p.Site)));
             CreateMap<Trainer.Models.PuzzleHistory, Data.Models.PuzzleHistory>()
                 .ConstructUsing((p, resolutonContext) => FindDbObjectOrCreate(p, new Data.Models.PuzzleHistory()));
             CreateMap<Trainer.Models.TacticsPuzzle, Data.Models.TacticsPuzzle>()

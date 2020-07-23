@@ -8,8 +8,6 @@ namespace MjrChess.Trainer.Data
 {
     public class PuzzleDbContext : DbContext
     {
-        public DbSet<Player> Players { get; set; } = default!;
-
         public DbSet<PuzzleHistory> PuzzleHistories { get; set; } = default!;
 
         public DbSet<TacticsPuzzle> Puzzles { get; set; } = default!;
@@ -21,11 +19,6 @@ namespace MjrChess.Trainer.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            // Player configuration
-            modelBuilder.Entity<Player>()
-                .Property(p => p.Name)
-                .IsRequired();
 
             // Puzzle history configuration
             modelBuilder.Entity<PuzzleHistory>()
@@ -71,12 +64,6 @@ namespace MjrChess.Trainer.Data
         /// <param name="modelBuilder">The model builder to seed.</param>
         private void SeedData(ModelBuilder modelBuilder)
         {
-            // Some initial players
-            modelBuilder.Entity<Player>()
-                .HasData(
-                    new Player("aupoil", Trainer.Models.ChessSites.LiChess) { Id = 1, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
-                    new Player("toskekg", Trainer.Models.ChessSites.LiChess) { Id = 2, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now });
-
             // Some initial puzzles
             modelBuilder.Entity<TacticsPuzzle>()
                 .HasData(

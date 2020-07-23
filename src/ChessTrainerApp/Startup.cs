@@ -32,7 +32,6 @@ namespace MjrChess.Trainer
 
             services.AddChessTrainerData(Configuration.GetConnectionString("PuzzleDatabase"));
 
-            services.AddScoped<IPlayerService, PlayerService>();
             services.AddScoped<IPuzzleService, PuzzleService>();
             services.AddScoped<IHistoryService, HistoryService>();
 

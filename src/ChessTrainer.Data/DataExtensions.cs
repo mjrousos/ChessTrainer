@@ -23,7 +23,6 @@ namespace MjrChess.Trainer.Data
             }).CreateMapper());
 
             // Register EF repositories
-            services.AddScoped<IRepository<Player>, EFRepository<Data.Models.Player, Player>>();
             services.AddScoped<IRepository<PuzzleHistory>, EFRepository<Data.Models.PuzzleHistory, PuzzleHistory>>();
             services.AddScoped<IRepository<TacticsPuzzle>, TacticsPuzzleRepository>();
 
