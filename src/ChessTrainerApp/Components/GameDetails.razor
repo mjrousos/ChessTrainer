@@ -30,7 +30,7 @@
 
 @code {
     [Inject]
-    private IJSRuntime JSRuntime { get; set; } = default!;
+    private IJSRuntime JSRuntime { get; set; } = default!; // Injected service, so no initialization needed
 
     [Parameter]
     public ChessGame? Game { get; set; }

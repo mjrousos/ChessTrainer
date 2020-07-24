@@ -8,7 +8,7 @@
         /// <summary>
         /// Gets or sets the user attempting the puzzle; null if the user is not logged in.
         /// </summary>
-        public string? UserId { get; set; } = default!;
+        public string? UserId { get; set; }
 
         /// <summary>
         /// Gets or sets the puzzle being attempted.

@@ -16,23 +16,25 @@ namespace MjrChess.Trainer.Components
     public class ChessPuzzleBase : OwningComponentBase
     {
         private const int HistoryCount = 10;
-        private ChessEngine puzzleEngine = default!;
+        private ChessEngine puzzleEngine = default!; // Injected service, so no initialization needed
 
         [Inject]
-        private ILogger<ChessPuzzleBase> Logger { get; set; } = default!;
+        private ILogger<ChessPuzzleBase> Logger { get; set; } = default!; // Injected service, so no initialization needed
 
-        private IPuzzleService PuzzleService { get; set; } = default!;
+        private IPuzzleService PuzzleService { get; set; } = default!; // Retrieved from DI in OnInitialized https://github.com/dotnet/csharplang/issues/2830
 
-        private IHistoryService UserService { get; set; } = default!;
+        private IHistoryService UserService { get; set; } = default!; // Retrieved from DI in OnInitialized https://github.com/dotnet/csharplang/issues/2830
 
         [CascadingParameter]
 #pragma warning disable SA1300 // Element should begin with upper-case letter
 #pragma warning disable IDE1006 // Apply .editorconfig rules
-        private Task<AuthenticationState> authenticationStateTask { get; set; } = default!;
+        private Task<AuthenticationState>? authenticationStateTask { get; set; }
 #pragma warning restore SA1300 // Element should begin with upper-case letter
 #pragma warning restore IDE1006 // Apply .editorconfig rules
 
-        private async Task<string?> GetUserId() => (await authenticationStateTask)?.User?.GetUserId();
+        private async Task<string?> GetUserId() => authenticationStateTask != null
+            ? (await authenticationStateTask)?.User?.GetUserId()
+            : null;
 
         [Inject]
         protected ChessEngine PuzzleEngine

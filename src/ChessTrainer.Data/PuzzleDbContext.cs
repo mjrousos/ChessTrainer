@@ -8,9 +8,9 @@ namespace MjrChess.Trainer.Data
 {
     public class PuzzleDbContext : DbContext
     {
-        public DbSet<PuzzleHistory> PuzzleHistories { get; set; } = default!;
+        public DbSet<PuzzleHistory> PuzzleHistories { get; set; } = default!; // https://github.com/dotnet/efcore/issues/10347#issuecomment-524877325
 
-        public DbSet<TacticsPuzzle> Puzzles { get; set; } = default!;
+        public DbSet<TacticsPuzzle> Puzzles { get; set; } = default!; // https://github.com/dotnet/efcore/issues/10347#issuecomment-524877325
 
         public PuzzleDbContext(DbContextOptions<PuzzleDbContext> options)
             : base(options)

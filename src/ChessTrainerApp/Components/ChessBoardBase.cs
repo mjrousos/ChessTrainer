@@ -16,10 +16,10 @@ namespace MjrChess.Trainer.Components
     public class ChessBoardBase : ComponentBase
     {
         [Inject]
-        private IJSRuntime JSRuntime { get; set; } = default!;
+        private IJSRuntime JSRuntime { get; set; } = default!; // Injected service, so no initialization needed
 
         [Parameter]
-        public ChessEngine Engine { get; set; } = default!;
+        public ChessEngine Engine { get; set; } = default!; // This parameter is required. https://github.com/dotnet/aspnetcore/issues/11815
 
         [Parameter]
         public bool UserMovableWhitePieces { get; set; } = true;

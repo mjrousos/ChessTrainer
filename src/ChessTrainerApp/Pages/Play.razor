@@ -14,7 +14,7 @@
 
 @code {
     [Inject]
-    protected ChessEngine GameEngine { get; set; } = default!;
+    protected ChessEngine GameEngine { get; set; } = default!; // Injected service, so no initialization needed
 
     // Expose NavCommandButtons for consumption by the layout
     public static Dictionary<string, object> GetLayoutParameters() =>

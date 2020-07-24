@@ -22,7 +22,7 @@
 
 @code {
     [Parameter]
-    public TacticsPuzzle Puzzle { get; set; } = default!;
+    public TacticsPuzzle Puzzle { get; set; } = default!; // This parameter is required. https://github.com/dotnet/aspnetcore/issues/11815
 
     [Parameter]
     public bool? Solved { get; set; }

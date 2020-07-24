@@ -15,7 +15,7 @@ namespace MjrChess.Trainer.BlazorExtensions
         : OwningComponentBase
     {
         [Inject]
-        private IJSRuntime JSRuntime { get; set; } = default!;
+        private IJSRuntime JSRuntime { get; set; } = default!; // Injected service, so no initialization needed
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
