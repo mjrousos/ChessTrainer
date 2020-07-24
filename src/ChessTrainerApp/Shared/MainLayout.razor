@@ -11,7 +11,12 @@
 </div>
 
 @code {
-    // Custom child content for the nav bar which can vary by page
+    // This layout page is meant to be used with `ExpandedRouteView`
+    // so that it can receive both a body and 'NavCommandButtons'
+    // content from pages.
+    /// <summary>
+    /// Gets or sets custom child content for inclusion in the nav bar.
+    /// </summary>
     [Parameter]
     public RenderFragment? NavCommandButtons { get; set; }
 }

@@ -1,3 +1,4 @@
+// Import MDC elements
 import { MDCChipSet } from '@material/chips';
 import { MDCRipple } from '@material/ripple';
 import { MDCTextField } from '@material/textfield';
@@ -7,6 +8,8 @@ import { MDCList } from '@material/list';
 import { MDCMenu } from '@material/menu';
 import { MDCSelect } from '@material/select';
 import { MDCSnackbar } from '@material/snackbar';
+
+// Import FontAwesome icons and infrastructure
 import { library, dom } from '@fortawesome/fontawesome-svg-core'
 import { faChessKing } from '@fortawesome/free-solid-svg-icons/faChessKing';
 import { faChessQueen } from '@fortawesome/free-solid-svg-icons/faChessQueen';

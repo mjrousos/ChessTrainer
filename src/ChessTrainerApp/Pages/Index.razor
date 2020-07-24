@@ -2,6 +2,7 @@
 
 @using  MjrChess.Trainer.Components;
 
+<!-- Display the chess puzzle component -->
 <div class="mdc-layout-grid">
     <div class="mdc-layout-grid__inner">
         <ChessPuzzle />
@@ -9,10 +10,11 @@
 </div>
 
 @code {
+    // Expose NavCommandButtons for consumption by the layout
     public static Dictionary<string, object> GetLayoutParameters() =>
         new Dictionary<string, object>()
         {
-            { "NavCommandButtons", NavCommandButtons }
+                { "NavCommandButtons", NavCommandButtons }
         };
 
     public static RenderFragment NavCommandButtons
