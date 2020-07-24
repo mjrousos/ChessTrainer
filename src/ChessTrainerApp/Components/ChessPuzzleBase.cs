@@ -113,7 +113,7 @@ namespace MjrChess.Trainer.Components
             await base.OnAfterRenderAsync(firstRender);
         }
 
-        protected async Task LoadNextPuzzleAsync() => LoadPuzzle(await PuzzleService.GetRandomPuzzleAsync(await GetUserId()));
+        protected async Task LoadNextPuzzleAsync() => LoadPuzzle(await PuzzleService.GetRandomPuzzleAsync());
 
         protected async Task LoadPuzzleByIdAsync(int id) => LoadPuzzle(await PuzzleService.GetPuzzleAsync(id));
 

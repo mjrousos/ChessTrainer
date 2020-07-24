@@ -8,6 +8,9 @@ using MjrChess.Trainer.Models;
 
 namespace MjrChess.Trainer.Services
 {
+    /// <summary>
+    /// Service for retrieving tactics puzzles.
+    /// </summary>
     public class PuzzleService : IPuzzleService
     {
         private static Random NumGen { get; } = new Random();
@@ -23,6 +26,11 @@ namespace MjrChess.Trainer.Services
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        /// <summary>
+        /// Gets a puzzle by ID.
+        /// </summary>
+        /// <param name="puzzleId">The puzzle ID to retrieve.</param>
+        /// <returns>The puzzle with the specified ID, or null if no such puzzle exists.</returns>
         public async Task<TacticsPuzzle?> GetPuzzleAsync(int puzzleId)
         {
             var puzzle = await PuzzleRepository.GetAsync(puzzleId);
@@ -38,7 +46,11 @@ namespace MjrChess.Trainer.Services
             return puzzle;
         }
 
-        public async Task<TacticsPuzzle?> GetRandomPuzzleAsync(string? userId)
+        /// <summary>
+        /// Gets a random puzzle.
+        /// </summary>
+        /// <returns>A random puzzle, or null if no puzzles exist.</returns>
+        public async Task<TacticsPuzzle?> GetRandomPuzzleAsync()
         {
             var puzzlesQuery = PuzzleRepository.Query();
             var puzzleCount = await puzzlesQuery.CountAsync();
@@ -50,15 +62,8 @@ namespace MjrChess.Trainer.Services
             }
             else
             {
-                // Automapper doesn't map the puzzle's history's puzzles properly, so fix that up here.
-                foreach (var history in puzzle.History)
-                {
-                    history.Puzzle = puzzle;
-                }
-
-                Logger.LogInformation("Retrieved puzzle {PuzzleId} for user {UserId} (index {SkipCount} of {PuzzleCount} puzzles)",
+                Logger.LogInformation("Retrieved puzzle {PuzzleId} (index {SkipCount} of {PuzzleCount} puzzles)",
                     puzzle.Id,
-                    userId ?? "Anonymous",
                     skipCount,
                     puzzleCount);
             }

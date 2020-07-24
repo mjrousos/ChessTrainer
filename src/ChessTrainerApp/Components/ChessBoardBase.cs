@@ -33,7 +33,7 @@ namespace MjrChess.Trainer.Components
 
         protected Move? LastMove => Game.Moves.LastOrDefault();
 
-        private ChessPiece? _selectedPiece;
+        private ChessPiece? selectedPiece;
 
         /// <summary>
         /// Gets or sets the piece the user currently has selected.
@@ -42,17 +42,17 @@ namespace MjrChess.Trainer.Components
         {
             get
             {
-                return _selectedPiece;
+                return selectedPiece;
             }
 
             set
             {
-                _selectedPiece = value;
+                selectedPiece = value;
 
                 // Storing an enumerable in state used by Blazor was causing the enumerable
                 // to be evaluated multiple times. Therefore, store as an array to make sure
                 // that the evaluation is only done once.
-                LegalMovesForSelectedPiece = _selectedPiece == null ? new Move[0] : Engine.GetLegalMoves(_selectedPiece.Position).ToArray();
+                LegalMovesForSelectedPiece = selectedPiece == null ? new Move[0] : Engine.GetLegalMoves(selectedPiece.Position).ToArray();
             }
         }
 
@@ -60,12 +60,12 @@ namespace MjrChess.Trainer.Components
 
         // Tracks whether the component is rendered so that we know whether
         // to call StateHasChanged or not.
-        private bool _rendered = false;
+        private bool rendered = false;
 
         protected override void OnAfterRender(bool firstRender)
         {
             base.OnAfterRender(firstRender);
-            _rendered = true;
+            rendered = true;
         }
 
         public async void HandleMouseDown(MouseEventArgs args)
@@ -181,7 +181,7 @@ namespace MjrChess.Trainer.Components
         /// </summary>
         private void Render()
         {
-            if (_rendered)
+            if (rendered)
             {
                 StateHasChanged();
             }
