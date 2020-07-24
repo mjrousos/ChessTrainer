@@ -14,7 +14,17 @@ namespace MjrChess.Trainer.BlazorExtensions
     /// With the default RouteView, layout pages are instantiated with only the Body parameter. This class
     /// allows pages to optionally specify other parameters (besides Body) which are passed to the Layout page.
     /// </summary>
-    public class ExpandedRouteView : RouteView
+    /// <remarks>
+    /// This allows a page to specify both a body and, for example, other components that are rendered elsewhere
+    /// in the layout. In this sample project, it's used to allow pages to specify buttons to show in the navigation
+    /// bar at the top of the page, separate from the rest of the body content.
+    /// </remarks>
+    public class ExpandedRouteView
+
+        // It would be nice to derive this from AuthorizeRouteView, but AuthorizeRouteView is
+        // sealed, so derive from RouteView, instead. Callers can use CascadingAuthenticationState
+        // to get access to authentication state.
+        : RouteView
     {
         public const string GetLayoutParametersName = "GetLayoutParameters";
 
@@ -30,16 +40,25 @@ namespace MjrChess.Trainer.BlazorExtensions
             // Get the layout page type (either from the page or from the default)
             var pageLayoutType = RouteData.PageType.GetCustomAttribute<LayoutAttribute>()?.LayoutType ?? DefaultLayout;
 
+            // Get a list of all parameters the Layout is expecting
             var parameterAttributeType = typeof(ParameterAttribute);
             var parametersExpected = pageLayoutType.GetProperties()
                 .Where(p => p.CustomAttributes.Any(a => parameterAttributeType.IsAssignableFrom(a.AttributeType)))
                 .Select(p => p.Name)
                 .ToList();
 
-            var index = 0;
-            builder.OpenComponent(index++, pageLayoutType);
-            builder.AddAttribute(index++, "Body", new RenderFragment(RenderPageWithParameters));
+            // Remove the expected body parameter since it's an always present special case
             parametersExpected.Remove("Body");
+
+            var index = 0;
+
+            // Begin rendering the layout page
+            builder.OpenComponent(index++, pageLayoutType);
+
+            // Add the body
+            builder.AddAttribute(index++, "Body", new RenderFragment(RenderPageWithParameters));
+
+            // Add other custom attributes that the page may have specified that the Layout page knows how to handle
             AddParametersFromPage(builder, RouteData.PageType, parametersExpected, ref index);
 
             // Pass null for any additional expected parameters that weren't defined by the page
@@ -51,7 +70,7 @@ namespace MjrChess.Trainer.BlazorExtensions
             builder.CloseComponent();
         }
 
-        private static void AddParametersFromPage(RenderTreeBuilder builder, Type pageType, List<string> parameterNames, ref int index)
+        private static void AddParametersFromPage(RenderTreeBuilder builder, Type pageType, List<string> layoutParameterNames, ref int index)
         {
             // We get the method for retrieving layout parameters using reflection. We can't have the pageType derive from
             // a base class or interface with a `GetLayoutParameters` method because `GetLayoutParameters` needs to be static
@@ -61,10 +80,12 @@ namespace MjrChess.Trainer.BlazorExtensions
             {
                 if (getAttributesMethod.Invoke(null, null) is Dictionary<string, object> attributes)
                 {
-                    foreach (var attr in attributes.Where(a => parameterNames.Contains(a.Key)))
+                    // For any attributes supplied by the page which the layout expects, add
+                    // the attribute and remove it from the list of parameters still expected.
+                    foreach (var attr in attributes.Where(a => layoutParameterNames.Contains(a.Key)))
                     {
                         builder.AddAttribute(index++, attr.Key, attr.Value);
-                        parameterNames.Remove(attr.Key);
+                        layoutParameterNames.Remove(attr.Key);
                     }
                 }
             }

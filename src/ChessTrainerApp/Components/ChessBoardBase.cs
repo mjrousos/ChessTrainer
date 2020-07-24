@@ -19,7 +19,7 @@ namespace MjrChess.Trainer.Components
         private IJSRuntime JSRuntime { get; set; } = default!;
 
         [Parameter]
-        public ChessEngine Engine { get; set; } = new ChessEngine();
+        public ChessEngine Engine { get; set; } = default!;
 
         [Parameter]
         public bool UserMovableWhitePieces { get; set; } = true;
@@ -61,11 +61,6 @@ namespace MjrChess.Trainer.Components
         // Tracks whether the component is rendered so that we know whether
         // to call StateHasChanged or not.
         private bool _rendered = false;
-
-        public ChessBoardBase()
-        {
-            Engine = new ChessEngine();
-        }
 
         protected override void OnAfterRender(bool firstRender)
         {

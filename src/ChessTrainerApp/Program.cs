@@ -14,6 +14,8 @@ namespace MjrChess.Trainer
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
+                    // Specify wwwroot/dist as the web root since that's where
+                    // webpack builds static assets to.
                     webBuilder.UseWebRoot("wwwroot/dist");
                     webBuilder.UseStartup<Startup>();
                 });

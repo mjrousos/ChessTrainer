@@ -27,25 +27,36 @@ namespace MjrChess.Trainer
 
         public void ConfigureServices(IServiceCollection services)
         {
+            // Register AAD B2C authentication scheme
             services.AddAuthentication(AzureADB2CDefaults.AuthenticationScheme)
                 .AddAzureADB2C(options => Configuration.Bind("AzureAdB2C", options));
 
+            // Add data repository services
             services.AddChessTrainerData(Configuration.GetConnectionString("PuzzleDatabase"));
 
+            // Add services
             services.AddScoped<IPuzzleService, PuzzleService>();
             services.AddScoped<IHistoryService, HistoryService>();
 
             services.AddRazorPages();
             services.AddServerSideBlazor();
+
+            // Add response compression services
             services.AddResponseCompression(options =>
             {
                 options.Providers.Add<BrotliCompressionProvider>();
                 options.Providers.Add<GzipCompressionProvider>();
                 options.MimeTypes = ResponseCompressionDefaults.MimeTypes;
             });
+
+            // Health checks (so that a load balancer can easily determine whether the site is up and ready)
             services.AddHealthChecks();
 
+            // Even though this is transient, it's useful to register as a service so that it can be more
+            // easily swapped out in the future if the app ever expands to support multiple different engines
             services.AddTransient<ChessEngine>();
+
+            // Add AppInsights services
             services.AddApplicationInsightsTelemetry(Configuration["ApplicationInsights:InstrumentationKey"]);
         }
 
