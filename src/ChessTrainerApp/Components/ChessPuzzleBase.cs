@@ -286,7 +286,15 @@ namespace MjrChess.Trainer.Components
                 throw new InvalidOperationException($"Invalid move ({move}) for puzzle {CurrentPuzzle.Id}");
             }
 
+            // Temporarily detach the move handler so that setup moves aren't
+            // handled as if they were moves made by the user.
+            PuzzleEngine.Game.OnMove -= HandleMove;
+
+            // Move
             PuzzleEngine.Game.Move(resolvedMove);
+
+            // Re-attach the move handler
+            PuzzleEngine.Game.OnMove += HandleMove;
         }
     }
 }
