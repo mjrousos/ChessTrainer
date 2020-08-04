@@ -1,4 +1,5 @@
-﻿<div>
+﻿<!-- Component with a sign in button or a personalized greeting and sign out button, depending on authetication state -->
+<div>
     <AuthorizeView>
         <Authorized>
             Welcome, @context.User.Identity.Name
@@ -13,12 +14,3 @@
     </AuthorizeView>
 </div>
 
-@code {
-    [Inject]
-    private IJSRuntime JSRuntime { get; set; } = default!;
-
-    async Task SignUserIn()
-    {
-        await JSRuntime.InvokeVoidAsync("notify", "Signing in");
-    }
-}

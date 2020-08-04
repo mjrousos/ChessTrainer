@@ -1,4 +1,5 @@
-﻿<div class="loader">
+﻿<!-- A loading spinner featuring a chess piece in a rotating circle -->
+<div class="loader">
     @if (!string.IsNullOrWhiteSpace(Title))
     {
         <h2 class="loaderTitle">@Title</h2>
@@ -10,6 +11,9 @@
 </div>
 
 @code {
+    /// <summary>
+    /// Gets or sets optional text that will be displayed on the loading spinner.
+    /// </summary>
     [Parameter]
     public string? Title { get; set; }
 }

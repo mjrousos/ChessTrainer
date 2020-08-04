@@ -18,25 +18,45 @@ namespace MjrChess.Trainer.Components
         [Inject]
         private IJSRuntime JSRuntime { get; set; } = default!; // Injected service, so no initialization needed
 
+        /// <summary>
+        /// Gets or sets the chess engine to use to calculate legal moves.
+        /// </summary>
         [Parameter]
         public ChessEngine Engine { get; set; } = default!; // This parameter is required. https://github.com/dotnet/aspnetcore/issues/11815
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the chess board should allow the user to move the white pieces.
+        /// </summary>
         [Parameter]
         public bool UserMovableWhitePieces { get; set; } = true;
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the chess board should allow the user to move the black pieces.
+        /// </summary>
         [Parameter]
         public bool UserMovableBlackPieces { get; set; } = true;
 
+        /// <summary>
+        /// Gets the chess game represented on the board.
+        /// </summary>
         protected ChessGame Game => Engine.Game;
 
+        /// <summary>
+        /// Gets or sets a list of all legal moves for the selected piece.
+        /// </summary>
+        /// <remarks>This is stored as an array instead of an enumerable because storing
+        /// an enumerable caused the enumerable to be iterated multiple times.</remarks>
         protected Move[] LegalMovesForSelectedPiece { get; set; } = new Move[0];
 
+        /// <summary>
+        /// Gets the last move made.
+        /// </summary>
         protected Move? LastMove => Game.Moves.LastOrDefault();
 
         private ChessPiece? selectedPiece;
 
         /// <summary>
-        /// Gets or sets the piece the user currently has selected.
+        /// Gets or sets the piece the user currently has selected. Setting the selected piece will also update legal moves.
         /// </summary>
         public ChessPiece? SelectedPiece
         {
@@ -49,6 +69,7 @@ namespace MjrChess.Trainer.Components
             {
                 selectedPiece = value;
 
+                // When the selected piece changes, update legal moves for this board.
                 // Storing an enumerable in state used by Blazor was causing the enumerable
                 // to be evaluated multiple times. Therefore, store as an array to make sure
                 // that the evaluation is only done once.
@@ -58,28 +79,53 @@ namespace MjrChess.Trainer.Components
 
         protected const string ElementName = "ChessBoard";
 
-        // Tracks whether the component is rendered so that we know whether
-        // to call StateHasChanged or not.
-        private bool rendered = false;
-
-        protected override void OnAfterRender(bool firstRender)
-        {
-            base.OnAfterRender(firstRender);
-            rendered = true;
-        }
-
+        /// <summary>
+        /// Handle mouse button down events on the chess board.
+        /// </summary>
+        /// <remarks>
+        /// MouseDown and MouseUp events are handled separately to allow
+        /// moving pieces either by dragging (which will be a single down/up)
+        /// or by clicking on the piece and destination squares (which will be
+        /// two separate down/up events).</remarks>
+        /// <param name="args">Details of the mouse down event.</param>
         public async void HandleMouseDown(MouseEventArgs args)
         {
+            if (args.Button != 0)
+            {
+                // Only handle left clicks
+                return;
+            }
+
+            // If no piece is selected, select the piece at the position clicked
             if (SelectedPiece == null)
             {
                 (var file, var rank) = await GetMousePositionAsync(args);
                 SelectPiece(file, rank);
-                Render();
+
+                // Tell Blazor to re-render the board
+                StateHasChanged();
             }
         }
 
+        /// <summary>
+        /// Handle mouse button up events on the chess board.
+        /// </summary>
+        /// <remarks>
+        /// MouseDown and MouseUp events are handled separately to allow
+        /// moving pieces either by dragging (which will be a single down/up)
+        /// or by clicking on the piece and destination squares (which will be
+        /// two separate down/up events).</remarks>
+        /// <param name="args">Details of the mouse up event.</param>
         public async void HandleMouseUp(MouseEventArgs args)
         {
+            if (args.Button != 0)
+            {
+                // Only handle left clicks
+                return;
+            }
+
+            // If a piece is selected, place the piece on the square where the mouse
+            // button was released if it's different from the piece's inital square
             if (SelectedPiece != null)
             {
                 (var file, var rank) = await GetMousePositionAsync(args);
@@ -93,7 +139,9 @@ namespace MjrChess.Trainer.Components
                 else
                 {
                     PlacePiece(file, rank);
-                    Render();
+
+                    // Tell Blazor to re-render the board
+                    StateHasChanged();
                 }
             }
         }
@@ -174,17 +222,6 @@ namespace MjrChess.Trainer.Components
             var rank = (Game.BoardSize - 1) - (((int)args.ClientY - boardDimensions.Y) * Game.BoardSize / boardDimensions.Height);
 
             return (file, rank);
-        }
-
-        /// <summary>
-        /// Tells Blazor to re-render the component.
-        /// </summary>
-        private void Render()
-        {
-            if (rendered)
-            {
-                StateHasChanged();
-            }
         }
     }
 }
