@@ -1,6 +1,7 @@
 ﻿@inherits ChessPuzzleBase
 
 <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-2-desktop mdc-layout-grid__cell--span-2-tablet mdc-layout-grid__cell--span-4-phone">
+    <!-- Show a history of puzzles that have been attempted -->
     <PuzzleHistoryList CurrentPuzzle="CurrentPuzzle" History="PuzzleHistory" OnPuzzleSelect="LoadPuzzleByIdAsync" />
 </div>
 <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-7-desktop mdc-layout-grid__cell--span-6-tablet mdc-layout-grid__cell--span-4-phone">
@@ -10,6 +11,7 @@
     }
     else
     {
+        <!-- The chess board for displaying the puzzle, configured so that only the correct color pieces can be moved -->
         <ChessBoard 
             Engine ="PuzzleEngine" 
             UserMovableBlackPieces="!WhiteToMove" 
@@ -17,6 +19,7 @@
     }
 </div>
 <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-8-tablet mdc-layout-grid__cell--span-4-phone">
+    <!-- Puzzle info, including buttons to reset, reveal, or skip the puzzle -->
     <PuzzleInfo 
         Puzzle="CurrentPuzzle" 
         PuzzleState="CurrentPuzzleState" 

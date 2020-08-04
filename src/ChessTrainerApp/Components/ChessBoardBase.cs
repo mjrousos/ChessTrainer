@@ -203,8 +203,9 @@ namespace MjrChess.Trainer.Components
             }
         }
 
-        private async Task<(int, int)> GetMousePositionAsync(MouseEventArgs args)
+        private async Task<(int file, int rank)> GetMousePositionAsync(MouseEventArgs args)
         {
+            // Use JSInterop to get the bounding rectangle of the chess board component
             var boardDimensions = await JSRuntime.InvokeAsync<Rectangle>("getBoundingRectangle", new object[] { ElementName });
 
             // Account for the rare case where the user clicks on the final pixel of the board
@@ -218,6 +219,7 @@ namespace MjrChess.Trainer.Components
                 args.ClientY--;
             }
 
+            // Divide by board size (8 squares) to determine which rank and file corresponds to the input position.
             var file = ((int)args.ClientX - boardDimensions.X) * Game.BoardSize / boardDimensions.Width;
             var rank = (Game.BoardSize - 1) - (((int)args.ClientY - boardDimensions.Y) * Game.BoardSize / boardDimensions.Height);
 

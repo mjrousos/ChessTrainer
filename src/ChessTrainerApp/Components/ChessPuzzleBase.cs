@@ -15,8 +15,7 @@ namespace MjrChess.Trainer.Components
 {
     public class ChessPuzzleBase : OwningComponentBase
     {
-        private const int HistoryCount = 10;
-        private ChessEngine puzzleEngine = default!; // Injected service, so no initialization needed
+        private const int MaxHistoryShown = 10;
 
         [Inject]
         private ILogger<ChessPuzzleBase> Logger { get; set; } = default!; // Injected service, so no initialization needed
@@ -32,16 +31,28 @@ namespace MjrChess.Trainer.Components
 #pragma warning restore SA1300 // Element should begin with upper-case letter
 #pragma warning restore IDE1006 // Apply .editorconfig rules
 
-        private async Task<string?> GetUserId() => authenticationStateTask != null
+        /// <summary>
+        /// Helper method to get the current authenticated user's ID based on current authentication state.
+        /// </summary>
+        /// <returns>The current user's ID or null if no user is authenticated.</returns>
+        private async Task<string?> GetUserIdAsync() => authenticationStateTask != null
             ? (await authenticationStateTask)?.User?.GetUserId()
             : null;
 
+        private ChessEngine puzzleEngine = default!; // Injected service, so no initialization needed
+
+        /// <summary>
+        /// Gets or sets the puzzle engine (including the game state) for the current puzzle.
+        /// </summary>
         [Inject]
         protected ChessEngine PuzzleEngine
         {
             get => puzzleEngine;
             set
             {
+                // This setter makes sure the chess game's move handlers are
+                // wired correctly when switching which game is in use for the
+                // current puzzle.
                 if (puzzleEngine != null)
                 {
                     puzzleEngine.Game.OnMove -= HandleMove;
@@ -54,12 +65,15 @@ namespace MjrChess.Trainer.Components
 
         private TacticsPuzzle? currentPuzzle;
 
+        /// <summary>
+        /// Gets or sets the current tactics puzzle being shown to the user.
+        /// </summary>
         protected TacticsPuzzle? CurrentPuzzle
         {
             get => currentPuzzle;
             set
             {
-                // When the current puzzle changes, update the engine used to display the puzzle
+                // When the current puzzle changes, update the engine to display the new puzzle
                 currentPuzzle = value;
                 if (value != null)
                 {
@@ -72,14 +86,27 @@ namespace MjrChess.Trainer.Components
             }
         }
 
+        /// <summary>
+        /// Gets or sets the state of the current puzzle (solved, missed, ongoing, or revealed).
+        /// </summary>
         protected PuzzleState CurrentPuzzleState { get; set; }
 
+        /// <summary>
+        /// Gets or sets the user's puzzle history.
+        /// </summary>
         protected IList<PuzzleHistory>? PuzzleHistory { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the user has already attempted this puzzle or not.
+        /// </summary>
         protected bool FirstAttempt { get; set; }
 
         protected override void OnInitialized()
         {
+            // PuzzleService and UserService are retrieved from OwningComponentBase's ScopedServices property
+            // so that services scoped specifically to this instance (rather than services shared with other components
+            // are used. For more information about OwningComponentBase and component-scoped DI services,
+            // see documentation at https://docs.microsoft.com/aspnet/core/blazor/fundamentals/dependency-injection#utility-base-component-classes-to-manage-a-di-scope
             PuzzleService = ScopedServices.GetRequiredService<IPuzzleService>();
             UserService = ScopedServices.GetRequiredService<IHistoryService>();
 
@@ -97,7 +124,7 @@ namespace MjrChess.Trainer.Components
             // puzzle here instead.
             //
             // Pre-rendering docs and OnInitialized interactions:
-            // https://docs.microsoft.com/en-us/aspnet/core/blazor/hosting-models?view=aspnetcore-3.1#stateful-reconnection-after-prerendering
+            // https://docs.microsoft.com/aspnet/core/blazor/hosting-models#stateful-reconnection-after-prerendering
             // Recommendation to use OnAfterRender for this scenario:
             // https://github.com/dotnet/aspnetcore/issues/13711
             if (firstRender)
@@ -105,7 +132,7 @@ namespace MjrChess.Trainer.Components
                 await LoadNextPuzzleAsync();
                 var userId = await GetUserIdAsync();
 
-                // Don't await loading puzzle history since it can take a second or two and await it
+                // Don't await loading puzzle history since it can take a second or two and awaiting it
                 // in OnAfterRenderAsync can block initialization of this component. Instead, let the
                 // history be populated asynchronously and use InvokeAsync to notify the UI that state
                 // has changed once it is finished.
@@ -113,7 +140,7 @@ namespace MjrChess.Trainer.Components
                 {
                     PuzzleHistory = userId is null
                         ? new List<PuzzleHistory>()
-                        : (await UserService.GetPuzzleHistoryAsync(userId))?.OrderByDescending(h => h.LastModifiedDate).Take(HistoryCount).ToList() ?? new List<PuzzleHistory>();
+                        : (await UserService.GetPuzzleHistoryAsync(userId))?.OrderByDescending(h => h.LastModifiedDate).Take(MaxHistoryShown).ToList() ?? new List<PuzzleHistory>();
 
                     // StateHasChanged cannot be called directly since this thread will not be on the renderer's synchronization context.
                     // Use InvokeAsync to switch execution to the renderer's sync context.
@@ -124,8 +151,17 @@ namespace MjrChess.Trainer.Components
             await base.OnAfterRenderAsync(firstRender);
         }
 
+        /// <summary>
+        /// Loads a random puzzle from the puzzle service.
+        /// </summary>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         protected async Task LoadNextPuzzleAsync() => LoadPuzzle(await PuzzleService.GetRandomPuzzleAsync());
 
+        /// <summary>
+        /// Loads a puzzle by ID.
+        /// </summary>
+        /// <param name="id">The ID of the puzzle to load.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         protected async Task LoadPuzzleByIdAsync(int id) => LoadPuzzle(await PuzzleService.GetPuzzleAsync(id));
 
         private void LoadPuzzle(TacticsPuzzle? puzzle)
@@ -140,6 +176,10 @@ namespace MjrChess.Trainer.Components
             }
         }
 
+        /// <summary>
+        /// Resets the current puzzle to an ongoing/unsolved state
+        /// (but does not reset FirstAttempt).
+        /// </summary>
         protected void ResetPuzzle()
         {
             if (CurrentPuzzle != null)
@@ -155,6 +195,9 @@ namespace MjrChess.Trainer.Components
             }
         }
 
+        /// <summary>
+        /// Reveals the solution to the current puzzle without recording puzzle history.
+        /// </summary>
         protected void RevealPuzzle()
         {
             // Reveal is a no-op if there's no puzzle or the puzzle is already revealed or solved
@@ -203,14 +246,18 @@ namespace MjrChess.Trainer.Components
                         Solved = CurrentPuzzleState == PuzzleState.Solved
                     };
 
+                    // Show the result in the puzzle history component
                     PuzzleHistory?.Insert(0, puzzleHistory);
-                    while (PuzzleHistory?.Count > HistoryCount)
+                    while (PuzzleHistory?.Count > MaxHistoryShown)
                     {
-                        PuzzleHistory.RemoveAt(HistoryCount);
+                        // If too many history items are shown, remove the oldest one.
+                        PuzzleHistory.RemoveAt(MaxHistoryShown);
                     }
 
                     if (!(userId is null))
                     {
+                        // If the user is authenticated, store the new puzzle history
+                        // with the user service.
                         await UserService.RecordPuzzleHistoryAsync(puzzleHistory);
                     }
 
@@ -223,15 +270,15 @@ namespace MjrChess.Trainer.Components
 
         private void MakeMove(Move move)
         {
-            // Moves in puzzles only include where the piece should move.
-            // They don't include information about check, checkmate, etc.
-            // By finding the move with the current engine, that information
-            // is added (so that it will display correctly).
             if (CurrentPuzzle is null)
             {
                 return;
             }
 
+            // Moves in puzzles only include where the piece should move.
+            // They don't include information about check, checkmate, etc.
+            // By finding the move with the current engine, that information
+            // is added (so that it will display correctly).
             var resolvedMove = PuzzleEngine.GetLegalMoves(move.OriginalPosition).SingleOrDefault(m => m.FinalPosition == move.FinalPosition);
             if (resolvedMove == null)
             {
