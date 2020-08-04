@@ -59,15 +59,15 @@ namespace MjrChess.Trainer.Components
             get => currentPuzzle;
             set
             {
+                // When the current puzzle changes, update the engine used to display the puzzle
                 currentPuzzle = value;
                 if (value != null)
                 {
-                    PuzzleReady = false;
+                    // Load the new puzzle and make the inital move to prepare it
                     PuzzleEngine.LoadFEN(value.Position);
                     MakeMove(value.SetupMove);
                     PuzzleEngine.Game.WhitePlayer = value.WhitePlayerName ?? "White Player";
                     PuzzleEngine.Game.BlackPlayer = value.BlackPlayerName ?? "Black Player";
-                    PuzzleReady = true;
                 }
             }
         }
@@ -75,8 +75,6 @@ namespace MjrChess.Trainer.Components
         protected PuzzleState CurrentPuzzleState { get; set; }
 
         protected IList<PuzzleHistory>? PuzzleHistory { get; set; }
-
-        private bool PuzzleReady { get; set; }
 
         protected bool FirstAttempt { get; set; }
 
@@ -105,11 +103,22 @@ namespace MjrChess.Trainer.Components
             if (firstRender)
             {
                 await LoadNextPuzzleAsync();
-                var userId = await GetUserId();
-                PuzzleHistory = userId is null
-                    ? new List<PuzzleHistory>()
-                    : (await UserService.GetPuzzleHistoryAsync(userId))?.OrderByDescending(h => h.LastModifiedDate).Take(HistoryCount).ToList() ?? new List<PuzzleHistory>();
-                StateHasChanged();
+                var userId = await GetUserIdAsync();
+
+                // Don't await loading puzzle history since it can take a second or two and await it
+                // in OnAfterRenderAsync can block initialization of this component. Instead, let the
+                // history be populated asynchronously and use InvokeAsync to notify the UI that state
+                // has changed once it is finished.
+                _ = Task.Run(async () =>
+                {
+                    PuzzleHistory = userId is null
+                        ? new List<PuzzleHistory>()
+                        : (await UserService.GetPuzzleHistoryAsync(userId))?.OrderByDescending(h => h.LastModifiedDate).Take(HistoryCount).ToList() ?? new List<PuzzleHistory>();
+
+                    // StateHasChanged cannot be called directly since this thread will not be on the renderer's synchronization context.
+                    // Use InvokeAsync to switch execution to the renderer's sync context.
+                    await InvokeAsync(StateHasChanged);
+                });
             }
 
             await base.OnAfterRenderAsync(firstRender);
@@ -169,9 +178,10 @@ namespace MjrChess.Trainer.Components
 
         private async void HandleMove(ChessGame game, Move move)
         {
-            var userId = await GetUserId();
-            if (CurrentPuzzle != null && PuzzleReady)
+            if (CurrentPuzzle != null)
             {
+                var userId = await GetUserIdAsync();
+
                 if (move == CurrentPuzzle.Solution)
                 {
                     Logger.LogInformation("Puzzle {PuzzleId} solved by {UserId}", CurrentPuzzle.Id, userId ?? "Anonymous");
