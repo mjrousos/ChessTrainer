@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MjrChess.Trainer.Data;
 using MjrChess.Trainer.Models;
@@ -13,13 +14,13 @@ namespace MjrChess.Trainer.Services
     /// </summary>
     public class HistoryService : IHistoryService
     {
-        private IRepository<PuzzleHistory> PuzzleHistoryRepository { get; }
-
         private ILogger<HistoryService> Logger { get; }
 
-        public HistoryService(IRepository<PuzzleHistory> puzzleHistoryRepository, ILogger<HistoryService> logger)
+        private IServiceProvider ServiceProvider { get; }
+
+        public HistoryService(IServiceProvider serviceProvider, ILogger<HistoryService> logger)
         {
-            PuzzleHistoryRepository = puzzleHistoryRepository ?? throw new ArgumentNullException(nameof(puzzleHistoryRepository));
+            ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -36,7 +37,16 @@ namespace MjrChess.Trainer.Services
                 throw new ArgumentException(nameof(userId));
             }
 
-            var history = await PuzzleHistoryRepository.Query(h => string.Equals(userId, h.UserId)).ToArrayAsync();
+            // The IRepository<PuzzleHistory> has to be resolved in a scope local to this method because
+            // it's possible for users to attempt to solve a puzzle before retrieving all previous puzzle
+            // histories finish. In such a case, RecordPuzzleHistoryAsync would run concurrently with
+            // GetPuzzleHistoryAsync. If a single repository instance was used, the same EF context would
+            // be used concurrently. Creating separate service scopes ensures that these two methods will
+            // use separate EF contexts.
+            using var serviceScope = ServiceProvider.CreateScope();
+            var puzzleHistoryRepository = serviceScope.ServiceProvider.GetRequiredService<IRepository<PuzzleHistory>>();
+
+            var history = await puzzleHistoryRepository.Query(h => string.Equals(userId, h.UserId)).ToArrayAsync();
             Logger.LogInformation("Found {PuzzleCount} puzzle attempts for user {UserId}", history.Length, userId);
 
             return history;
@@ -54,7 +64,16 @@ namespace MjrChess.Trainer.Services
                 throw new ArgumentNullException(nameof(puzzleHistory));
             }
 
-            await PuzzleHistoryRepository.AddAsync(puzzleHistory);
+            // The IRepository<PuzzleHistory> has to be resolved in a scope local to this method because
+            // it's possible for users to attempt to solve a puzzle before retrieving all previous puzzle
+            // histories finish. In such a case, RecordPuzzleHistoryAsync would run concurrently with
+            // GetPuzzleHistoryAsync. If a single repository instance was used, the same EF context would
+            // be used concurrently. Creating separate service scopes ensures that these two methods will
+            // use separate EF contexts.
+            using var serviceScope = ServiceProvider.CreateScope();
+            var puzzleHistoryRepository = serviceScope.ServiceProvider.GetRequiredService<IRepository<PuzzleHistory>>();
+
+            await puzzleHistoryRepository.AddAsync(puzzleHistory);
             Logger.LogInformation("Recorded that user {UserId} {Result} puzzle {PuzzleId}", puzzleHistory.UserId, puzzleHistory.Solved ? "solved" : "failed", puzzleHistory.Puzzle.Id);
         }
     }
