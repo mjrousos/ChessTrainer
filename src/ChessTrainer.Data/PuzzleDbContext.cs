@@ -59,7 +59,7 @@ namespace MjrChess.Trainer.Data
         }
 
         /// <summary>
-        /// Populates the DB context with seed data (some initial puzzles and players).
+        /// Populates the DB context with seed data (some initial puzzles).
         /// </summary>
         /// <param name="modelBuilder">The model builder to seed.</param>
         private void SeedData(ModelBuilder modelBuilder)
@@ -80,7 +80,7 @@ namespace MjrChess.Trainer.Data
                         SetupMovedFrom = "b8",
                         SetupMovedTo = "c6",
                         WhitePlayerName = "Hustler",
-                        BlackPlayerId = "Noobie",
+                        BlackPlayerName = "Noobie",
                         GameDate = new DateTimeOffset(2015, 2, 7, 0, 0, 0, TimeSpan.Zero)
                     },
                     new
@@ -121,6 +121,24 @@ namespace MjrChess.Trainer.Data
                         GameDate = new DateTimeOffset(2016, 10, 7, 0, 0, 0, TimeSpan.Zero),
                         Site = "lichess.org",
                         GameUrl = "https://lichess.org/HjVhr1Dn"
+                    },
+                    new
+                    {
+                        Id = 4,
+                        Position = "krr5/p6p/2pQ4/3pp3/N5q1/6P1/P1P2PBP/3R2K1 w - - 14 31",
+                        CreatedDate = DateTimeOffset.Now,
+                        LastModifiedDate = DateTimeOffset.Now,
+                        MovedFrom = "b8",
+                        MovedTo = "b1",
+                        SetupMovedFrom = "d1",
+                        SetupMovedTo = "d5",
+                        IncorrectMovedFrom = "g4",
+                        IncorrectMovedTo = "a4",
+                        WhitePlayerName = "fucilaco",
+                        BlackPlayerName = "mjrousos",
+                        GameDate = new DateTimeOffset(2019, 10, 26, 0, 0, 0, TimeSpan.Zero),
+                        Site = "lichess.org",
+                        GameUrl = "https://lichess.org/ABBg3RuE"
                     });
         }
 
