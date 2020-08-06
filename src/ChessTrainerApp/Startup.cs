@@ -65,6 +65,9 @@ namespace MjrChess.Trainer
             // Issue: https://github.com/dotnet/aspnetcore/issues/18865
             app.UseRewriter(new RewriteOptions().AddRedirect("AzureADB2C/Account/SignedOut", "/"));
 
+            // Apply data migrations, if necessary
+            app.ApplicationServices.ApplyDataMigrations();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

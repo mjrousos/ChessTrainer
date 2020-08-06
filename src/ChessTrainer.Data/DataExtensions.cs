@@ -35,5 +35,16 @@ namespace MjrChess.Trainer.Data
 
             return services;
         }
+
+        /// <summary>
+        /// Ensures that the database exists and necessary migrations have been applied.
+        /// </summary>
+        /// <param name="serviceProvider">The service provider that data services have been registered in.</param>
+        public static void ApplyDataMigrations(this IServiceProvider serviceProvider)
+        {
+            using var scope = serviceProvider.CreateScope();
+            using var context = scope.ServiceProvider.GetRequiredService<PuzzleDbContext>();
+            context.Database.Migrate();
+        }
     }
 }
