@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace MjrChess.Trainer.Data.Migrations
 {
+    /// <summary>
+    /// Migration for cleaning up unused tables and adding additional seed puzzle.
+    /// </summary>
     public partial class AddSeedPuzzle : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -44,7 +47,7 @@ namespace MjrChess.Trainer.Data.Migrations
             migrationBuilder.InsertData(
                 table: "Puzzles",
                 columns: new[] { "Id", "BlackPlayerName", "CreatedDate", "GameDate", "GameUrl", "IncorrectMovedFrom", "IncorrectMovedTo", "IncorrectPiecePromotedTo", "LastModifiedDate", "MovedFrom", "MovedTo", "PiecePromotedTo", "Position", "SetupMovedFrom", "SetupMovedTo", "SetupPiecePromotedTo", "Site", "WhitePlayerName" },
-                values: new object[] { 4, "mjrousos", new DateTimeOffset(new DateTime(2020, 8, 6, 11, 2, 3, 199, DateTimeKind.Unspecified).AddTicks(7176), new TimeSpan(0, -4, 0, 0, 0)), new DateTimeOffset(new DateTime(2019, 10, 26, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "https://lichess.org/ABBg3RuE", "g4", "a4", null, new DateTimeOffset(new DateTime(2020, 8, 6, 11, 2, 3, 199, DateTimeKind.Unspecified).AddTicks(7220), new TimeSpan(0, -4, 0, 0, 0)), "b8", "b1", null, "krr5/p6p/2pQ4/3pp3/N5q1/6P1/P1P2PBP/3R2K1 w - - 14 31", "d1", "d5", null, "lichess.org", "fucilaco" });
+                values: new object?[] { 4, "mjrousos", new DateTimeOffset(new DateTime(2020, 8, 6, 11, 2, 3, 199, DateTimeKind.Unspecified).AddTicks(7176), new TimeSpan(0, -4, 0, 0, 0)), new DateTimeOffset(new DateTime(2019, 10, 26, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "https://lichess.org/ABBg3RuE", "g4", "a4", null, new DateTimeOffset(new DateTime(2020, 8, 6, 11, 2, 3, 199, DateTimeKind.Unspecified).AddTicks(7220), new TimeSpan(0, -4, 0, 0, 0)), "b8", "b1", null, "krr5/p6p/2pQ4/3pp3/N5q1/6P1/P1P2PBP/3R2K1 w - - 14 31", "d1", "d5", null, "lichess.org", "fucilaco" });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -116,6 +119,7 @@ namespace MjrChess.Trainer.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional (suppressed because MigrationBuilder.InsertData expects an object[,])
             migrationBuilder.InsertData(
                 table: "Players",
                 columns: new[] { "Id", "CreatedDate", "LastModifiedDate", "Name", "Site" },
@@ -124,13 +128,14 @@ namespace MjrChess.Trainer.Data.Migrations
                     { 1, new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 101, DateTimeKind.Unspecified).AddTicks(5281), new TimeSpan(0, -4, 0, 0, 0)), new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 101, DateTimeKind.Unspecified).AddTicks(6425), new TimeSpan(0, -4, 0, 0, 0)), "aupoil", 0 },
                     { 2, new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 101, DateTimeKind.Unspecified).AddTicks(7443), new TimeSpan(0, -4, 0, 0, 0)), new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 101, DateTimeKind.Unspecified).AddTicks(7489), new TimeSpan(0, -4, 0, 0, 0)), "toskekg", 0 }
                 });
+#pragma warning restore CA1814 // Prefer jagged arrays over multidimensional
 
             migrationBuilder.UpdateData(
                 table: "Puzzles",
                 keyColumn: "Id",
                 keyValue: 1,
                 columns: new[] { "BlackPlayerName", "CreatedDate", "LastModifiedDate" },
-                values: new object[] { null, new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 103, DateTimeKind.Unspecified).AddTicks(7202), new TimeSpan(0, -4, 0, 0, 0)), new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 103, DateTimeKind.Unspecified).AddTicks(7258), new TimeSpan(0, -4, 0, 0, 0)) });
+                values: new object?[] { null, new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 103, DateTimeKind.Unspecified).AddTicks(7202), new TimeSpan(0, -4, 0, 0, 0)), new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 103, DateTimeKind.Unspecified).AddTicks(7258), new TimeSpan(0, -4, 0, 0, 0)) });
 
             migrationBuilder.UpdateData(
                 table: "Puzzles",
