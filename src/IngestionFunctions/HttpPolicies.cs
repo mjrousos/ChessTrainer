@@ -19,7 +19,7 @@ namespace IngestionFunctions
             get => HttpPolicyExtensions
                     .HandleTransientHttpError()
                     .OrResult(r => r.StatusCode == HttpStatusCode.TooManyRequests)
-                    .WaitAndRetryAsync(3, i => TimeSpan.FromSeconds(i * 3));
+                    .WaitAndRetryAsync(3, i => TimeSpan.FromSeconds(i * 3.0));
         }
 
         /// <summary>
@@ -29,7 +29,7 @@ namespace IngestionFunctions
         {
             get => HttpPolicyExtensions
                     .HandleTransientHttpError()
-                    .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
+                    .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30.0));
         }
     }
 }

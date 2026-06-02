@@ -12,6 +12,6 @@ Upgrade the IngestionFunctions dependency chain to `net10.0` using a Bottom-Up d
 - ✅ 02-engine: Retarget the Engine library ([Content](tasks/02-engine/task.md), [Progress](tasks/02-engine/progress-details.md))
 - ✅ 03-common-models: Retarget shared common models ([Content](tasks/03-common-models/task.md), [Progress](tasks/03-common-models/progress-details.md))
 - ✅ 04-data-access: Upgrade EF Core and AutoMapper data layer ([Content](tasks/04-data-access/task.md), [Progress](tasks/04-data-access/progress-details.md))
-- 🔲 05-ingestion-functions: Migrate Functions app to isolated worker
+- 🔄 05-ingestion-functions: Migrate Functions app to isolated worker ([Content](tasks/05-ingestion-functions/task.md))
 - 🔲 06-ingestion-test: Retarget the Functions test project
 - 🔲 07-solution-validation: Validate upgrade scope and document hand-off
