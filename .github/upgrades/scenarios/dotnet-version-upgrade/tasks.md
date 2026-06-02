@@ -4,11 +4,11 @@
 
 Upgrade the IngestionFunctions dependency chain to `net10.0` using a Bottom-Up dependency-first strategy. Shared libraries will single-target .NET 10, the Functions app will move to v4 isolated worker, and the out-of-scope ChessTrainerApp breakage will be documented at final validation.
 
-**Progress**: 0/7 tasks complete <progress value="0" max="100"></progress> 0%
+**Progress**: 1/7 tasks complete <progress value="14" max="100"></progress> 14%
 
 ## Tasks
 
-- 🔲 01-upgrade-foundations: Prepare shared build settings for net10.0
+- ✅ 01-upgrade-foundations: Prepare shared build settings for net10.0 ([Content](tasks/01-upgrade-foundations/task.md), [Progress](tasks/01-upgrade-foundations/progress-details.md))
 - 🔲 02-engine: Retarget the Engine library
 - 🔲 03-common-models: Retarget shared common models
 - 🔲 04-data-access: Upgrade EF Core and AutoMapper data layer
