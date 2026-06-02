@@ -1,0 +1,1005 @@
+{
+  "packageGovernance": {
+    "totalDistinctPackages": 19,
+    "totalVersionDriftInstances": 0,
+    "targetFramework": "net10.0",
+    "packages": [
+      {
+        "name": "AutoMapper.Extensions.ExpressionMapping",
+        "totalProjectCount": 1,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "",
+        "isCompatible": true,
+        "description": "",
+        "versions": [
+          {
+            "version": "3.1.0-preview01",
+            "projects": [
+              "ChessTrainer.Data"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": ""
+        }
+      },
+      {
+        "name": "AutoMapper.Extensions.Microsoft.DependencyInjection",
+        "totalProjectCount": 1,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "",
+        "isCompatible": true,
+        "description": "",
+        "versions": [
+          {
+            "version": "7.0.0",
+            "projects": [
+              "ChessTrainer.Data"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": ""
+        }
+      },
+      {
+        "name": "Azure.Storage.Queues",
+        "totalProjectCount": 1,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "12.26.0",
+        "isCompatible": true,
+        "description": "NuGet package contains security vulnerability",
+        "versions": [
+          {
+            "version": "12.2.0",
+            "projects": [
+              "IngestionFunctions"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": "12.26.0"
+        }
+      },
+      {
+        "name": "coverlet.collector",
+        "totalProjectCount": 1,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "",
+        "isCompatible": true,
+        "description": "",
+        "versions": [
+          {
+            "version": "1.0.1",
+            "projects": [
+              "IngestionFunctions.Test"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": ""
+        }
+      },
+      {
+        "name": "Microsoft.Azure.Cosmos.Table",
+        "totalProjectCount": 1,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "",
+        "isCompatible": false,
+        "description": "NuGet package is deprecated",
+        "versions": [
+          {
+            "version": "1.0.6",
+            "projects": [
+              "IngestionFunctions"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": ""
+        }
+      },
+      {
+        "name": "Microsoft.Azure.Functions.Extensions",
+        "totalProjectCount": 1,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "",
+        "isCompatible": true,
+        "description": "",
+        "versions": [
+          {
+            "version": "1.0.0",
+            "projects": [
+              "IngestionFunctions"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": ""
+        }
+      },
+      {
+        "name": "Microsoft.Azure.WebJobs.Extensions.Storage",
+        "totalProjectCount": 1,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "",
+        "isCompatible": true,
+        "description": "NuGet package functionality is included with framework reference",
+        "versions": [
+          {
+            "version": "3.0.10",
+            "projects": [
+              "IngestionFunctions"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": ""
+        }
+      },
+      {
+        "name": "Microsoft.CodeAnalysis.FxCopAnalyzers",
+        "totalProjectCount": 5,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "",
+        "isCompatible": false,
+        "description": "NuGet package is deprecated",
+        "versions": [
+          {
+            "version": "2.6.2",
+            "projects": [
+              "ChessTrainer.Common",
+              "ChessTrainer.Data",
+              "Engine",
+              "IngestionFunctions",
+              "IngestionFunctions.Test"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": ""
+        }
+      },
+      {
+        "name": "Microsoft.EntityFrameworkCore.Design",
+        "totalProjectCount": 1,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "10.0.8",
+        "isCompatible": true,
+        "description": "NuGet package upgrade is recommended",
+        "versions": [
+          {
+            "version": "3.1.1",
+            "projects": [
+              "ChessTrainer.Data"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": "10.0.8"
+        }
+      },
+      {
+        "name": "Microsoft.EntityFrameworkCore.SqlServer",
+        "totalProjectCount": 1,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "10.0.8",
+        "isCompatible": true,
+        "description": "NuGet package upgrade is recommended",
+        "versions": [
+          {
+            "version": "3.1.1",
+            "projects": [
+              "ChessTrainer.Data"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": "10.0.8"
+        }
+      },
+      {
+        "name": "Microsoft.Extensions.Configuration",
+        "totalProjectCount": 1,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "10.0.8",
+        "isCompatible": true,
+        "description": "NuGet package upgrade is recommended",
+        "versions": [
+          {
+            "version": "3.1.1",
+            "projects": [
+              "ChessTrainer.Data"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": "10.0.8"
+        }
+      },
+      {
+        "name": "Microsoft.Extensions.Http",
+        "totalProjectCount": 1,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "10.0.8",
+        "isCompatible": true,
+        "description": "NuGet package upgrade is recommended",
+        "versions": [
+          {
+            "version": "3.1.2",
+            "projects": [
+              "IngestionFunctions"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": "10.0.8"
+        }
+      },
+      {
+        "name": "Microsoft.Extensions.Http.Polly",
+        "totalProjectCount": 1,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "10.0.8",
+        "isCompatible": true,
+        "description": "NuGet package upgrade is recommended",
+        "versions": [
+          {
+            "version": "3.1.2",
+            "projects": [
+              "IngestionFunctions"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": "10.0.8"
+        }
+      },
+      {
+        "name": "Microsoft.NET.Sdk.Functions",
+        "totalProjectCount": 1,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "",
+        "isCompatible": true,
+        "description": "Needs to be replaced with Replace with new package Microsoft.Azure.Functions.Worker.Extensions.Http=3.3.0;Microsoft.Azure.Functions.Worker.Sdk=2.0.7;Microsoft.Azure.Functions.Worker=2.52.0",
+        "versions": [
+          {
+            "version": "3.0.3",
+            "projects": [
+              "IngestionFunctions"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": ""
+        }
+      },
+      {
+        "name": "Microsoft.NET.Test.Sdk",
+        "totalProjectCount": 1,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "",
+        "isCompatible": true,
+        "description": "",
+        "versions": [
+          {
+            "version": "16.2.0",
+            "projects": [
+              "IngestionFunctions.Test"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": ""
+        }
+      },
+      {
+        "name": "NETStandard.Library",
+        "totalProjectCount": 2,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "",
+        "isCompatible": true,
+        "description": "",
+        "versions": [
+          {
+            "version": "2.0.3",
+            "projects": [
+              "ChessTrainer.Common",
+              "Engine"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": ""
+        }
+      },
+      {
+        "name": "StyleCop.Analyzers",
+        "totalProjectCount": 5,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "",
+        "isCompatible": true,
+        "description": "",
+        "versions": [
+          {
+            "version": "1.1.1-beta.61",
+            "projects": [
+              "ChessTrainer.Common",
+              "ChessTrainer.Data",
+              "Engine",
+              "IngestionFunctions",
+              "IngestionFunctions.Test"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": ""
+        }
+      },
+      {
+        "name": "xunit",
+        "totalProjectCount": 1,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "",
+        "isCompatible": false,
+        "description": "NuGet package is deprecated",
+        "versions": [
+          {
+            "version": "2.4.0",
+            "projects": [
+              "IngestionFunctions.Test"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": ""
+        }
+      },
+      {
+        "name": "xunit.runner.visualstudio",
+        "totalProjectCount": 1,
+        "distinctVersionCount": 1,
+        "recommendedVersion": "",
+        "isCompatible": true,
+        "description": "",
+        "versions": [
+          {
+            "version": "2.4.0",
+            "projects": [
+              "IngestionFunctions.Test"
+            ],
+            "isRecommended": false
+          }
+        ],
+        "upgrade": {
+          "newVersion": ""
+        }
+      }
+    ]
+  },
+  "projects": [
+    {
+      "name": "ChessTrainer.Common",
+      "path": "src\\ChessTrainer.Common\\ChessTrainer.Common.csproj",
+      "isSdk": true,
+      "currentFrameworks": [
+        "netstandard2.0"
+      ],
+      "targetFramework": "net10.0",
+      "dependencies": {
+        "packages": [
+          {
+            "name": "NETStandard.Library",
+            "version": "2.0.3",
+            "isTransitive": true,
+            "isGlobal": false,
+            "isImplicit": true,
+            "description": "",
+            "compatibility": "valid",
+            "recommendedVersion": ""
+          },
+          {
+            "name": "StyleCop.Analyzers",
+            "version": "1.1.1-beta.61",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "Directory.Build.targets"
+              }
+            ],
+            "description": "",
+            "compatibility": "valid",
+            "recommendedVersion": ""
+          },
+          {
+            "name": "Microsoft.CodeAnalysis.FxCopAnalyzers",
+            "version": "2.6.2",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "Directory.Build.targets"
+              }
+            ],
+            "description": "NuGet package is deprecated",
+            "compatibility": "newVersionNeeded",
+            "recommendedVersion": ""
+          }
+        ],
+        "assemblies": [],
+        "projectReferences": [
+          {
+            "name": "Engine",
+            "isTransitive": false,
+            "definedIn": [
+              {
+                "path": "src\\ChessTrainer.Common\\ChessTrainer.Common.csproj"
+              }
+            ],
+            "referencedProjectPath": "src\\Engine\\Engine.csproj",
+            "compatibility": "valid"
+          }
+        ],
+        "frameworkReferences": []
+      },
+      "imports": [
+        {
+          "path": "Directory.Build.props",
+          "isLocal": true
+        },
+        {
+          "path": "Directory.Build.targets",
+          "isLocal": true
+        }
+      ]
+    },
+    {
+      "name": "ChessTrainer.Data",
+      "path": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj",
+      "isSdk": true,
+      "currentFrameworks": [
+        "netstandard2.1"
+      ],
+      "targetFramework": "net10.0",
+      "dependencies": {
+        "packages": [
+          {
+            "name": "AutoMapper.Extensions.ExpressionMapping",
+            "version": "3.1.0-preview01",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj"
+              }
+            ],
+            "description": "",
+            "compatibility": "valid",
+            "recommendedVersion": ""
+          },
+          {
+            "name": "AutoMapper.Extensions.Microsoft.DependencyInjection",
+            "version": "7.0.0",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj"
+              }
+            ],
+            "description": "",
+            "compatibility": "valid",
+            "recommendedVersion": ""
+          },
+          {
+            "name": "Microsoft.EntityFrameworkCore.Design",
+            "version": "3.1.1",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj"
+              }
+            ],
+            "description": "NuGet package upgrade is recommended",
+            "compatibility": "valid",
+            "recommendedVersion": "10.0.8",
+            "upgrade": {
+              "newVersion": "10.0.8"
+            }
+          },
+          {
+            "name": "Microsoft.EntityFrameworkCore.SqlServer",
+            "version": "3.1.1",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj"
+              }
+            ],
+            "description": "NuGet package upgrade is recommended",
+            "compatibility": "valid",
+            "recommendedVersion": "10.0.8",
+            "upgrade": {
+              "newVersion": "10.0.8"
+            }
+          },
+          {
+            "name": "Microsoft.Extensions.Configuration",
+            "version": "3.1.1",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj"
+              }
+            ],
+            "description": "NuGet package upgrade is recommended",
+            "compatibility": "valid",
+            "recommendedVersion": "10.0.8",
+            "upgrade": {
+              "newVersion": "10.0.8"
+            }
+          },
+          {
+            "name": "StyleCop.Analyzers",
+            "version": "1.1.1-beta.61",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "Directory.Build.targets"
+              }
+            ],
+            "description": "",
+            "compatibility": "valid",
+            "recommendedVersion": ""
+          },
+          {
+            "name": "Microsoft.CodeAnalysis.FxCopAnalyzers",
+            "version": "2.6.2",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "Directory.Build.targets"
+              }
+            ],
+            "description": "NuGet package is deprecated",
+            "compatibility": "newVersionNeeded",
+            "recommendedVersion": ""
+          }
+        ],
+        "assemblies": [],
+        "projectReferences": [
+          {
+            "name": "ChessTrainer.Common",
+            "isTransitive": false,
+            "definedIn": [
+              {
+                "path": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj"
+              }
+            ],
+            "referencedProjectPath": "src\\ChessTrainer.Common\\ChessTrainer.Common.csproj",
+            "compatibility": "valid"
+          },
+          {
+            "name": "Engine",
+            "isTransitive": false,
+            "definedIn": [
+              {
+                "path": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj"
+              }
+            ],
+            "referencedProjectPath": "src\\Engine\\Engine.csproj",
+            "compatibility": "valid"
+          }
+        ],
+        "frameworkReferences": []
+      },
+      "imports": [
+        {
+          "path": "Directory.Build.props",
+          "isLocal": true
+        },
+        {
+          "path": "Directory.Build.targets",
+          "isLocal": true
+        }
+      ]
+    },
+    {
+      "name": "Engine",
+      "path": "src\\Engine\\Engine.csproj",
+      "isSdk": true,
+      "currentFrameworks": [
+        "netstandard2.0"
+      ],
+      "targetFramework": "net10.0",
+      "dependencies": {
+        "packages": [
+          {
+            "name": "NETStandard.Library",
+            "version": "2.0.3",
+            "isTransitive": true,
+            "isGlobal": false,
+            "isImplicit": true,
+            "description": "",
+            "compatibility": "valid",
+            "recommendedVersion": ""
+          },
+          {
+            "name": "StyleCop.Analyzers",
+            "version": "1.1.1-beta.61",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "Directory.Build.targets"
+              }
+            ],
+            "description": "",
+            "compatibility": "valid",
+            "recommendedVersion": ""
+          },
+          {
+            "name": "Microsoft.CodeAnalysis.FxCopAnalyzers",
+            "version": "2.6.2",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "Directory.Build.targets"
+              }
+            ],
+            "description": "NuGet package is deprecated",
+            "compatibility": "newVersionNeeded",
+            "recommendedVersion": ""
+          }
+        ],
+        "assemblies": [],
+        "projectReferences": [],
+        "frameworkReferences": []
+      },
+      "imports": [
+        {
+          "path": "Directory.Build.props",
+          "isLocal": true
+        },
+        {
+          "path": "Directory.Build.targets",
+          "isLocal": true
+        }
+      ]
+    },
+    {
+      "name": "IngestionFunctions",
+      "path": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+      "isSdk": true,
+      "currentFrameworks": [
+        "netcoreapp3.1"
+      ],
+      "targetFramework": "net10.0",
+      "dependencies": {
+        "packages": [
+          {
+            "name": "Azure.Storage.Queues",
+            "version": "12.2.0",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "src\\IngestionFunctions\\IngestionFunctions.csproj"
+              }
+            ],
+            "description": "NuGet package contains security vulnerability",
+            "compatibility": "valid",
+            "recommendedVersion": "12.26.0",
+            "upgrade": {
+              "newVersion": "12.26.0"
+            }
+          },
+          {
+            "name": "Microsoft.Azure.Cosmos.Table",
+            "version": "1.0.6",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "src\\IngestionFunctions\\IngestionFunctions.csproj"
+              }
+            ],
+            "description": "NuGet package is deprecated",
+            "compatibility": "newVersionNeeded",
+            "recommendedVersion": ""
+          },
+          {
+            "name": "Microsoft.Azure.Functions.Extensions",
+            "version": "1.0.0",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "src\\IngestionFunctions\\IngestionFunctions.csproj"
+              }
+            ],
+            "description": "",
+            "compatibility": "valid",
+            "recommendedVersion": ""
+          },
+          {
+            "name": "Microsoft.Azure.WebJobs.Extensions.Storage",
+            "version": "3.0.10",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "src\\IngestionFunctions\\IngestionFunctions.csproj"
+              }
+            ],
+            "description": "NuGet package functionality is included with framework reference",
+            "compatibility": "valid",
+            "recommendedVersion": ""
+          },
+          {
+            "name": "Microsoft.Extensions.Http",
+            "version": "3.1.2",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "src\\IngestionFunctions\\IngestionFunctions.csproj"
+              }
+            ],
+            "description": "NuGet package upgrade is recommended",
+            "compatibility": "valid",
+            "recommendedVersion": "10.0.8",
+            "upgrade": {
+              "newVersion": "10.0.8"
+            }
+          },
+          {
+            "name": "Microsoft.Extensions.Http.Polly",
+            "version": "3.1.2",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "src\\IngestionFunctions\\IngestionFunctions.csproj"
+              }
+            ],
+            "description": "NuGet package upgrade is recommended",
+            "compatibility": "valid",
+            "recommendedVersion": "10.0.8",
+            "upgrade": {
+              "newVersion": "10.0.8"
+            }
+          },
+          {
+            "name": "Microsoft.NET.Sdk.Functions",
+            "version": "3.0.3",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "src\\IngestionFunctions\\IngestionFunctions.csproj"
+              }
+            ],
+            "description": "Needs to be replaced with Replace with new package Microsoft.Azure.Functions.Worker.Extensions.Http=3.3.0;Microsoft.Azure.Functions.Worker.Sdk=2.0.7;Microsoft.Azure.Functions.Worker=2.52.0",
+            "compatibility": "valid",
+            "recommendedVersion": ""
+          },
+          {
+            "name": "StyleCop.Analyzers",
+            "version": "1.1.1-beta.61",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "Directory.Build.targets"
+              }
+            ],
+            "description": "",
+            "compatibility": "valid",
+            "recommendedVersion": ""
+          },
+          {
+            "name": "Microsoft.CodeAnalysis.FxCopAnalyzers",
+            "version": "2.6.2",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "Directory.Build.targets"
+              }
+            ],
+            "description": "NuGet package is deprecated",
+            "compatibility": "newVersionNeeded",
+            "recommendedVersion": ""
+          }
+        ],
+        "assemblies": [],
+        "projectReferences": [
+          {
+            "name": "ChessTrainer.Data",
+            "isTransitive": false,
+            "definedIn": [
+              {
+                "path": "src\\IngestionFunctions\\IngestionFunctions.csproj"
+              }
+            ],
+            "referencedProjectPath": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj",
+            "compatibility": "valid"
+          }
+        ],
+        "frameworkReferences": []
+      },
+      "imports": [
+        {
+          "path": "Directory.Build.props",
+          "isLocal": true
+        },
+        {
+          "path": "Directory.Build.targets",
+          "isLocal": true
+        }
+      ]
+    },
+    {
+      "name": "IngestionFunctions.Test",
+      "path": "test\\IngestionFunctions.Test\\IngestionFunctions.Test.csproj",
+      "isSdk": true,
+      "currentFrameworks": [
+        "netcoreapp3.0"
+      ],
+      "targetFramework": "net10.0",
+      "dependencies": {
+        "packages": [
+          {
+            "name": "Microsoft.NET.Test.Sdk",
+            "version": "16.2.0",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "test\\IngestionFunctions.Test\\IngestionFunctions.Test.csproj"
+              }
+            ],
+            "description": "",
+            "compatibility": "valid",
+            "recommendedVersion": ""
+          },
+          {
+            "name": "xunit",
+            "version": "2.4.0",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "test\\IngestionFunctions.Test\\IngestionFunctions.Test.csproj"
+              }
+            ],
+            "description": "NuGet package is deprecated",
+            "compatibility": "newVersionNeeded",
+            "recommendedVersion": ""
+          },
+          {
+            "name": "xunit.runner.visualstudio",
+            "version": "2.4.0",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "test\\IngestionFunctions.Test\\IngestionFunctions.Test.csproj"
+              }
+            ],
+            "description": "",
+            "compatibility": "valid",
+            "recommendedVersion": ""
+          },
+          {
+            "name": "coverlet.collector",
+            "version": "1.0.1",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "test\\IngestionFunctions.Test\\IngestionFunctions.Test.csproj"
+              }
+            ],
+            "description": "",
+            "compatibility": "valid",
+            "recommendedVersion": ""
+          },
+          {
+            "name": "StyleCop.Analyzers",
+            "version": "1.1.1-beta.61",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "Directory.Build.targets"
+              }
+            ],
+            "description": "",
+            "compatibility": "valid",
+            "recommendedVersion": ""
+          },
+          {
+            "name": "Microsoft.CodeAnalysis.FxCopAnalyzers",
+            "version": "2.6.2",
+            "isTransitive": false,
+            "isGlobal": false,
+            "isImplicit": false,
+            "definedIn": [
+              {
+                "path": "Directory.Build.targets"
+              }
+            ],
+            "description": "NuGet package is deprecated",
+            "compatibility": "newVersionNeeded",
+            "recommendedVersion": ""
+          }
+        ],
+        "assemblies": [],
+        "projectReferences": [],
+        "frameworkReferences": []
+      },
+      "imports": [
+        {
+          "path": "Directory.Build.props",
+          "isLocal": true
+        },
+        {
+          "path": "Directory.Build.targets",
+          "isLocal": true
+        }
+      ]
+    }
+  ]
+}
