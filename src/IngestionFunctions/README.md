@@ -64,6 +64,59 @@ This file is **gitignored** — create it once in `src/IngestionFunctions/`:
 
 `UseDevelopmentStorage=true` is the well-known shortcut that points `Azure.Data.Tables` and `Azure.Storage.Queues` at the default Azurite endpoints. The `Program.cs` bootstrap calls `CreateIfNotExistsAsync()` on both the table and queue, so you don't need to pre-create them.
 
+#### Alternative: real Azure Storage account with managed identity
+
+Instead of Azurite, you can point at a real Azure Storage account using either a connection string or managed identity. `Program.cs` and the `[QueueTrigger]` runtime binding both follow the standard Azure Functions [identity-based connection conventions](https://learn.microsoft.com/azure/azure-functions/functions-reference#configure-an-identity-based-connection).
+
+**Option A — connection string** (account key):
+
+Get it from the Azure Portal (Storage account → Security + networking → Access keys) or:
+
+```powershell
+az storage account show-connection-string --name <account> --resource-group <rg> --query connectionString -o tsv
+```
+
+Drop the value into both `AzureWebJobsStorage` and `StorageConnectionString`:
+
+```json
+"AzureWebJobsStorage": "DefaultEndpointsProtocol=https;AccountName=<account>;AccountKey=<key>;EndpointSuffix=core.windows.net",
+"StorageConnectionString": "DefaultEndpointsProtocol=https;AccountName=<account>;AccountKey=<key>;EndpointSuffix=core.windows.net"
+```
+
+**Option B — managed identity** (recommended; no secrets):
+
+Replace the two settings above with the identity-based shape (the double-underscore is the standard `IConfiguration` nested-key syntax that the Functions runtime expects):
+
+```json
+"AzureWebJobsStorage__accountName": "<account>",
+"StorageConnectionString__tableServiceUri": "https://<account>.table.core.windows.net",
+"StorageConnectionString__queueServiceUri": "https://<account>.queue.core.windows.net"
+```
+
+`Program.cs` detects these and uses `DefaultAzureCredential` instead of a connection string. Locally that resolves to your `az login` identity; in Azure it resolves to the Function App's system/user-assigned managed identity.
+
+Assign these roles to your AAD user (locally) and to the Function App's managed identity (in Azure), scoped to the storage account:
+
+| Role | Why |
+|---|---|
+| Storage Blob Data Owner | `AzureWebJobsStorage` host blobs |
+| Storage Queue Data Contributor | `QueueClient` send/create + `[QueueTrigger]` binding |
+| Storage Table Data Contributor | `TableClient` upsert/read |
+
+```powershell
+$sub  = "<subscription-id>"
+$rg   = "<resource-group>"
+$acct = "<account>"
+$me   = (az ad signed-in-user show --query id -o tsv)
+$scope = "/subscriptions/$sub/resourceGroups/$rg/providers/Microsoft.Storage/storageAccounts/$acct"
+
+az role assignment create --role "Storage Blob Data Owner"        --assignee $me --scope $scope
+az role assignment create --role "Storage Queue Data Contributor" --assignee $me --scope $scope
+az role assignment create --role "Storage Table Data Contributor" --assignee $me --scope $scope
+```
+
+> If both the identity-based settings AND `StorageConnectionString` are present, identity-based wins (`Program.cs` checks the URI settings first).
+
 ### 3. Bootstrap the `PuzzleDb` schema
 
 EF Core migrations live in `ChessTrainerApp` (still on `netcoreapp3.1` until that project is upgraded). Two options:
