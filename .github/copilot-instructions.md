@@ -1,4 +1,4 @@
-# Copilot instructions for ChessPuzzleFinder
+# Copilot instructions for ChessTrainer
 
 These notes capture project conventions for AI coding assistants (e.g. the
 GitHub Copilot CLI) working in this repository. Human contributors are

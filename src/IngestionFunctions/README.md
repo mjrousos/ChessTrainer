@@ -213,10 +213,12 @@ curl -X POST http://localhost:7071/admin/functions/ReviewPlayers `
 # AddQueuedPlayer — drop an integer payload onto the player-ingestion queue.
 # Easiest: use Azure Storage Explorer (free) pointed at "Local & Attached"
 # > Storage Accounts > (Emulator - Default Ports) > Queues > player-ingestion.
-# Programmatic alternative with the Azure CLI:
+# Programmatic alternative with the Azure CLI (PowerShell-native base64 — `base64`
+# isn't a built-in command on Windows PowerShell):
+$payload = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("1"))
 az storage message put `
   --queue-name player-ingestion `
-  --content (echo -n "1" | base64) `
+  --content $payload `
   --connection-string "UseDevelopmentStorage=true"
 ```
 

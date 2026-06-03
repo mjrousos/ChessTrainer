@@ -94,11 +94,14 @@ builder.Services.AddTransient<ChessEngine>();
 await builder.Build().RunAsync();
 
 // Reads a required configuration setting and throws InvalidOperationException with a
-// descriptive message if it is missing or empty, instead of letting downstream code
-// fail later with an opaque NRE or SDK-level error.
+// descriptive message if it is missing, empty, or whitespace-only, instead of letting
+// downstream code fail later with an opaque NRE or SDK-level error.
 static string RequireSetting(IConfiguration configuration, string name)
-    => configuration[name] is { Length: > 0 } value
+{
+    var value = configuration[name];
+    return !string.IsNullOrWhiteSpace(value)
         ? value
         : throw new InvalidOperationException(
             $"Required configuration setting '{name}' is missing or empty. " +
             $"Set it in local.settings.json (locally) or in the Function App's application settings (in Azure).");
+}

@@ -10,7 +10,6 @@ using IngestionFunctions.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MjrChess.Trainer.Data;
@@ -81,7 +80,7 @@ namespace IngestionFunctions
             }
             catch (RequestFailedException exc)
             {
-                Logger.LogError("Unexpected exception checking ingestion record table: {Exception}", exc.ToString());
+                Logger.LogError(exc, "Unexpected exception checking ingestion record table");
                 return new ServiceUnavailableObjectResult("Most recent game ingested table unavailable");
             }
 
@@ -95,7 +94,7 @@ namespace IngestionFunctions
             }
             catch (RequestFailedException exc)
             {
-                Logger.LogError("Unexpected exception checking ingestion queue: {Exception}", exc.ToString());
+                Logger.LogError(exc, "Unexpected exception checking ingestion queue");
                 return new ServiceUnavailableObjectResult("Ingestion queue unavailable");
             }
 
@@ -235,7 +234,7 @@ namespace IngestionFunctions
             }
             catch (RequestFailedException exc)
             {
-                Logger.LogError("Unexpected exception queueing ingestion request for game {GamePath}: {Exception}", ingestionRequest.GameUrl, exc.ToString());
+                Logger.LogError(exc, "Unexpected exception queueing ingestion request for game {GamePath}", ingestionRequest.GameUrl);
                 throw;
             }
         }
