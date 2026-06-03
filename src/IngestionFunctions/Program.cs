@@ -5,6 +5,7 @@ using Azure.Storage.Queues;
 using IngestionFunctions;
 using IngestionFunctions.Services;
 using Microsoft.Azure.Functions.Worker.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MjrChess.Engine;
@@ -21,7 +22,7 @@ var builder = FunctionsApplication.CreateBuilder(args);
 builder.ConfigureFunctionsWebApplication();
 
 var config = builder.Configuration;
-builder.Services.AddChessTrainerData(config[PuzzleDbConnectionStringSettingName]!);
+builder.Services.AddChessTrainerData(RequireSetting(config, PuzzleDbConnectionStringSettingName));
 
 // Storage auth supports two modes (matches the Functions runtime's identity-based
 // connection conventions for the [QueueTrigger] binding):
@@ -42,10 +43,11 @@ QueueClient queueClient;
 
 if (!string.IsNullOrWhiteSpace(tableServiceUri) && !string.IsNullOrWhiteSpace(queueServiceUri))
 {
+    var queueName = RequireSetting(config, GameIngestionQueueSettingName);
     var credential = new DefaultAzureCredential();
     tableServiceClient = new TableServiceClient(new Uri(tableServiceUri), credential);
     queueClient = new QueueClient(
-        new Uri($"{queueServiceUri.TrimEnd('/')}/{config[GameIngestionQueueSettingName]}"),
+        new Uri($"{queueServiceUri.TrimEnd('/')}/{queueName}"),
         credential);
 }
 else
@@ -60,11 +62,12 @@ else
             $"'{StorageConnectionStringSettingName}__queueServiceUri' (managed identity).");
     }
 
+    var queueName = RequireSetting(config, GameIngestionQueueSettingName);
     tableServiceClient = new TableServiceClient(storageConnectionString);
-    queueClient = new QueueClient(storageConnectionString, config[GameIngestionQueueSettingName]!);
+    queueClient = new QueueClient(storageConnectionString, queueName);
 }
 
-var tableClient = tableServiceClient.GetTableClient(config[GameTableSettingName]!);
+var tableClient = tableServiceClient.GetTableClient(RequireSetting(config, GameTableSettingName));
 await tableClient.CreateIfNotExistsAsync();
 builder.Services.AddSingleton(tableClient);
 
@@ -89,3 +92,13 @@ builder.Services.AddSingleton(queueClient);
 builder.Services.AddTransient<ChessEngine>();
 
 await builder.Build().RunAsync();
+
+// Reads a required configuration setting and throws InvalidOperationException with a
+// descriptive message if it is missing or empty, instead of letting downstream code
+// fail later with an opaque NRE or SDK-level error.
+static string RequireSetting(IConfiguration configuration, string name)
+    => configuration[name] is { Length: > 0 } value
+        ? value
+        : throw new InvalidOperationException(
+            $"Required configuration setting '{name}' is missing or empty. " +
+            $"Set it in local.settings.json (locally) or in the Function App's application settings (in Azure).");

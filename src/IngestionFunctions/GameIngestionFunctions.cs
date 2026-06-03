@@ -87,11 +87,11 @@ namespace IngestionFunctions
 
             try
             {
-                var queueResponse = await GameQueue.CreateIfNotExistsAsync();
-                if (queueResponse.Status / 100 != 2)
-                {
-                    return new ServiceUnavailableObjectResult("Ingestion queue unavailable");
-                }
+                // CreateIfNotExistsAsync is idempotent: it throws RequestFailedException
+                // only on real failures (auth, throttling, network). A non-throwing call —
+                // whether the queue was newly created or already existed — means the queue
+                // is reachable and healthy, so we don't need to inspect the response.
+                await GameQueue.CreateIfNotExistsAsync();
             }
             catch (RequestFailedException exc)
             {
