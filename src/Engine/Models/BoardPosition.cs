@@ -38,7 +38,7 @@ namespace MjrChess.Engine.Models
         // faster since the default uses reflection.
         public bool Equals(BoardPosition other) => File == other.File && Rank == other.Rank;
 
-        public override bool Equals(object obj) => (obj is BoardPosition pos) ? Equals(pos) : false;
+        public override bool Equals(object? obj) => (obj is BoardPosition pos) ? Equals(pos) : false;
 
         public override int GetHashCode() => (File * 100) + Rank;
 

@@ -1,0 +1,884 @@
+{
+  "settings": {
+    "components": {
+      "code": true,
+      "binaries": false
+    },
+    "targetId": "net10.0",
+    "targetDisplayName": ".NETCoreApp,Version=v10.0"
+  },
+  "analysisStartTime": "2026-06-02T20:35:15.4934226Z",
+  "analysisEndTime": "2026-06-02T20:35:21.1552237Z",
+  "privacyModeHelpUrl": "https://go.microsoft.com/fwlink/?linkid=2270980",
+  "stats": {
+    "summary": {
+      "projects": 5,
+      "issues": 8,
+      "incidents": 25,
+      "effort": 27
+    },
+    "charts": {
+      "severity": {
+        "Mandatory": 4,
+        "Optional": 8,
+        "Potential": 13,
+        "Information": 0
+      },
+      "category": {
+        "NuGet": 15,
+        "Api": 7,
+        "Project": 2,
+        "AzureFunctionsUpgrade": 1
+      }
+    }
+  },
+  "projects": [
+    {
+      "path": "src\\ChessTrainer.Common\\ChessTrainer.Common.csproj",
+      "startingProject": true,
+      "issues": 1,
+      "storyPoints": 1,
+      "properties": {
+        "appName": "ChessTrainer.Common",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "netstandard2.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 7,
+        "numberOfCodeFiles": 7,
+        "linesTotal": 194,
+        "linesOfCode": 194,
+        "totalApiScanned": 326,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "745e695f-596e-4fdc-a082-04a01a8b956e",
+          "ruleId": "NuGet.0005",
+          "projectPath": "src\\ChessTrainer.Common\\ChessTrainer.Common.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2",
+              "protected": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2"
+            },
+            "kind": "File",
+            "path": "src\\ChessTrainer.Common\\ChessTrainer.Common.csproj",
+            "snippet": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2",
+            "protectedSnippet": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2",
+            "label": "Microsoft.CodeAnalysis.FxCopAnalyzers 2.6.2",
+            "properties": {
+              "PackageId": "Microsoft.CodeAnalysis.FxCopAnalyzers",
+              "PackageVersion": "2.6.2",
+              "PackageNewVersion": null,
+              "PackageReplacements": null
+            }
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj",
+      "startingProject": true,
+      "issues": 3,
+      "storyPoints": 5,
+      "properties": {
+        "appName": "ChessTrainer.Data",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "netstandard2.1"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 13,
+        "numberOfCodeFiles": 13,
+        "linesTotal": 605,
+        "linesOfCode": 605,
+        "totalApiScanned": 792,
+        "minLinesOfCodeToChange": 1,
+        "maxLinesOfCodeToChange": 1
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "eedc3b99-336b-4dcc-8a6c-7e9bc4d0da84",
+          "ruleId": "NuGet.0002",
+          "projectPath": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.EntityFrameworkCore.Design, 3.1.1\n\nRecommendation:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.8",
+              "protected": "Microsoft.EntityFrameworkCore.Design, 3.1.1\n\nRecommendation:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.8"
+            },
+            "kind": "File",
+            "path": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj",
+            "snippet": "Microsoft.EntityFrameworkCore.Design, 3.1.1\n\nRecommendation:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.8",
+            "protectedSnippet": "Microsoft.EntityFrameworkCore.Design, 3.1.1\n\nRecommendation:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.8",
+            "label": "Microsoft.EntityFrameworkCore.Design 3.1.1",
+            "properties": {
+              "PackageId": "Microsoft.EntityFrameworkCore.Design",
+              "PackageVersion": "3.1.1",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "56b862af-05b3-408e-a8a7-e2bf8253c1fa",
+          "ruleId": "NuGet.0002",
+          "projectPath": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.EntityFrameworkCore.SqlServer, 3.1.1\n\nRecommendation:\n\nRemove Microsoft.EntityFrameworkCore.SqlServer, and replace with new package Microsoft.EntityFrameworkCore.SqlServer 10.0.8",
+              "protected": "Microsoft.EntityFrameworkCore.SqlServer, 3.1.1\n\nRecommendation:\n\nRemove Microsoft.EntityFrameworkCore.SqlServer, and replace with new package Microsoft.EntityFrameworkCore.SqlServer 10.0.8"
+            },
+            "kind": "File",
+            "path": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj",
+            "snippet": "Microsoft.EntityFrameworkCore.SqlServer, 3.1.1\n\nRecommendation:\n\nRemove Microsoft.EntityFrameworkCore.SqlServer, and replace with new package Microsoft.EntityFrameworkCore.SqlServer 10.0.8",
+            "protectedSnippet": "Microsoft.EntityFrameworkCore.SqlServer, 3.1.1\n\nRecommendation:\n\nRemove Microsoft.EntityFrameworkCore.SqlServer, and replace with new package Microsoft.EntityFrameworkCore.SqlServer 10.0.8",
+            "label": "Microsoft.EntityFrameworkCore.SqlServer 3.1.1",
+            "properties": {
+              "PackageId": "Microsoft.EntityFrameworkCore.SqlServer",
+              "PackageVersion": "3.1.1",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "b1d11f49-15ef-42cc-bb04-208e270ffbbd",
+          "ruleId": "NuGet.0002",
+          "projectPath": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Configuration, 3.1.1\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.8",
+              "protected": "Microsoft.Extensions.Configuration, 3.1.1\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.8"
+            },
+            "kind": "File",
+            "path": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj",
+            "snippet": "Microsoft.Extensions.Configuration, 3.1.1\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Configuration, 3.1.1\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.8",
+            "label": "Microsoft.Extensions.Configuration 3.1.1",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Configuration",
+              "PackageVersion": "3.1.1",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "62a67a1b-11d7-442d-9003-93ac01e7fb14",
+          "ruleId": "NuGet.0005",
+          "projectPath": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2",
+              "protected": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2"
+            },
+            "kind": "File",
+            "path": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj",
+            "snippet": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2",
+            "protectedSnippet": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2",
+            "label": "Microsoft.CodeAnalysis.FxCopAnalyzers 2.6.2",
+            "properties": {
+              "PackageId": "Microsoft.CodeAnalysis.FxCopAnalyzers",
+              "PackageVersion": "2.6.2",
+              "PackageNewVersion": null,
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "b0c0ba76-c6eb-4839-8fea-b1c43e03e6e4",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "src\\ChessTrainer.Data\\ChessTrainer.Data.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "options.EnableRetryOnFailure(maxRetryCount: 15, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "src\\ChessTrainer.Data\\DataExtensions.cs",
+            "snippet": "options.EnableRetryOnFailure(maxRetryCount: 15, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 25,
+            "column": 20
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "src\\Engine\\Engine.csproj",
+      "startingProject": true,
+      "issues": 1,
+      "storyPoints": 1,
+      "properties": {
+        "appName": "Engine",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "netstandard2.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 9,
+        "numberOfCodeFiles": 9,
+        "linesTotal": 1799,
+        "linesOfCode": 1799,
+        "totalApiScanned": 2055,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "78d735d6-e6cd-4d04-a2fc-d783e39eeb9c",
+          "ruleId": "NuGet.0005",
+          "projectPath": "src\\Engine\\Engine.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2",
+              "protected": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2"
+            },
+            "kind": "File",
+            "path": "src\\Engine\\Engine.csproj",
+            "snippet": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2",
+            "protectedSnippet": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2",
+            "label": "Microsoft.CodeAnalysis.FxCopAnalyzers 2.6.2",
+            "properties": {
+              "PackageId": "Microsoft.CodeAnalysis.FxCopAnalyzers",
+              "PackageVersion": "2.6.2",
+              "PackageNewVersion": null,
+              "PackageReplacements": null
+            }
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+      "startingProject": true,
+      "issues": 8,
+      "storyPoints": 17,
+      "properties": {
+        "appName": "IngestionFunctions",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "netcoreapp3.1"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 9,
+        "numberOfCodeFiles": 9,
+        "linesTotal": 581,
+        "linesOfCode": 581,
+        "totalApiScanned": 623,
+        "minLinesOfCodeToChange": 6,
+        "maxLinesOfCodeToChange": 6
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "941e969f-df64-4660-9199-3e872f832330",
+          "ruleId": "NuGet.0002",
+          "projectPath": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Http, 3.1.2\n\nRecommendation:\n\nRemove Microsoft.Extensions.Http, and replace with new package Microsoft.Extensions.Http 10.0.8",
+              "protected": "Microsoft.Extensions.Http, 3.1.2\n\nRecommendation:\n\nRemove Microsoft.Extensions.Http, and replace with new package Microsoft.Extensions.Http 10.0.8"
+            },
+            "kind": "File",
+            "path": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+            "snippet": "Microsoft.Extensions.Http, 3.1.2\n\nRecommendation:\n\nRemove Microsoft.Extensions.Http, and replace with new package Microsoft.Extensions.Http 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Http, 3.1.2\n\nRecommendation:\n\nRemove Microsoft.Extensions.Http, and replace with new package Microsoft.Extensions.Http 10.0.8",
+            "label": "Microsoft.Extensions.Http 3.1.2",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Http",
+              "PackageVersion": "3.1.2",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "491d1146-1a86-4bd1-bbe7-1e5cfa8ec52a",
+          "ruleId": "NuGet.0002",
+          "projectPath": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Http.Polly, 3.1.2\n\nRecommendation:\n\nRemove Microsoft.Extensions.Http.Polly, and replace with new package Microsoft.Extensions.Http.Polly 10.0.8",
+              "protected": "Microsoft.Extensions.Http.Polly, 3.1.2\n\nRecommendation:\n\nRemove Microsoft.Extensions.Http.Polly, and replace with new package Microsoft.Extensions.Http.Polly 10.0.8"
+            },
+            "kind": "File",
+            "path": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+            "snippet": "Microsoft.Extensions.Http.Polly, 3.1.2\n\nRecommendation:\n\nRemove Microsoft.Extensions.Http.Polly, and replace with new package Microsoft.Extensions.Http.Polly 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Http.Polly, 3.1.2\n\nRecommendation:\n\nRemove Microsoft.Extensions.Http.Polly, and replace with new package Microsoft.Extensions.Http.Polly 10.0.8",
+            "label": "Microsoft.Extensions.Http.Polly 3.1.2",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Http.Polly",
+              "PackageVersion": "3.1.2",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "7be3048b-f74e-43d7-ae79-7dc9b2b4e7a5",
+          "ruleId": "NuGet.0002",
+          "projectPath": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.NET.Sdk.Functions, 3.0.3\n\nRecommendation:\n\nRemove Microsoft.NET.Sdk.Functions, and replace with new package Microsoft.Azure.Functions.Worker.Extensions.Http 3.3.0,\nMicrosoft.Azure.Functions.Worker.Sdk 2.0.7,\nMicrosoft.Azure.Functions.Worker 2.52.0",
+              "protected": "Microsoft.NET.Sdk.Functions, 3.0.3\n\nRecommendation:\n\nRemove Microsoft.NET.Sdk.Functions, and replace with new package Microsoft.Azure.Functions.Worker.Extensions.Http 3.3.0,\nMicrosoft.Azure.Functions.Worker.Sdk 2.0.7,\nMicrosoft.Azure.Functions.Worker 2.52.0"
+            },
+            "kind": "File",
+            "path": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+            "snippet": "Microsoft.NET.Sdk.Functions, 3.0.3\n\nRecommendation:\n\nRemove Microsoft.NET.Sdk.Functions, and replace with new package Microsoft.Azure.Functions.Worker.Extensions.Http 3.3.0,\nMicrosoft.Azure.Functions.Worker.Sdk 2.0.7,\nMicrosoft.Azure.Functions.Worker 2.52.0",
+            "protectedSnippet": "Microsoft.NET.Sdk.Functions, 3.0.3\n\nRecommendation:\n\nRemove Microsoft.NET.Sdk.Functions, and replace with new package Microsoft.Azure.Functions.Worker.Extensions.Http 3.3.0,\nMicrosoft.Azure.Functions.Worker.Sdk 2.0.7,\nMicrosoft.Azure.Functions.Worker 2.52.0",
+            "label": "Microsoft.NET.Sdk.Functions 3.0.3",
+            "properties": {
+              "PackageId": "Microsoft.NET.Sdk.Functions",
+              "PackageVersion": "3.0.3",
+              "PackageNewVersion": null,
+              "PackageReplacements": "Replace with new package Microsoft.Azure.Functions.Worker.Extensions.Http=3.3.0;Microsoft.Azure.Functions.Worker.Sdk=2.0.7;Microsoft.Azure.Functions.Worker=2.52.0"
+            }
+          }
+        },
+        {
+          "incidentId": "01b67f30-4b64-4165-964f-5b1606ac2998",
+          "ruleId": "NuGet.0004",
+          "projectPath": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Azure.Storage.Queues, 12.2.0\n\nRecommendation:\n\nAzure.Storage.Queues, 12.26.0",
+              "protected": "Azure.Storage.Queues, 12.2.0\n\nRecommendation:\n\nAzure.Storage.Queues, 12.26.0"
+            },
+            "kind": "File",
+            "path": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+            "snippet": "Azure.Storage.Queues, 12.2.0\n\nRecommendation:\n\nAzure.Storage.Queues, 12.26.0",
+            "protectedSnippet": "Azure.Storage.Queues, 12.2.0\n\nRecommendation:\n\nAzure.Storage.Queues, 12.26.0",
+            "label": "Azure.Storage.Queues 12.2.0",
+            "properties": {
+              "PackageId": "Azure.Storage.Queues",
+              "PackageVersion": "12.2.0",
+              "PackageNewVersion": "12.26.0",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "06600092-f2f8-4f8e-926e-43049a83fb01",
+          "ruleId": "NuGet.0005",
+          "projectPath": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Azure.Cosmos.Table, 1.0.6\n\nRecommendation:\n\nPlease note, this package is obsolete as of 3/31/2023 and is no longer maintained or monitored. Microsoft encourages you to upgrade to the replacement package, Azure.Data.Tables, to continue receiving updates. Refer to the migration guide (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/tables/Azure.Data.Tables/MigrationGuide.md) for guidance on upgrading. Refer to our deprecation policy (https://aka.ms/azsdk/support-policies) for more details.\nRemove Microsoft.Azure.Cosmos.Table, and replace with new package Microsoft.Azure.Cosmos.Table, 1.0.8",
+              "protected": "Microsoft.Azure.Cosmos.Table, 1.0.6\n\nRecommendation:\n\nPlease note, this package is obsolete as of 3/31/2023 and is no longer maintained or monitored. Microsoft encourages you to upgrade to the replacement package, Azure.Data.Tables, to continue receiving updates. Refer to the migration guide (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/tables/Azure.Data.Tables/MigrationGuide.md) for guidance on upgrading. Refer to our deprecation policy (https://aka.ms/azsdk/support-policies) for more details.\nRemove Microsoft.Azure.Cosmos.Table, and replace with new package Microsoft.Azure.Cosmos.Table, 1.0.8"
+            },
+            "kind": "File",
+            "path": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+            "snippet": "Microsoft.Azure.Cosmos.Table, 1.0.6\n\nRecommendation:\n\nPlease note, this package is obsolete as of 3/31/2023 and is no longer maintained or monitored. Microsoft encourages you to upgrade to the replacement package, Azure.Data.Tables, to continue receiving updates. Refer to the migration guide (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/tables/Azure.Data.Tables/MigrationGuide.md) for guidance on upgrading. Refer to our deprecation policy (https://aka.ms/azsdk/support-policies) for more details.\nRemove Microsoft.Azure.Cosmos.Table, and replace with new package Microsoft.Azure.Cosmos.Table, 1.0.8",
+            "protectedSnippet": "Microsoft.Azure.Cosmos.Table, 1.0.6\n\nRecommendation:\n\nPlease note, this package is obsolete as of 3/31/2023 and is no longer maintained or monitored. Microsoft encourages you to upgrade to the replacement package, Azure.Data.Tables, to continue receiving updates. Refer to the migration guide (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/tables/Azure.Data.Tables/MigrationGuide.md) for guidance on upgrading. Refer to our deprecation policy (https://aka.ms/azsdk/support-policies) for more details.\nRemove Microsoft.Azure.Cosmos.Table, and replace with new package Microsoft.Azure.Cosmos.Table, 1.0.8",
+            "label": "Microsoft.Azure.Cosmos.Table 1.0.6",
+            "properties": {
+              "PackageId": "Microsoft.Azure.Cosmos.Table",
+              "PackageVersion": "1.0.6",
+              "PackageNewVersion": null,
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "2cb7c6e6-0283-4b9f-aa35-230392166e43",
+          "ruleId": "NuGet.0005",
+          "projectPath": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2",
+              "protected": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2"
+            },
+            "kind": "File",
+            "path": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+            "snippet": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2",
+            "protectedSnippet": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2",
+            "label": "Microsoft.CodeAnalysis.FxCopAnalyzers 2.6.2",
+            "properties": {
+              "PackageId": "Microsoft.CodeAnalysis.FxCopAnalyzers",
+              "PackageVersion": "2.6.2",
+              "PackageNewVersion": null,
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "b1f9be32-ee7f-47e2-bf1a-43afa2fa6320",
+          "ruleId": "Project.0002",
+          "projectPath": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: netcoreapp3.1\nRecommended target framework: net10.0",
+              "protected": "Current target framework: netcoreapp3.1\nRecommended target framework: net10.0"
+            },
+            "kind": "File",
+            "path": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+            "snippet": "Current target framework: netcoreapp3.1\nRecommended target framework: net10.0",
+            "protectedSnippet": "Current target framework: netcoreapp3.1\nRecommended target framework: net10.0",
+            "properties": {
+              "CurrentTargetFramework": "netcoreapp3.1",
+              "RecommendedTargetFramework": "net10.0"
+            }
+          }
+        },
+        {
+          "incidentId": "32099b2a-3f32-4599-9a8a-05bf838ce4e6",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "using var responseBody = await response.Content.ReadAsStreamAsync();",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "src\\IngestionFunctions\\Services\\LiChessService.cs",
+            "snippet": "using var responseBody = await response.Content.ReadAsStreamAsync();",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 61,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "365f90c2-2998-4051-b236-ef5988f070f3",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "using var responseBody = await response.Content.ReadAsStreamAsync();",
+              "protected": "M:System.Net.Http.HttpContent.ReadAsStreamAsync"
+            },
+            "kind": "File",
+            "path": "src\\IngestionFunctions\\Services\\LiChessService.cs",
+            "snippet": "using var responseBody = await response.Content.ReadAsStreamAsync();",
+            "protectedSnippet": "M:System.Net.Http.HttpContent.ReadAsStreamAsync",
+            "label": "M:System.Net.Http.HttpContent.ReadAsStreamAsync",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 61,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "04acd6cf-dcef-4973-b7be-b27cc33c3b24",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var uri = new Uri(string.Format(CultureInfo.InvariantCulture, UrlFormatString, playerName, max, sinceClause));",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "src\\IngestionFunctions\\Services\\LiChessService.cs",
+            "snippet": "var uri = new Uri(string.Format(CultureInfo.InvariantCulture, UrlFormatString, playerName, max, sinceClause));",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 51,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "53f25cb1-a342-4d21-a518-a15c3862ce86",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var uri = new Uri(string.Format(CultureInfo.InvariantCulture, UrlFormatString, playerName, max, sinceClause));",
+              "protected": "M:System.Uri.#ctor(System.String)"
+            },
+            "kind": "File",
+            "path": "src\\IngestionFunctions\\Services\\LiChessService.cs",
+            "snippet": "var uri = new Uri(string.Format(CultureInfo.InvariantCulture, UrlFormatString, playerName, max, sinceClause));",
+            "protectedSnippet": "M:System.Uri.#ctor(System.String)",
+            "label": "M:System.Uri.#ctor(System.String)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 51,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "2c21fedb-c9d4-476c-81b9-3d295b72a0da",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "TimeSpan.FromSeconds(30)",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "src\\IngestionFunctions\\HttpPolicies.cs",
+            "snippet": "TimeSpan.FromSeconds(30)",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 31,
+            "column": 44
+          }
+        },
+        {
+          "incidentId": "08000401-c0b0-4e3d-a388-d98c21e2b15a",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "TimeSpan.FromSeconds(i * 3)",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "src\\IngestionFunctions\\HttpPolicies.cs",
+            "snippet": "TimeSpan.FromSeconds(i * 3)",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 21,
+            "column": 47
+          }
+        },
+        {
+          "incidentId": "a558fedb-5ecb-43f7-934e-63b9ddaf58db",
+          "ruleId": "NuGet.0003",
+          "projectPath": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Azure.WebJobs.Extensions.Storage, 3.0.10\n\nRecommendation:\n\nPackage functionality included with new framework reference",
+              "protected": "Microsoft.Azure.WebJobs.Extensions.Storage, 3.0.10\n\nRecommendation:\n\nPackage functionality included with new framework reference"
+            },
+            "kind": "File",
+            "path": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+            "snippet": "Microsoft.Azure.WebJobs.Extensions.Storage, 3.0.10\n\nRecommendation:\n\nPackage functionality included with new framework reference",
+            "protectedSnippet": "Microsoft.Azure.WebJobs.Extensions.Storage, 3.0.10\n\nRecommendation:\n\nPackage functionality included with new framework reference",
+            "label": "Microsoft.Azure.WebJobs.Extensions.Storage 3.0.10",
+            "properties": {
+              "PackageId": "Microsoft.Azure.WebJobs.Extensions.Storage",
+              "PackageVersion": "3.0.10",
+              "PackageNewVersion": null,
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "c7e19e12-1add-4f58-980a-1fc4c5a6403b",
+          "ruleId": "AzureFunctionsUpgrade.0002",
+          "projectPath": "src\\IngestionFunctions\\IngestionFunctions.csproj",
+          "state": "Active",
+          "location": {
+            "kind": "File",
+            "path": "src\\IngestionFunctions\\IngestionFunctions.csproj"
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "test\\IngestionFunctions.Test\\IngestionFunctions.Test.csproj",
+      "startingProject": true,
+      "issues": 2,
+      "storyPoints": 3,
+      "properties": {
+        "appName": "IngestionFunctions.Test",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "netcoreapp3.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 1,
+        "numberOfCodeFiles": 1,
+        "linesTotal": 13,
+        "linesOfCode": 13,
+        "totalApiScanned": 0,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "1d938cdd-35ab-43b3-bf2c-4a6cbabf5ee1",
+          "ruleId": "NuGet.0005",
+          "projectPath": "test\\IngestionFunctions.Test\\IngestionFunctions.Test.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "xunit, 2.4.0\n\nRecommendation:\n\nThis package will only be updated for security issues. All future feature work has moved onto v3.\n\nGuide for migrating from xUnit.net v2 to v3: https://xunit.net/docs/getting-started/v3/migration\nRemove xunit, and replace with new package xunit, 2.9.3",
+              "protected": "xunit, 2.4.0\n\nRecommendation:\n\nThis package will only be updated for security issues. All future feature work has moved onto v3.\n\nGuide for migrating from xUnit.net v2 to v3: https://xunit.net/docs/getting-started/v3/migration\nRemove xunit, and replace with new package xunit, 2.9.3"
+            },
+            "kind": "File",
+            "path": "test\\IngestionFunctions.Test\\IngestionFunctions.Test.csproj",
+            "snippet": "xunit, 2.4.0\n\nRecommendation:\n\nThis package will only be updated for security issues. All future feature work has moved onto v3.\n\nGuide for migrating from xUnit.net v2 to v3: https://xunit.net/docs/getting-started/v3/migration\nRemove xunit, and replace with new package xunit, 2.9.3",
+            "protectedSnippet": "xunit, 2.4.0\n\nRecommendation:\n\nThis package will only be updated for security issues. All future feature work has moved onto v3.\n\nGuide for migrating from xUnit.net v2 to v3: https://xunit.net/docs/getting-started/v3/migration\nRemove xunit, and replace with new package xunit, 2.9.3",
+            "label": "xunit 2.4.0",
+            "properties": {
+              "PackageId": "xunit",
+              "PackageVersion": "2.4.0",
+              "PackageNewVersion": null,
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "dbbc697b-eede-4444-b37d-00b983eff57b",
+          "ruleId": "NuGet.0005",
+          "projectPath": "test\\IngestionFunctions.Test\\IngestionFunctions.Test.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2",
+              "protected": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2"
+            },
+            "kind": "File",
+            "path": "test\\IngestionFunctions.Test\\IngestionFunctions.Test.csproj",
+            "snippet": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2",
+            "protectedSnippet": "Microsoft.CodeAnalysis.FxCopAnalyzers, 2.6.2\n\nRecommendation:\n\nRead our guide on how to \u0022Migrate from FxCop analyzers to .NET analyzers\u0022 at https://docs.microsoft.com/visualstudio/code-quality/migrate-from-fxcop-analyzers-to-net-analyzers?view=vs-2019\nRemove Microsoft.CodeAnalysis.FxCopAnalyzers, and replace with new package Microsoft.CodeAnalysis.FxCopAnalyzers, 3.3.2",
+            "label": "Microsoft.CodeAnalysis.FxCopAnalyzers 2.6.2",
+            "properties": {
+              "PackageId": "Microsoft.CodeAnalysis.FxCopAnalyzers",
+              "PackageVersion": "2.6.2",
+              "PackageNewVersion": null,
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "0780ebbf-0202-4ae0-adab-ca6ba2e9055e",
+          "ruleId": "Project.0002",
+          "projectPath": "test\\IngestionFunctions.Test\\IngestionFunctions.Test.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: netcoreapp3.0\nRecommended target framework: net10.0",
+              "protected": "Current target framework: netcoreapp3.0\nRecommended target framework: net10.0"
+            },
+            "kind": "File",
+            "path": "test\\IngestionFunctions.Test\\IngestionFunctions.Test.csproj",
+            "snippet": "Current target framework: netcoreapp3.0\nRecommended target framework: net10.0",
+            "protectedSnippet": "Current target framework: netcoreapp3.0\nRecommended target framework: net10.0",
+            "properties": {
+              "CurrentTargetFramework": "netcoreapp3.0",
+              "RecommendedTargetFramework": "net10.0"
+            }
+          }
+        }
+      ],
+      "features": []
+    }
+  ],
+  "rules": {
+    "NuGet.0005": {
+      "id": "NuGet.0005",
+      "isFeature": false,
+      "description": "NuGet package is deprecated.\n\nGo to its documentation and if there is a guidance for replacement of functionality provided by this package.",
+      "label": "NuGet package is deprecated",
+      "severity": "Optional",
+      "effort": 1,
+      "links": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262531",
+          "isCustom": false
+        }
+      ]
+    },
+    "NuGet.0002": {
+      "id": "NuGet.0002",
+      "isFeature": false,
+      "description": "NuGet package upgrade is recommended for selected target framework.\n\nStandard .NET packages are recommended to have versions matching version of .NET that project targets.\n\nSome other packages also are known to work better for selected target frameworks.",
+      "label": "NuGet package upgrade is recommended",
+      "severity": "Potential",
+      "effort": 1,
+      "links": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262530",
+          "isCustom": false
+        }
+      ]
+    },
+    "Api.0002": {
+      "id": "Api.0002",
+      "isFeature": false,
+      "description": "API is source incompatible for selected .NET version: requires code changes to compile successfully when targeting a new version, such as removing obsolete APIs or changing method signatures.",
+      "label": "Source incompatible for selected .NET version",
+      "severity": "Potential",
+      "effort": 1,
+      "links": [
+        {
+          "title": "Breaking changes in .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262679",
+          "isCustom": false
+        }
+      ]
+    },
+    "NuGet.0004": {
+      "id": "NuGet.0004",
+      "isFeature": false,
+      "description": "NuGet package contains security vulnerabilities.\n\nPackage needs to be upgraded to a newer version that addresses known security vulnerabilities.",
+      "label": "NuGet package contains security vulnerability",
+      "severity": "Optional",
+      "effort": 1
+    },
+    "Project.0002": {
+      "id": "Project.0002",
+      "isFeature": false,
+      "description": "Project\u0027s target framework(s) needs to be changed to the new target framework that you selected for this upgrade.\n\nDuring upgrade target framework will be adjusted to corresponding platform when applicable. In some cases project would result in multiple target frameworks after the upgrade if it was using features that now have their own platforms in modern .NET frameworks (windows, iOS, Android etc).",
+      "label": "Project\u0027s target framework(s) needs to be changed",
+      "severity": "Mandatory",
+      "effort": 1,
+      "links": [
+        {
+          "title": "Overview of porting from .NET Framework to .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2265227",
+          "isCustom": false
+        },
+        {
+          "title": ".NET project SDKs",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2265226",
+          "isCustom": false
+        }
+      ]
+    },
+    "Api.0003": {
+      "id": "Api.0003",
+      "isFeature": false,
+      "description": "API has a behavioral change in selected .NET version: code and binaries may behave differently at runtime without needing recompilation, but the new behavior might be undesirable and require updates.",
+      "label": "Behavioral change in selected .NET version",
+      "severity": "Potential",
+      "effort": 1
+    },
+    "NuGet.0003": {
+      "id": "NuGet.0003",
+      "isFeature": false,
+      "description": "NuGet package functionality is included with framework reference.\n\nPackage needs to be removed.",
+      "label": "NuGet package functionality is included with framework reference",
+      "severity": "Mandatory",
+      "effort": 1,
+      "links": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262609",
+          "isCustom": false
+        }
+      ]
+    },
+    "AzureFunctionsUpgrade.0002": {
+      "id": "AzureFunctionsUpgrade.0002",
+      "isFeature": true,
+      "description": "When migrating from in-proc to isolated, enable the use of the V2 model for Azure Functions projects and enable Application Insights.",
+      "label": "Enable the use of the V2 model for Azure Functions projects and enable Application Insights.",
+      "severity": "Mandatory",
+      "effort": 3,
+      "links": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=2342114",
+          "isCustom": false
+        },
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=2341915",
+          "isCustom": false
+        }
+      ]
+    }
+  }
+}

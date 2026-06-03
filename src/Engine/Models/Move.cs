@@ -54,7 +54,7 @@ namespace MjrChess.Engine.Models
             FinalPosition == other.FinalPosition &&
             PiecePromotedTo == other.PiecePromotedTo;
 
-        public override bool Equals(object obj) => (obj is Move move) ? Equals(move) : false;
+        public override bool Equals(object? obj) => (obj is Move move) ? Equals(move) : false;
 
         public override int GetHashCode() => $"{PieceMoved}{OriginalPosition}{FinalPosition}{PiecePromotedTo}".GetHashCode();
 

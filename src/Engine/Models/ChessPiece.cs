@@ -19,7 +19,7 @@ namespace MjrChess.Engine.Models
             PieceType == other?.PieceType &&
             Position == other?.Position;
 
-        public override bool Equals(object obj) => (obj is ChessPiece piece) ? Equals(piece) : false;
+        public override bool Equals(object? obj) => (obj is ChessPiece piece) ? Equals(piece) : false;
 
         public override int GetHashCode() => (Position.GetHashCode() * Enum.GetValues(typeof(ChessPieces)).Length) + PieceType.GetHashCode();
 

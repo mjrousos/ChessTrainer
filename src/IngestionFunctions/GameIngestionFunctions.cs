@@ -2,14 +2,14 @@
 using System.Data.Common;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Azure;
+using Azure.Data.Tables;
 using Azure.Storage.Queues;
 using IngestionFunctions.Models;
 using IngestionFunctions.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Cosmos.Table;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MjrChess.Trainer.Data;
@@ -25,7 +25,7 @@ namespace IngestionFunctions
 
         private IRepository<Player> PlayerRepository { get; }
 
-        private CloudTable GameTable { get; }
+        private TableClient GameTable { get; }
 
         private QueueClient GameQueue { get; }
 
@@ -33,7 +33,7 @@ namespace IngestionFunctions
 
         private ILogger<GameIngestionFunctions> Logger { get; }
 
-        public GameIngestionFunctions(IRepository<Player> playerRepository, CloudTable gameTable, QueueClient gameQueue, ChessServiceResolver serviceResolver, ILogger<GameIngestionFunctions> logger)
+        public GameIngestionFunctions(IRepository<Player> playerRepository, TableClient gameTable, QueueClient gameQueue, ChessServiceResolver serviceResolver, ILogger<GameIngestionFunctions> logger)
         {
             PlayerRepository = playerRepository ?? throw new ArgumentNullException(nameof(playerRepository));
             GameTable = gameTable ?? throw new ArgumentNullException(nameof(gameTable));
@@ -44,8 +44,8 @@ namespace IngestionFunctions
             Logger.LogInformation("Game ingestion functions started");
         }
 
-        [FunctionName("ReviewPlayers")]
-        public async Task ReviewPlayers([TimerTrigger("0 0 1 * * *")]TimerInfo timer)
+        [Function("ReviewPlayers")]
+        public async Task ReviewPlayers([TimerTrigger("0 0 1 * * *")] TimerInfo timer)
         {
             Logger.LogInformation("Reviewing players for new games");
             foreach (var player in await PlayerRepository.Query(p => p.Site != ChessSites.Other).ToArrayAsync())
@@ -55,10 +55,10 @@ namespace IngestionFunctions
                 Logger.LogInformation("Queued {GameCount} games for ingestion for player {PlayerId}", count, player.Id);
             }
 
-            Logger.LogInformation("Player review done. Will check next at {ScheduleTime}", timer.Schedule.GetNextOccurrence(DateTime.Now));
+            Logger.LogInformation("Player review done. Will check next at {ScheduleTime}", timer.ScheduleStatus?.Next);
         }
 
-        [FunctionName("HealthCheck")]
+        [Function("HealthCheck")]
         public async Task<IActionResult> HealthCheck([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequest req)
         {
             try
@@ -70,20 +70,38 @@ namespace IngestionFunctions
                 return new ServiceUnavailableObjectResult("Player repository unavailable");
             }
 
-            if (!await GameTable.ExistsAsync())
+            try
             {
+                var tableResponse = await GameTable.CreateIfNotExistsAsync();
+                if (tableResponse?.GetRawResponse().IsError == true)
+                {
+                    return new ServiceUnavailableObjectResult("Most recent game ingested table unavailable");
+                }
+            }
+            catch (RequestFailedException exc)
+            {
+                Logger.LogError(exc, "Unexpected exception checking ingestion record table");
                 return new ServiceUnavailableObjectResult("Most recent game ingested table unavailable");
             }
 
-            if ((await GameQueue.CreateAsync()).Status / 100 != 2)
+            try
             {
+                // CreateIfNotExistsAsync is idempotent: it throws RequestFailedException
+                // only on real failures (auth, throttling, network). A non-throwing call —
+                // whether the queue was newly created or already existed — means the queue
+                // is reachable and healthy, so we don't need to inspect the response.
+                await GameQueue.CreateIfNotExistsAsync();
+            }
+            catch (RequestFailedException exc)
+            {
+                Logger.LogError(exc, "Unexpected exception checking ingestion queue");
                 return new ServiceUnavailableObjectResult("Ingestion queue unavailable");
             }
 
             return new OkResult();
         }
 
-        [FunctionName("AddQueuedPlayer")]
+        [Function("AddQueuedPlayer")]
         public async Task ProcessQueuedPlayer([QueueTrigger(PlayerIngestionQueueSettingName, Connection = StorageConnectionStringSettingName)] int playerId)
         {
             Logger.LogInformation("Finding games for player {PlayerId}", playerId);
@@ -99,7 +117,7 @@ namespace IngestionFunctions
             Logger.LogInformation("Queued {GameCount} games for ingestion for player {PlayerId}", count, player.Id);
         }
 
-        [FunctionName("AddPlayer")]
+        [Function("AddPlayer")]
         public async Task<IActionResult> AddPlayersGames([HttpTrigger(AuthorizationLevel.Function, "put", Route = "AddPlayer")] HttpRequest req)
         {
             var playerIdString = req.Query[PlayerIdQueryKey].ToString();
@@ -160,34 +178,19 @@ namespace IngestionFunctions
 
         private async Task<DateTimeOffset?> GetMostRecentGameAsync(Player player)
         {
-            var retrievalOperation = TableOperation.Retrieve<IngestionRecord>(player.Site.ToString(), player.Name);
             try
             {
-                var result = await GameTable.ExecuteAsync(retrievalOperation);
-
-                switch (result.HttpStatusCode)
-                {
-                    case 404:
-                        Logger.LogInformation("No games ingested yet for player {PlayerId}", player.Id);
-                        return null;
-                    case 200:
-                        if (result.Result is IngestionRecord ingestionRecord)
-                        {
-                            Logger.LogInformation("Most recent game ingested for player {PlayerId}: {IngestionDate}", player.Id, ingestionRecord.MostRecentGame);
-                            return ingestionRecord.MostRecentGame;
-                        }
-                        else
-                        {
-                            Logger.LogInformation("No games ingested yet for player {PlayerId}", player.Id);
-                            return null;
-                        }
-
-                    default:
-                        Logger.LogError("Unexpected result from ingestion record table query: {StatusCode} {Contents}", result.HttpStatusCode, result.Result);
-                        return null;
-                }
+                var result = await GameTable.GetEntityAsync<IngestionRecord>(player.Site.ToString(), player.Name);
+                var ingestionRecord = result.Value;
+                Logger.LogInformation("Most recent game ingested for player {PlayerId}: {IngestionDate}", player.Id, ingestionRecord.MostRecentGame);
+                return ingestionRecord.MostRecentGame;
             }
-            catch (StorageException exc)
+            catch (RequestFailedException exc) when (exc.Status == 404)
+            {
+                Logger.LogInformation("No games ingested yet for player {PlayerId}", player.Id);
+                return null;
+            }
+            catch (RequestFailedException exc)
             {
                 Logger.LogError("Unexpected exception from ingestion record table query: {Exception}", exc.ToString());
                 throw;
@@ -196,21 +199,26 @@ namespace IngestionFunctions
 
         private async Task SetMostRecentGameAsync(Player player, DateTimeOffset newMostRecentGame)
         {
-            var upsertOperation = TableOperation.InsertOrReplace(new IngestionRecord { ChessSite = player.Site.ToString(), Player = player.Name, MostRecentGame = newMostRecentGame });
+            var ingestionRecord = new IngestionRecord
+            {
+                ChessSite = player.Site.ToString(),
+                Player = player.Name,
+                MostRecentGame = newMostRecentGame
+            };
 
             try
             {
-                var result = await GameTable.ExecuteAsync(upsertOperation);
-                if (result.HttpStatusCode / 100 != 2)
+                var response = await GameTable.UpsertEntityAsync(ingestionRecord, TableUpdateMode.Replace);
+                if (response.Status / 100 != 2)
                 {
-                    Logger.LogError("Unexpected result from updating ingestion record table: {StatusCode} {Contents}", result.HttpStatusCode, result.Result);
+                    Logger.LogError("Unexpected result from updating ingestion record table: {StatusCode} {ReasonPhrase}", response.Status, response.ReasonPhrase);
                 }
                 else
                 {
                     Logger.LogInformation("Updated {PlayerId} most recent ingested game time to {MostRecentTime}", player.Id, newMostRecentGame);
                 }
             }
-            catch (StorageException exc)
+            catch (RequestFailedException exc)
             {
                 Logger.LogError("Unexpected exception updating ingestion record table: {Exception}", exc.ToString());
                 throw;
@@ -224,9 +232,9 @@ namespace IngestionFunctions
                 await GameQueue.SendMessageAsync(JsonSerializer.Serialize(ingestionRequest));
                 Logger.LogInformation("Queued ingestion request for game {GamePath}", ingestionRequest.GameUrl);
             }
-            catch (StorageException exc)
+            catch (RequestFailedException exc)
             {
-                Logger.LogError("Unexpected exception queueing ingestion requst for game {GamePath}: {Exception}", ingestionRequest.GameUrl, exc.ToString());
+                Logger.LogError(exc, "Unexpected exception queueing ingestion request for game {GamePath}", ingestionRequest.GameUrl);
                 throw;
             }
         }
