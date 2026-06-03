@@ -7,11 +7,11 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MjrChess.Trainer.Data;
 
-namespace MjrChess.Trainer.Migrations
+namespace MjrChess.Trainer.Data.Migrations
 {
     [DbContext(typeof(PuzzleDbContext))]
-    [Migration("20200206223217_AddSetupMoveToTacticsPuzzle")]
-    partial class AddSetupMoveToTacticsPuzzle
+    [Migration("20200130041453_AddSiteToTacticsPuzzle")]
+    partial class AddSiteToTacticsPuzzle
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -49,50 +49,14 @@ namespace MjrChess.Trainer.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 530, DateTimeKind.Unspecified).AddTicks(631), new TimeSpan(0, -5, 0, 0, 0)),
-                            LastModifiedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 533, DateTimeKind.Unspecified).AddTicks(9085), new TimeSpan(0, -5, 0, 0, 0)),
                             Name = "Hustler",
                             Site = 2
                         },
                         new
                         {
                             Id = 2,
-                            CreatedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 534, DateTimeKind.Unspecified).AddTicks(210), new TimeSpan(0, -5, 0, 0, 0)),
-                            LastModifiedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 534, DateTimeKind.Unspecified).AddTicks(253), new TimeSpan(0, -5, 0, 0, 0)),
                             Name = "Noobie",
                             Site = 2
-                        },
-                        new
-                        {
-                            Id = 3,
-                            CreatedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 534, DateTimeKind.Unspecified).AddTicks(272), new TimeSpan(0, -5, 0, 0, 0)),
-                            LastModifiedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 534, DateTimeKind.Unspecified).AddTicks(279), new TimeSpan(0, -5, 0, 0, 0)),
-                            Name = "Vini700",
-                            Site = 0
-                        },
-                        new
-                        {
-                            Id = 4,
-                            CreatedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 534, DateTimeKind.Unspecified).AddTicks(287), new TimeSpan(0, -5, 0, 0, 0)),
-                            LastModifiedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 534, DateTimeKind.Unspecified).AddTicks(295), new TimeSpan(0, -5, 0, 0, 0)),
-                            Name = "aupoil",
-                            Site = 0
-                        },
-                        new
-                        {
-                            Id = 5,
-                            CreatedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 534, DateTimeKind.Unspecified).AddTicks(302), new TimeSpan(0, -5, 0, 0, 0)),
-                            LastModifiedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 534, DateTimeKind.Unspecified).AddTicks(309), new TimeSpan(0, -5, 0, 0, 0)),
-                            Name = "toskekg",
-                            Site = 0
-                        },
-                        new
-                        {
-                            Id = 6,
-                            CreatedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 534, DateTimeKind.Unspecified).AddTicks(317), new TimeSpan(0, -5, 0, 0, 0)),
-                            LastModifiedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 534, DateTimeKind.Unspecified).AddTicks(323), new TimeSpan(0, -5, 0, 0, 0)),
-                            Name = "wolfwolf",
-                            Site = 0
                         });
                 });
 
@@ -142,19 +106,15 @@ namespace MjrChess.Trainer.Migrations
                     b.Property<DateTimeOffset?>("GameDate")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("GameUrl")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("IncorrectMovedFrom")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("IncorrectMovedTo")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("IncorrectPieceMoved")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("IncorrectPiecePromotedTo")
+                    b.Property<int>("IncorrectPieceMoved")
                         .HasColumnType("int");
 
                     b.Property<DateTimeOffset?>("LastModifiedDate")
@@ -171,26 +131,9 @@ namespace MjrChess.Trainer.Migrations
                     b.Property<int>("PieceMoved")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PiecePromotedTo")
-                        .HasColumnType("int");
-
                     b.Property<string>("Position")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SetupMovedFrom")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SetupMovedTo")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("SetupPieceMoved")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("SetupPiecePromotedTo")
-                        .HasColumnType("int");
 
                     b.Property<string>("Site")
                         .HasColumnType("nvarchar(max)");
@@ -211,56 +154,17 @@ namespace MjrChess.Trainer.Migrations
                         {
                             Id = 1,
                             BlackPlayerId = 2,
-                            CreatedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 535, DateTimeKind.Unspecified).AddTicks(8352), new TimeSpan(0, -5, 0, 0, 0)),
+                            CreatedDate = new DateTimeOffset(new DateTime(2020, 1, 29, 23, 14, 52, 496, DateTimeKind.Unspecified).AddTicks(3665), new TimeSpan(0, -5, 0, 0, 0)),
                             GameDate = new DateTimeOffset(new DateTime(2015, 2, 7, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            LastModifiedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 535, DateTimeKind.Unspecified).AddTicks(8428), new TimeSpan(0, -5, 0, 0, 0)),
+                            IncorrectMovedFrom = "d2",
+                            IncorrectMovedTo = "d4",
+                            IncorrectPieceMoved = 5,
+                            LastModifiedDate = new DateTimeOffset(new DateTime(2020, 1, 29, 23, 14, 52, 500, DateTimeKind.Unspecified).AddTicks(8775), new TimeSpan(0, -5, 0, 0, 0)),
                             MovedFrom = "f3",
                             MovedTo = "f7",
                             PieceMoved = 1,
-                            Position = "rnbqk1nr/pppp1ppp/8/2b1p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR b KQkq - 3 3",
-                            SetupMovedFrom = "b8",
-                            SetupMovedTo = "c6",
-                            SetupPieceMoved = 10,
+                            Position = "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4",
                             WhitePlayerId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            BlackPlayerId = 4,
-                            CreatedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 536, DateTimeKind.Unspecified).AddTicks(991), new TimeSpan(0, -5, 0, 0, 0)),
-                            GameDate = new DateTimeOffset(new DateTime(2016, 8, 8, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            GameUrl = "https://lichess.org/3piQphpY",
-                            LastModifiedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 536, DateTimeKind.Unspecified).AddTicks(1029), new TimeSpan(0, -5, 0, 0, 0)),
-                            MovedFrom = "c6",
-                            MovedTo = "a5",
-                            PieceMoved = 10,
-                            Position = "r3r1k1/ppp2pp1/2n4p/3q4/3Pb3/B1P2N1P/P2Q1PP1/R3R1K1 w - - 4 16",
-                            SetupMovedFrom = "e1",
-                            SetupMovedTo = "e3",
-                            SetupPieceMoved = 2,
-                            Site = "lichess.org",
-                            WhitePlayerId = 3
-                        },
-                        new
-                        {
-                            Id = 3,
-                            BlackPlayerId = 6,
-                            CreatedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 536, DateTimeKind.Unspecified).AddTicks(3265), new TimeSpan(0, -5, 0, 0, 0)),
-                            GameDate = new DateTimeOffset(new DateTime(2016, 10, 7, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            GameUrl = "https://lichess.org/HjVhr1Dn",
-                            IncorrectMovedFrom = "f8",
-                            IncorrectMovedTo = "f5",
-                            IncorrectPieceMoved = 8,
-                            LastModifiedDate = new DateTimeOffset(new DateTime(2020, 2, 6, 17, 32, 16, 536, DateTimeKind.Unspecified).AddTicks(3298), new TimeSpan(0, -5, 0, 0, 0)),
-                            MovedFrom = "e7",
-                            MovedTo = "b4",
-                            PieceMoved = 9,
-                            Position = "r2q1rk1/1pp1b1pp/p7/4pp2/2PnB1P1/3PB2P/PP1Q1P2/R3K2R w KQ - 0 15",
-                            SetupMovedFrom = "g4",
-                            SetupMovedTo = "f5",
-                            SetupPieceMoved = 5,
-                            Site = "lichess.org",
-                            WhitePlayerId = 5
                         });
                 });
 

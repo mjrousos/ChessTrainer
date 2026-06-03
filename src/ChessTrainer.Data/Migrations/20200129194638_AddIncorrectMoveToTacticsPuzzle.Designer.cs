@@ -7,11 +7,11 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MjrChess.Trainer.Data;
 
-namespace MjrChess.Trainer.Migrations
+namespace MjrChess.Trainer.Data.Migrations
 {
     [DbContext(typeof(PuzzleDbContext))]
-    [Migration("20200130041453_AddSiteToTacticsPuzzle")]
-    partial class AddSiteToTacticsPuzzle
+    [Migration("20200129194638_AddIncorrectMoveToTacticsPuzzle")]
+    partial class AddIncorrectMoveToTacticsPuzzle
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -41,7 +41,12 @@ namespace MjrChess.Trainer.Migrations
                     b.Property<int>("Site")
                         .HasColumnType("int");
 
+                    b.Property<int?>("UserSettingsId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserSettingsId");
 
                     b.ToTable("Players");
 
@@ -135,9 +140,6 @@ namespace MjrChess.Trainer.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Site")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int?>("WhitePlayerId")
                         .HasColumnType("int");
 
@@ -154,12 +156,12 @@ namespace MjrChess.Trainer.Migrations
                         {
                             Id = 1,
                             BlackPlayerId = 2,
-                            CreatedDate = new DateTimeOffset(new DateTime(2020, 1, 29, 23, 14, 52, 496, DateTimeKind.Unspecified).AddTicks(3665), new TimeSpan(0, -5, 0, 0, 0)),
+                            CreatedDate = new DateTimeOffset(new DateTime(2020, 1, 29, 14, 46, 38, 46, DateTimeKind.Unspecified).AddTicks(9553), new TimeSpan(0, -5, 0, 0, 0)),
                             GameDate = new DateTimeOffset(new DateTime(2015, 2, 7, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             IncorrectMovedFrom = "d2",
                             IncorrectMovedTo = "d4",
                             IncorrectPieceMoved = 5,
-                            LastModifiedDate = new DateTimeOffset(new DateTime(2020, 1, 29, 23, 14, 52, 500, DateTimeKind.Unspecified).AddTicks(8775), new TimeSpan(0, -5, 0, 0, 0)),
+                            LastModifiedDate = new DateTimeOffset(new DateTime(2020, 1, 29, 14, 46, 38, 51, DateTimeKind.Unspecified).AddTicks(766), new TimeSpan(0, -5, 0, 0, 0)),
                             MovedFrom = "f3",
                             MovedTo = "f7",
                             PieceMoved = 1,
@@ -190,19 +192,11 @@ namespace MjrChess.Trainer.Migrations
                     b.ToTable("UserSettings");
                 });
 
-            modelBuilder.Entity("MjrChess.Trainer.Models.UserSettingsXPlayer", b =>
+            modelBuilder.Entity("MjrChess.Trainer.Models.Player", b =>
                 {
-                    b.Property<int>("UserSettingsId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PlayerId")
-                        .HasColumnType("int");
-
-                    b.HasKey("UserSettingsId", "PlayerId");
-
-                    b.HasIndex("PlayerId");
-
-                    b.ToTable("UserSettingsXPlayers");
+                    b.HasOne("MjrChess.Trainer.Models.UserSettings", null)
+                        .WithMany("PreferredPlayers")
+                        .HasForeignKey("UserSettingsId");
                 });
 
             modelBuilder.Entity("MjrChess.Trainer.Models.PuzzleHistory", b =>
@@ -223,21 +217,6 @@ namespace MjrChess.Trainer.Migrations
                     b.HasOne("MjrChess.Trainer.Models.Player", "WhitePlayer")
                         .WithMany()
                         .HasForeignKey("WhitePlayerId");
-                });
-
-            modelBuilder.Entity("MjrChess.Trainer.Models.UserSettingsXPlayer", b =>
-                {
-                    b.HasOne("MjrChess.Trainer.Models.Player", "Player")
-                        .WithMany()
-                        .HasForeignKey("PlayerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MjrChess.Trainer.Models.UserSettings", "UserSettings")
-                        .WithMany("PreferredPlayers")
-                        .HasForeignKey("UserSettingsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }
