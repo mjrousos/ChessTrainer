@@ -2,6 +2,62 @@
 
 Azure Functions app responsible for discovering chess games for tracked players (Lichess + Chess.com) and queueing them for puzzle ingestion. Runs on **.NET 10** under the **Azure Functions v4 isolated worker** model.
 
+## Architecture
+
+IngestionFunctions is a **producer** — it discovers new games and writes them to a queue. The puzzle extraction that consumes that queue lives elsewhere (or is yet to be built).
+
+### Storage map
+
+| Storage | Setting | Purpose |
+|---|---|---|
+| **SQL: `PuzzleDb`** | `PuzzleDbConnectionString` | User-facing system of record. Holds `Player`, `TacticsPuzzle`, `PuzzleHistory`, `UserSettings`, and `UserSettingsXPlayer` (join table). IngestionFunctions only reads `Player` here, via `IRepository<Player>`. |
+| **Azure Table: `ingestionrecords`** | `GameTable` | Per-player checkpoint store (`IngestionRecord`). `PartitionKey` = chess site, `RowKey` = player username, `MostRecentGame` = high-water mark. Used so subsequent runs only queue games newer than what's already been seen. |
+| **Azure Queue: `player-ingestion`** *(input)* | `PlayerIngestionQueue` | Drives the `AddQueuedPlayer` function. Payload is a single `int` player ID. Lets external callers say "scan this player now" without blocking on a long-running HTTP request. |
+| **Azure Queue: `game-ingestion`** *(output)* | `GameIngestionQueue` | Where all four functions converge. Each new game found becomes one `IngestionRequest` message (site, date, URL, both player names, the associated `PlayerId`, and the full UCI move list). Consumed by a downstream puzzle-extraction worker (not in this project). |
+
+Both queues live in the same storage account; only the names differ. They flow in opposite directions through the system.
+
+### Data flow
+
+```mermaid
+flowchart LR
+    subgraph Triggers["IngestionFunctions"]
+        Timer[ReviewPlayers<br/>Timer 01:00 UTC]
+        Http[AddPlayer<br/>HTTP PUT]
+        QTrigger[AddQueuedPlayer<br/>QueueTrigger]
+        Health[HealthCheck<br/>HTTP GET]
+    end
+
+    PlayerQ[(player-ingestion<br/>queue)]
+    PlayerQ -->|int playerId| QTrigger
+
+    DB[(PuzzleDb<br/>Player rows)]
+    Table[(ingestionrecords<br/>table)]
+    GameQ[(game-ingestion<br/>queue)]
+
+    Timer -->|enumerate players| DB
+    Http -->|lookup by id| DB
+    QTrigger -->|lookup by id| DB
+
+    Timer -->|read/write checkpoint| Table
+    Http -->|read/write checkpoint| Table
+    QTrigger -->|read/write checkpoint| Table
+
+    Timer -->|HTTP w/ Polly retry+breaker| Sites([Lichess / Chess.com APIs])
+    Http -->|HTTP w/ Polly retry+breaker| Sites
+    QTrigger -->|HTTP w/ Polly retry+breaker| Sites
+
+    Timer -->|IngestionRequest per game| GameQ
+    Http -->|IngestionRequest per game| GameQ
+    QTrigger -->|IngestionRequest per game| GameQ
+
+    GameQ -.->|consumed elsewhere| Downstream[Puzzle extraction<br/>→ TacticsPuzzle rows]
+
+    Health -.->|pings| DB
+    Health -.->|pings| Table
+    Health -.->|pings| GameQ
+```
+
 ## Functions
 
 | Name | Trigger | Notes |
