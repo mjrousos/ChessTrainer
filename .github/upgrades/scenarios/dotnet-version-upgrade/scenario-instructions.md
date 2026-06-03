@@ -58,5 +58,9 @@ These projects share `Engine` / `ChessTrainer.Common` / `ChessTrainer.Data` with
 
 Original detailed scoping plan: `C:\Users\mikerou\.copilot\session-state\c46e75f4-6561-4c9f-ae65-696eb010c660\plan.md` — kept as input to the assessment/planning stages; the scenario's own `plan.md` (produced by the planning stage) will be the authoritative execution plan.
 
+## Reminders & Deferred Items
+
+- **2026-06-03T14:27Z** — Move EF Core migrations from `src/ChessTrainerApp/Migrations/` to `src/ChessTrainer.Data/Migrations/`, drop the `MigrationsAssembly("MjrChess.Trainer")` workaround in `DataExtensions.cs`, and add an `IDesignTimeDbContextFactory<PuzzleDbContext>` so `dotnet ef` can target the Data project directly. Deferred to GitHub issue [#20](https://github.com/mjrousos/ChessTrainer/issues/20) per user request. Resolves the long-standing TODO at `DataExtensions.cs:32` and unblocks `dotnet ef database update` without requiring ChessTrainerApp to build.
+
 
 
