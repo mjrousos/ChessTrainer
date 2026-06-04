@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace MjrChess.Trainer.Migrations
+namespace MjrChess.Trainer.Data.Migrations
 {
     public partial class TacticsHaveNamesAndAssociatedId : Migration
     {

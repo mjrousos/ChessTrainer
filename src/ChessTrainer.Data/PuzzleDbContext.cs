@@ -94,10 +94,25 @@ namespace MjrChess.Trainer.Data
 
         private void SeedData(ModelBuilder modelBuilder)
         {
+            // Seed timestamps are intentionally hardcoded (not DateTimeOffset.Now) so the EF Core
+            // model is deterministic across builds. Otherwise every build produces a new model and
+            // `dotnet ef` flags PendingModelChangesWarning. Values match the snapshot in
+            // Migrations/PuzzleDbContextModelSnapshot.cs.
+            var player1Created = new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 101, DateTimeKind.Unspecified).AddTicks(5281), new TimeSpan(0, -4, 0, 0, 0));
+            var player1Modified = new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 101, DateTimeKind.Unspecified).AddTicks(6425), new TimeSpan(0, -4, 0, 0, 0));
+            var player2Created = new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 101, DateTimeKind.Unspecified).AddTicks(7443), new TimeSpan(0, -4, 0, 0, 0));
+            var player2Modified = new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 101, DateTimeKind.Unspecified).AddTicks(7489), new TimeSpan(0, -4, 0, 0, 0));
+            var puzzle1Created = new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 103, DateTimeKind.Unspecified).AddTicks(7202), new TimeSpan(0, -4, 0, 0, 0));
+            var puzzle1Modified = new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 103, DateTimeKind.Unspecified).AddTicks(7258), new TimeSpan(0, -4, 0, 0, 0));
+            var puzzle2Created = new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 104, DateTimeKind.Unspecified).AddTicks(295), new TimeSpan(0, -4, 0, 0, 0));
+            var puzzle2Modified = new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 104, DateTimeKind.Unspecified).AddTicks(341), new TimeSpan(0, -4, 0, 0, 0));
+            var puzzle3Created = new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 104, DateTimeKind.Unspecified).AddTicks(3379), new TimeSpan(0, -4, 0, 0, 0));
+            var puzzle3Modified = new DateTimeOffset(new DateTime(2020, 5, 26, 17, 43, 1, 104, DateTimeKind.Unspecified).AddTicks(3418), new TimeSpan(0, -4, 0, 0, 0));
+
             modelBuilder.Entity<Player>()
                 .HasData(
-                    new Player("aupoil", Trainer.Models.ChessSites.LiChess) { Id = 1, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now },
-                    new Player("toskekg", Trainer.Models.ChessSites.LiChess) { Id = 2, CreatedDate = DateTimeOffset.Now, LastModifiedDate = DateTimeOffset.Now });
+                    new Player("aupoil", Trainer.Models.ChessSites.LiChess) { Id = 1, CreatedDate = player1Created, LastModifiedDate = player1Modified },
+                    new Player("toskekg", Trainer.Models.ChessSites.LiChess) { Id = 2, CreatedDate = player2Created, LastModifiedDate = player2Modified });
 
             modelBuilder.Entity<TacticsPuzzle>()
                 .HasData(
@@ -105,8 +120,8 @@ namespace MjrChess.Trainer.Data
                     {
                         Id = 1,
                         Position = "rnbqk1nr/pppp1ppp/8/2b1p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR b KQkq - 3 3",
-                        CreatedDate = DateTimeOffset.Now,
-                        LastModifiedDate = DateTimeOffset.Now,
+                        CreatedDate = puzzle1Created,
+                        LastModifiedDate = puzzle1Modified,
                         PieceMoved = Engine.Models.ChessPieces.WhiteQueen,
                         MovedFrom = "f3",
                         MovedTo = "f7",
@@ -122,8 +137,8 @@ namespace MjrChess.Trainer.Data
                     {
                         Id = 2,
                         Position = "r3r1k1/ppp2pp1/2n4p/3q4/3Pb3/B1P2N1P/P2Q1PP1/R3R1K1 w - - 4 16",
-                        CreatedDate = DateTimeOffset.Now,
-                        LastModifiedDate = DateTimeOffset.Now,
+                        CreatedDate = puzzle2Created,
+                        LastModifiedDate = puzzle2Modified,
                         PieceMoved = Engine.Models.ChessPieces.BlackKnight,
                         MovedFrom = "c6",
                         MovedTo = "a5",
@@ -141,8 +156,8 @@ namespace MjrChess.Trainer.Data
                     {
                         Id = 3,
                         Position = "r2q1rk1/1pp1b1pp/p7/4pp2/2PnB1P1/3PB2P/PP1Q1P2/R3K2R w KQ - 0 15",
-                        CreatedDate = DateTimeOffset.Now,
-                        LastModifiedDate = DateTimeOffset.Now,
+                        CreatedDate = puzzle3Created,
+                        LastModifiedDate = puzzle3Modified,
                         PieceMoved = Engine.Models.ChessPieces.BlackBishop,
                         MovedFrom = "e7",
                         MovedTo = "b4",
