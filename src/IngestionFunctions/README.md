@@ -175,10 +175,30 @@ az role assignment create --role "Storage Table Data Contributor" --assignee $me
 
 ### 3. Bootstrap the `PuzzleDb` schema
 
-EF Core migrations live in `ChessTrainerApp` (still on `netcoreapp3.1` until that project is upgraded). Two options:
+EF Core migrations live in `ChessTrainer.Data` alongside the
+`PuzzleDbContext` they describe, and the project ships a design-time
+`IDesignTimeDbContextFactory<PuzzleDbContext>`. That means `dotnet ef` can
+target `ChessTrainer.Data` directly — no startup project required, and
+specifically no dependency on `ChessTrainerApp` building:
 
-- **Quick test path**: connect to the local SQL container (e.g., with Azure Data Studio or `sqlcmd`) and create the `PuzzleDb` database plus a `Players` table with one test row. That's enough for `HealthCheck` and `AddPlayer` to exercise the EF Core 10 layer end-to-end.
-- **Proper path**: once `ChessTrainerApp` is upgraded, run `dotnet ef database update --project src/ChessTrainerApp` against the local SQL container — this materializes the full schema.
+```powershell
+# From the repo root. Targets the local SQL container started in step 1.
+$env:PuzzleDbConnectionString = "Server=localhost,1433;Database=PuzzleDb;User Id=sa;Password=Local!Password123;TrustServerCertificate=true;"
+dotnet ef database update --project src/ChessTrainer.Data
+```
+
+The design-time factory reads the `PuzzleDbConnectionString` environment
+variable (the same name used by the function host) and falls back to the
+local SQL container connection string above when the variable isn't set,
+so `dotnet ef database update --project src/ChessTrainer.Data` works
+out-of-the-box against the default local container.
+
+To generate the equivalent SQL without touching a database — useful for
+code review or deploying to a managed SQL instance — use:
+
+```powershell
+dotnet ef migrations script --project src/ChessTrainer.Data --idempotent -o migrations.sql
+```
 
 ### 4. Run the function host
 
