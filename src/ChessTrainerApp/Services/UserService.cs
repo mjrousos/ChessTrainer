@@ -137,7 +137,7 @@ namespace MjrChess.Trainer.Services
             Logger.LogInformation("Recorded that user {UserId} {Result} puzzle {PuzzleId}", puzzleHistory.UserId, puzzleHistory.Solved ? "solved" : "failed", puzzleHistory.Puzzle.Id);
         }
 
-        private async Task<UserSettings> GetUserSettingsAsync(string userId)
+        private async Task<UserSettings?> GetUserSettingsAsync(string userId)
         {
             var settings = await UserSettingsRepository.Query(s => userId.Equals(s.UserId)).FirstOrDefaultAsync();
             return settings;

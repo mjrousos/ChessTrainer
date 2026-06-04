@@ -1,6 +1,6 @@
-﻿using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.AzureADB2C.UI;
+﻿using System;
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.UI;
 using MjrChess.Engine;
 using MjrChess.Trainer.Data;
 using MjrChess.Trainer.Services;
@@ -27,16 +29,18 @@ namespace MjrChess.Trainer
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddAuthentication(AzureADB2CDefaults.AuthenticationScheme)
-                .AddAzureADB2C(options => Configuration.Bind("AzureAdB2C", options));
+            services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+                .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAdB2C"));
 
-            services.AddChessTrainerData(Configuration.GetConnectionString("PuzzleDatabase"));
+            services.AddChessTrainerData(Configuration.GetConnectionString("PuzzleDatabase")
+                ?? throw new InvalidOperationException("ConnectionStrings:PuzzleDatabase configuration value is required."));
 
             services.AddScoped<IPlayerService, PlayerService>();
             services.AddScoped<IPuzzleService, PuzzleService>();
             services.AddScoped<IUserService, UserService>();
 
-            services.AddRazorPages();
+            services.AddRazorPages()
+                .AddMicrosoftIdentityUI();
             services.AddServerSideBlazor();
             services.AddResponseCompression(options =>
             {
@@ -47,18 +51,36 @@ namespace MjrChess.Trainer
             services.AddHealthChecks();
 
             services.AddTransient<ChessEngine>();
-            services.AddApplicationInsightsTelemetry(Configuration["ApplicationInsights:InstrumentationKey"]);
+
+            // Application Insights 3.x throws at startup if no connection string or
+            // instrumentation key is configured. The original 2.x code passed an empty
+            // instrumentation key, which the SDK silently treated as "no telemetry";
+            // preserve that behavior by only registering telemetry when configured.
+            var aiConnectionString = Configuration["ApplicationInsights:ConnectionString"];
+            var aiInstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
+            if (!string.IsNullOrWhiteSpace(aiConnectionString) || !string.IsNullOrWhiteSpace(aiInstrumentationKey))
+            {
+                services.AddApplicationInsightsTelemetry();
+            }
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, TelemetryConfiguration aiConfig)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            // Issue: https://github.com/dotnet/aspnetcore/issues/18865
-            app.UseRewriter(new RewriteOptions().AddRedirect("AzureADB2C/Account/SignedOut", "/"));
+            // Redirect post-signout requests from the Microsoft.Identity.Web UI to the site root.
+            app.UseRewriter(new RewriteOptions().AddRedirect("MicrosoftIdentity/Account/SignedOut", "/"));
 
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                aiConfig.DisableTelemetry = true;
+
+                // TelemetryConfiguration is only registered when AddApplicationInsightsTelemetry()
+                // was called above; use GetService (not GetRequiredService) to avoid throwing
+                // when telemetry is intentionally disabled via missing configuration.
+                var aiConfig = app.ApplicationServices.GetService<TelemetryConfiguration>();
+                if (aiConfig is not null)
+                {
+                    aiConfig.DisableTelemetry = true;
+                }
             }
             else
             {

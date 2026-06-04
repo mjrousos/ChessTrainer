@@ -19,7 +19,7 @@
                 {
                     @foreach (var puzzle in History)
                     {
-                        <li class="mdc-list-item" @onclick="() => OnPuzzleSelect?.Invoke(puzzle.Puzzle.Id)">
+                        <li class="mdc-list-item" @onclick="() => OnPuzzleSelect?.Invoke(puzzle.Puzzle.Id) ?? Task.CompletedTask">
                             <PuzzleLink Puzzle="puzzle.Puzzle" Solved="puzzle.Solved" />
                         </li>
                     }

@@ -36,22 +36,24 @@ namespace MjrChess.Trainer.BlazorExtensions
                 .Select(p => p.Name)
                 .ToList();
 
-            var index = 0;
-            builder.OpenComponent(index++, pageLayoutType);
-            builder.AddAttribute(index++, "Body", new RenderFragment(RenderPageWithParameters));
+            builder.OpenComponent(0, pageLayoutType);
+            builder.AddAttribute(1, "Body", new RenderFragment(RenderPageWithParameters));
             parametersExpected.Remove("Body");
-            AddParametersFromPage(builder, RouteData.PageType, parametersExpected, ref index);
+            AddParametersFromPage(builder, RouteData.PageType, parametersExpected);
 
-            // Pass null for any additional expected parameters that weren't defined by the page
+            // Pass null for any additional expected parameters that weren't defined by the page.
+            // Sequence number 3 follows the attributes added by AddParametersFromPage (which uses 2),
+            // keeping sequence numbers monotonically increasing in execution order per Blazor's
+            // RenderTreeBuilder guidance.
             foreach (var name in parametersExpected)
             {
-                builder.AddAttribute(index++, name, (object)null!);
+                builder.AddAttribute(3, name, (object)null!);
             }
 
             builder.CloseComponent();
         }
 
-        private static void AddParametersFromPage(RenderTreeBuilder builder, Type pageType, List<string> parameterNames, ref int index)
+        private static void AddParametersFromPage(RenderTreeBuilder builder, Type pageType, List<string> parameterNames)
         {
             // We get the method for retrieving layout parameters using reflection. We can't have the pageType derive from
             // a base class or interface with a `GetLayoutParameters` method because `GetLayoutParameters` needs to be static
@@ -63,7 +65,7 @@ namespace MjrChess.Trainer.BlazorExtensions
                 {
                     foreach (var attr in attributes.Where(a => parameterNames.Contains(a.Key)))
                     {
-                        builder.AddAttribute(index++, attr.Key, attr.Value);
+                        builder.AddAttribute(2, attr.Key, attr.Value);
                         parameterNames.Remove(attr.Key);
                     }
                 }

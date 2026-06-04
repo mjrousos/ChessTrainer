@@ -1,14 +1,14 @@
 ﻿<div>
     <AuthorizeView>
         <Authorized>
-            Welcome, @context.User.Identity.Name
-            <a class="mdc-top-app-bar__action-item mdc-button" aria-label="Sign out" href="AzureADB2C/Account/SignOut">Sign out</a>
+            Welcome, @context.User.Identity?.Name
+            <a class="mdc-top-app-bar__action-item mdc-button" aria-label="Sign out" href="MicrosoftIdentity/Account/SignOut">Sign out</a>
         </Authorized>
         <Authorizing>
             <span>Authorizing...</span>
         </Authorizing>
         <NotAuthorized>
-            <a class="mdc-top-app-bar__action-item mdc-button" aria-label="Sign in" href="AzureADB2C/Account/SignIn">Sign in</a>
+            <a class="mdc-top-app-bar__action-item mdc-button" aria-label="Sign in" href="MicrosoftIdentity/Account/SignIn">Sign in</a>
         </NotAuthorized>
     </AuthorizeView>
 </div>
