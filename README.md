@@ -21,6 +21,23 @@ back to you as puzzles to solve.
   engine (move validation only — not a strong engine; see
   [#35](https://github.com/mjrousos/ChessTrainer/issues/35)).
 
+## Screenshots
+
+### Tactics puzzle (home page)
+
+A real position from a tracked player's Lichess game, with the prompt
+explaining the blunder that was actually played and asking the user to
+find the move that should have been played instead.
+
+![Tactics puzzle UI: a chess board with a mid-game position from a Lichess game between toskekg and wolfwolf. The right sidebar shows the prompt "In this position, black blundered by playing Rxf5. Can you do better? Find the best move for black!" along with the game source and a link to the original game on lichess.org. A pawn-target square is highlighted to indicate the blunder destination.](docs/images/home-puzzle.png)
+
+### Freeform play (`/play`)
+
+A standalone board for playing through the in-house engine, with PGN and
+FEN export.
+
+![Freeform play board: a standard chess board with all pieces in their starting positions, "Black Player" labelled at the top and "White Player" (highlighted as side-to-move) at the bottom, with PGN and FEN buttons below the board.](docs/images/play-board.png)
+
 ## How it works
 
 ChessTrainer is one of three cooperating pieces. Game ingestion lives here;
