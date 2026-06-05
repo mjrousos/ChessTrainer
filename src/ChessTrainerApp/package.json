@@ -28,6 +28,9 @@
     "webpack-dev": "webpack --mode=development",
     "webpack-prod": "webpack --mode=production"
   },
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "author": "Mike Rousos",
   "license": "MIT"
 }
