@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@0.0.75"]
+    },
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/"
+    },
+    "azure": {
+      "command": "npx",
+      "args": ["-y", "@azure/mcp@3.0.0-beta.16", "server", "start"]
+    }
+  }
+}

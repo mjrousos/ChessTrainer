@@ -12,8 +12,8 @@ IngestionFunctions is a **producer** — it discovers new games and writes them 
 |---|---|---|
 | **SQL: `PuzzleDb`** | `PuzzleDbConnectionString` | User-facing system of record. Holds `Player`, `TacticsPuzzle`, `PuzzleHistory`, `UserSettings`, and `UserSettingsXPlayer` (join table). IngestionFunctions only reads `Player` here, via `IRepository<Player>`. |
 | **Azure Table: `ingestionrecords`** | `GameTable` | Per-player checkpoint store (`IngestionRecord`). `PartitionKey` = chess site, `RowKey` = player username, `MostRecentGame` = high-water mark. Used so subsequent runs only queue games newer than what's already been seen. |
-| **Azure Queue: `player-ingestion`** *(input)* | `PlayerIngestionQueue` | Drives the `AddQueuedPlayer` function. Payload is a single `int` player ID. Lets external callers say "scan this player now" without blocking on a long-running HTTP request. |
-| **Azure Queue: `game-ingestion`** *(output)* | `GameIngestionQueue` | Where all four functions converge. Each new game found becomes one `IngestionRequest` message (site, date, URL, both player names, the associated `PlayerId`, and the full UCI move list). Consumed by a downstream puzzle-extraction worker (not in this project). |
+| **Azure Queue: `players`** *(input)* | `PlayerIngestionQueue` | Drives the `AddQueuedPlayer` function. Payload is a single `int` player ID. Lets external callers say "scan this player now" without blocking on a long-running HTTP request. |
+| **Azure Queue: `games`** *(output)* | `GameIngestionQueue` | Where all four functions converge. Each new game found becomes one `IngestionRequest` message (site, date, URL, both player names, the associated `PlayerId`, and the full UCI move list). Consumed by a downstream puzzle-extraction worker (not in this project). |
 
 Both queues live in the same storage account; only the names differ. They flow in opposite directions through the system.
 
@@ -28,12 +28,12 @@ flowchart LR
         Health[HealthCheck<br/>HTTP GET]
     end
 
-    PlayerQ[(player-ingestion<br/>queue)]
+    PlayerQ[(players<br/>queue)]
     PlayerQ -->|int playerId| QTrigger
 
     DB[(PuzzleDb<br/>Player rows)]
     Table[(ingestionrecords<br/>table)]
-    GameQ[(game-ingestion<br/>queue)]
+    GameQ[(games<br/>queue)]
 
     Timer -->|enumerate players| DB
     Http -->|lookup by id| DB
@@ -110,8 +110,8 @@ This file is **gitignored** — create it once in `src/IngestionFunctions/`:
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "StorageConnectionString": "UseDevelopmentStorage=true",
     "GameTable": "ingestionrecords",
-    "GameIngestionQueue": "game-ingestion",
-    "PlayerIngestionQueue": "player-ingestion",
+    "GameIngestionQueue": "games",
+    "PlayerIngestionQueue": "players",
     "PuzzleDbConnectionString": "Server=localhost,1433;Database=PuzzleDb;User Id=sa;Password=Local!Password123;TrustServerCertificate=true;",
     "LichessToken": "<your-lichess-token-or-leave-empty>"
   }
@@ -230,14 +230,14 @@ curl -X PUT "http://localhost:7071/api/AddPlayer?PlayerId=1"
 curl -X POST http://localhost:7071/admin/functions/ReviewPlayers `
   -H "Content-Type: application/json" -d "{}"
 
-# AddQueuedPlayer — drop an integer payload onto the player-ingestion queue.
+# AddQueuedPlayer — drop an integer payload onto the players queue.
 # Easiest: use Azure Storage Explorer (free) pointed at "Local & Attached"
-# > Storage Accounts > (Emulator - Default Ports) > Queues > player-ingestion.
+# > Storage Accounts > (Emulator - Default Ports) > Queues > players.
 # Programmatic alternative with the Azure CLI (PowerShell-native base64 — `base64`
 # isn't a built-in command on Windows PowerShell):
 $payload = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("1"))
 az storage message put `
-  --queue-name player-ingestion `
+  --queue-name players `
   --content $payload `
   --connection-string "UseDevelopmentStorage=true"
 ```
