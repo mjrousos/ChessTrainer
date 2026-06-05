@@ -191,11 +191,7 @@ Bicep + GitHub Actions is tracked in
 ## Roadmap
 
 See the [issues list](https://github.com/mjrousos/ChessTrainer/issues) for
-in-flight work. Highlights:
-
-- **Bugs** — Sign-in broken ([#39](https://github.com/mjrousos/ChessTrainer/issues/39)).
-- **Platform** — CI workflow ([#36](https://github.com/mjrousos/ChessTrainer/issues/36)), IaC modernization ([#31](https://github.com/mjrousos/ChessTrainer/issues/31)), OpenTelemetry ([#34](https://github.com/mjrousos/ChessTrainer/issues/34)), `/healthz` + `/readyz` ([#38](https://github.com/mjrousos/ChessTrainer/issues/38)), test coverage ([#29](https://github.com/mjrousos/ChessTrainer/issues/29)), rename default branch ([#32](https://github.com/mjrousos/ChessTrainer/issues/32)).
-- **Features** — Stockfish for hints / analysis ([#35](https://github.com/mjrousos/ChessTrainer/issues/35)), dark mode + theming ([#30](https://github.com/mjrousos/ChessTrainer/issues/30)), accessibility ([#37](https://github.com/mjrousos/ChessTrainer/issues/37)), Lichess OAuth ([#33](https://github.com/mjrousos/ChessTrainer/issues/33)).
+in-flight work — bug fixes, platform improvements, and product features.
 
 ## License
 
