@@ -71,17 +71,17 @@
             {
                 case PuzzleState.Solved:
                 case PuzzleState.Revealed:
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnReset?.Invoke()">replay</button>
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnNext?.Invoke()">skip_next</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnReset?.Invoke() ?? Task.CompletedTask">replay</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnNext?.Invoke() ?? Task.CompletedTask">skip_next</button>
                     break;
                 case PuzzleState.Missed:
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnReset?.Invoke()">replay</button>
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnReveal?.Invoke()">help_outline</button>
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnNext?.Invoke()">skip_next</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnReset?.Invoke() ?? Task.CompletedTask">replay</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnReveal?.Invoke() ?? Task.CompletedTask">help_outline</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnNext?.Invoke() ?? Task.CompletedTask">skip_next</button>
                     break;
                 case PuzzleState.Ongoing:
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnReveal?.Invoke()">help_outline</button>
-                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnNext?.Invoke()">skip_next</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnReveal?.Invoke() ?? Task.CompletedTask">help_outline</button>
+                    <button class="mdc-icon-button mdc-card__action mdc-card__action--icon material-icons pull-right" @onclick="() => OnNext?.Invoke() ?? Task.CompletedTask">skip_next</button>
                     break;
             }
         </div>

@@ -63,7 +63,10 @@ namespace IngestionFunctions
         {
             try
             {
-                await PlayerRepository.Query().FirstOrDefaultAsync();
+                // AnyAsync is the idiomatic DB-connectivity probe: it doesn't
+                // materialize a row and (unlike FirstOrDefaultAsync on an
+                // unfiltered query) doesn't trigger EF Core warning 10103.
+                await PlayerRepository.Query().AnyAsync();
             }
             catch (DbException)
             {

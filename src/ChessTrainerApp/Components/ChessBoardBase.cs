@@ -160,7 +160,7 @@ namespace MjrChess.Trainer.Components
             }
         }
 
-        private async Task<(int, int)> GetMousePositionAsync(MouseEventArgs args)
+        private async Task<(int File, int Rank)> GetMousePositionAsync(MouseEventArgs args)
         {
             var boardDimensions = await JSRuntime.InvokeAsync<Rectangle>("getBoundingRectangle", new object[] { ElementName });
 
