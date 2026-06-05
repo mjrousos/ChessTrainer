@@ -54,7 +54,12 @@ namespace MjrChess.Trainer.Services
             }
 
             var skipCount = NumGen.Next(puzzleCount);
-            var puzzle = await puzzlesQuery.Skip(skipCount).FirstOrDefaultAsync();
+
+            // OrderBy is required so Skip/First returns a deterministic row for a
+            // given index — without one, EF Core warns (10102) and the underlying
+            // database is free to return rows in any order, which would break the
+            // "pick the Nth puzzle" semantics of the random selection here.
+            var puzzle = await puzzlesQuery.OrderBy(p => p.Id).Skip(skipCount).FirstOrDefaultAsync();
             if (puzzle == null)
             {
                 Logger.LogError("No puzzles found");
