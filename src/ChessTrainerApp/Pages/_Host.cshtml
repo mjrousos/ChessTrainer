@@ -1,7 +1,16 @@
 ﻿@page "/"
 @namespace MjrChess.Trainer.Pages
-@inject Microsoft.ApplicationInsights.AspNetCore.JavaScriptSnippet JavaScriptSnippet
+@using Microsoft.Extensions.DependencyInjection
+@inject IServiceProvider Services
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    // JavaScriptSnippet is only registered when Application Insights telemetry has
+    // been added in Startup.ConfigureServices (which only happens when an AI
+    // connection string / instrumentation key is configured). Use GetService so
+    // the page degrades gracefully when telemetry is off.
+    var javaScriptSnippet = Services.GetService<Microsoft.ApplicationInsights.AspNetCore.JavaScriptSnippet>();
+}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -10,7 +19,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chess Trainer</title>
     <link href="app.bundle.css" rel="stylesheet" />
-    @Html.Raw(JavaScriptSnippet.FullScript)
+    @if (javaScriptSnippet is not null)
+    {
+        @Html.Raw(javaScriptSnippet.FullScript)
+    }
     <base href="~/" />
 </head>
 <body>
