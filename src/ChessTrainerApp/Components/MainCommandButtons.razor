@@ -1,12 +1,12 @@
 ﻿@inject NavigationManager NavManager
 
-<button class="mdc-icon-button" aria-label="Source in Azure DevOps" @onclick="NavigateToSource">
+<button class="mdc-icon-button" aria-label="Source on GitHub" @onclick="NavigateToSource">
     <i class="fas fa-code-branch"></i>
 </button>
 
 @code {
     void NavigateToSource()
     {
-        NavManager.NavigateTo("https://dotnetcst.visualstudio.com/LearningProjects/_git/ChessTrainer");
+        NavManager.NavigateTo("https://github.com/mjrousos/ChessTrainer");
     }
 }
