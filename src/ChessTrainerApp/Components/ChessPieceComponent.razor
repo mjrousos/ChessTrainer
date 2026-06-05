@@ -3,15 +3,6 @@
 @code {
     const string SpriteSource = "Chess_Pieces_Sprite.svg";
 
-    public ChessPieceComponent() { }
-
-    public ChessPieceComponent(ChessPieces pieceType, int file, int rank)
-    {
-        PieceType = pieceType;
-        File = file;
-        Rank = rank;
-    }
-
     [Parameter]
     public ChessPieces PieceType { get; set; }
 
