@@ -49,7 +49,7 @@ These projects share `Engine` / `ChessTrainer.Common` / `ChessTrainer.Data` with
 - **EF migrations**: live in `ChessTrainerApp` (`MigrationsAssembly("MjrChess.Trainer")`). Not moved in this scenario.
 
 ## Source Control
-- **Source Branch**: `master`
+- **Source Branch**: `main`
 - **Working Branch**: `upgrade-dotnet-10`
 - **Commit Strategy**: After Each Task
 - **Branch Sync**: Auto (Merge)
