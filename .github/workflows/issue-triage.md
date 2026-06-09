@@ -96,7 +96,9 @@ Type and helper labels (`bug`, `enhancement`, `documentation`,
 `question`, `needs-triage`, `needs-info`, `duplicate`) are **not**
 defined in this config; they are fixed and applied per the rules in
 the steps below. The full set of labels you may apply is the
-`add_labels` allow-list in this workflow's frontmatter.
+`safe-outputs.add-labels.allowed` list in this workflow's
+frontmatter (exposed to the agent as the `add_labels` safe-output
+tool).
 
 ### 2. Read the issue
 
