@@ -1,0 +1,182 @@
+# Issue triage configuration for the Issue Triage agentic workflow.
+#
+# Maintainer-editable mapping that drives `.github/workflows/issue-triage.md`.
+# Update this file (no workflow edits required) to:
+#   - retarget owners as the team grows
+#   - tweak the keywords that hint at each area or priority
+#   - change the required sections in the missing-info comment
+
+default_owner: mjrousos
+
+areas:
+  engine:
+    labels: [engine]
+    owner: mjrousos
+    description: Chess move generation, validation, FEN/PGN parsing (src/Engine).
+    keywords:
+      - chess engine
+      - move generation
+      - ChessEngine
+      - FEN
+      - PGN
+      - check
+      - checkmate
+      - stalemate
+      - en passant
+      - castling
+    paths:
+      - src/Engine/**
+      - test/MjrChess.Engine.Test/**
+
+  data:
+    labels: [data]
+    owner: mjrousos
+    description: EF Core data layer, repositories, AutoMapper (src/ChessTrainer.Data and src/ChessTrainer.Common).
+    keywords:
+      - EF Core
+      - Entity Framework
+      - migration
+      - PuzzleDbContext
+      - repository
+      - AutoMapper
+      - PuzzleDatabase
+      - DbContext
+    paths:
+      - src/ChessTrainer.Data/**
+      - src/ChessTrainer.Common/**
+      - test/ChessTrainer.Data.Test/**
+
+  ui:
+    labels: [ui]
+    owner: mjrousos
+    description: Blazor Server UI, Razor components, front-end assets (src/ChessTrainerApp).
+    keywords:
+      - blazor
+      - razor
+      - component
+      - page
+      - scss
+      - css
+      - webpack
+      - typescript
+      - javascript
+      - wwwroot
+      - chessboard
+    paths:
+      - src/ChessTrainerApp/**
+
+  ingestion:
+    labels: [ingestion]
+    owner: mjrousos
+    description: Azure Functions that ingest games from Lichess and Chess.com (src/IngestionFunctions).
+    keywords:
+      - lichess
+      - chess.com
+      - azure function
+      - azure functions
+      - ingestion
+      - scrape
+      - queue
+      - Azurite
+    paths:
+      - src/IngestionFunctions/**
+
+  infrastructure:
+    labels: [infrastructure]
+    owner: mjrousos
+    description: IaC, deployment, CI/CD, hosting (infrastructure/ and .github/workflows).
+    keywords:
+      - ARM
+      - bicep
+      - azuredeploy
+      - deploy
+      - App Service
+      - GitHub Actions
+      - CI
+      - CD
+      - workflow
+      - pipeline
+    paths:
+      - infrastructure/**
+      - .github/workflows/**
+
+  auth:
+    labels: [auth]
+    owner: mjrousos
+    description: Authentication, identity, sign-in (Azure AD B2C / Entra External ID).
+    keywords:
+      - sign in
+      - sign-in
+      - login
+      - logout
+      - B2C
+      - Entra
+      - identity
+      - OIDC
+      - AzureAdB2C
+      - Microsoft Identity Web
+
+priority:
+  P0:
+    description: Critical — crash, data loss, security vulnerability, prod down.
+    keywords:
+      - crash
+      - crashes
+      - data loss
+      - outage
+      - production down
+      - prod down
+      - security vulnerability
+      - exploit
+      - cve
+  P1:
+    description: High — regression, blocks release, broken on main.
+    keywords:
+      - regression
+      - blocks release
+      - blocker
+      - broken in main
+      - broken on main
+      - cannot build
+      - won't build
+      - build fails
+  P2:
+    description: Medium — normal bug, ordinary feature request.
+    keywords:
+      - bug
+      - error
+      - warning
+      - exception
+      - not working
+      - doesn't work
+      - fails to
+  P3:
+    description: Low — polish, cosmetic, nice-to-have, docs/typo.
+    keywords:
+      - enhancement
+      - nice to have
+      - cosmetic
+      - polish
+      - typo
+      - docs
+      - documentation
+  default: P3
+
+missing_info:
+  # Only post a missing-info comment when the issue is classified as one of these labels.
+  applies_to_labels: [bug]
+  required_sections:
+    - Steps to reproduce
+    - Expected behavior
+    - Actual behavior
+  # Hidden marker used by the workflow to detect a prior missing-info comment
+  # and avoid posting duplicates on re-trigger.
+  comment_marker: "<!-- triage-bot:needs-info -->"
+
+duplicate:
+  # Hidden marker used by the workflow to detect a prior duplicate comment
+  # and avoid posting duplicates on re-trigger.
+  comment_marker: "<!-- triage-bot:duplicate -->"
+  # Required confidence before applying `duplicate` label + posting the
+  # link comment. Acceptable: high | medium (the agent uses its judgement).
+  min_confidence: high
