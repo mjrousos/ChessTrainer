@@ -244,10 +244,10 @@ outside `missing_info.applies_to_labels` (e.g. `enhancement`,
 ## Safe outputs
 
 - All mutations go through the configured safe outputs
-  (`add-labels`, `add-comment`, `assign-to-user`). Do not try to
+  (`add_labels`, `add_comment`, `assign_to_user`). Do not try to
   shell out to `gh issue label`, `gh issue comment`, or `gh issue
   edit` — they are not available and would be rejected.
-- `add-comment` has `hide-older-comments: true`, so re-running will
+- `add_comment` has `hide-older-comments: true`, so re-running will
   minimize previous bot comments before posting new ones — but you
   should still guard with the hidden markers so we avoid posting at
   all when nothing has changed.

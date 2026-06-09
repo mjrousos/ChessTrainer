@@ -163,7 +163,7 @@ priority:
   default: P3
 
 missing_info:
-  # Only post a missing-info comment when the issue is classified as one of these labels.
+  # Only post a missing-info comment when the issue carries one of these labels.
   applies_to_labels: [bug]
   required_sections:
     - Steps to reproduce
