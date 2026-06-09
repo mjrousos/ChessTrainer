@@ -1,10 +1,19 @@
 # Issue triage configuration for the Issue Triage agentic workflow.
 #
 # Maintainer-editable mapping that drives `.github/workflows/issue-triage.md`.
-# Update this file (no workflow edits required) to:
-#   - retarget owners as the team grows
+# Update this file to:
 #   - tweak the keywords that hint at each area or priority
 #   - change the required sections in the missing-info comment
+#   - adjust marker strings or duplicate-detection confidence
+#
+# Notes:
+#   - Retargeting owners (changing `owner:` values or `default_owner`)
+#     also requires updating `assign-to-user.allowed` in
+#     `.github/workflows/issue-triage.md` and recompiling the lock
+#     file (`gh aw compile issue-triage`), because safe-output
+#     allow-lists are enforced at the workflow level.
+#   - Adding a brand-new area label likewise requires extending
+#     `add-labels.allowed` in the workflow and recompiling.
 
 default_owner: mjrousos
 

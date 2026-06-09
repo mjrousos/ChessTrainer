@@ -23,6 +23,7 @@ tools:
     toolsets: [issues]
   bash:
     - "cat .github/triage-config.yml"
+    - "yq *"
     - "jq *"
 safe-outputs:
   add-labels:
@@ -86,8 +87,16 @@ Run `cat .github/triage-config.yml` and parse the YAML. It defines:
 - `duplicate` — `comment_marker`, `min_confidence`
 - `default_owner` — fallback assignee
 
-Treat this file as the source of truth. Do not invent labels, owners, or
-keywords that are not in it.
+Treat this file as the source of truth for **area routing, owners,
+keyword lists, priority keywords, required sections, and marker
+strings**. Do not invent area labels, owners, or keywords that are
+not in it.
+
+Type and helper labels (`bug`, `enhancement`, `documentation`,
+`question`, `needs-triage`, `needs-info`, `duplicate`) are **not**
+defined in this config; they are fixed and applied per the rules in
+the steps below. The full set of labels you may apply is the
+`add_labels` allow-list in this workflow's frontmatter.
 
 ### 2. Read the issue
 
