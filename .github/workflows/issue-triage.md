@@ -44,6 +44,8 @@ safe-outputs:
   add-comment:
     max: 2
     hide-older-comments: true
+    discussions: false
+    pull-requests: false
   assign-to-user:
     allowed: [mjrousos]
     max: 1
@@ -129,8 +131,9 @@ When acting:
 
   ```text
   <!-- triage-bot:duplicate -->
-  This looks like a duplicate of #<N>. Closing in favor of the
-  original — please add any extra detail there.
+  This looks like a likely duplicate of #<N>. Leaving the issue open
+  for a maintainer to confirm; please add any extra detail to the
+  original in the meantime.
   ```
 
   (Do not actually close the issue; closing is a maintainer action.)

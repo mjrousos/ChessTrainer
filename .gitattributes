@@ -1,1 +1,10 @@
+# Lock files compiled by `gh aw` (https://github.com/github/gh-aw).
+# `linguist-generated` hides them from default diffs and PR file views.
+# `merge=ours` keeps the local copy on merge conflicts; it relies on the
+# built-in "ours" merge driver, which must be enabled per-clone with:
+#   git config merge.ours.driver true
+# Without that one-time config the attribute is a no-op (safe), so a
+# missing driver only means conflicts on this file fall back to the
+# normal 3-way merge. Recompile with `gh aw compile <workflow>` after
+# any merge that touches the source `.md`.
 .github/workflows/*.lock.yml linguist-generated=true merge=ours
