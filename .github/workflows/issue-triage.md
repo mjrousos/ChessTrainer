@@ -53,6 +53,8 @@ safe-outputs:
   assign-to-user:
     allowed: [mjrousos]
     max: 1
+concurrency:
+  group: "gh-aw-${{ github.workflow }}-${{ github.event.issue.number || inputs.issue_number || github.run_id }}"
 user-rate-limit:
   max-runs-per-window: 5
   window: 60
@@ -115,8 +117,10 @@ Handle the two terminal states first:
   - the issue already has at least one assignee, **and**
   - if the issue carries any label listed in
     `missing_info.applies_to_labels` and lacks any of the
-    `missing_info.required_sections`, the needs-info comment is
-    already present.
+    `missing_info.required_sections`, **both** the `needs-info` label
+    and the needs-info comment are already present (if the label was
+    removed but the comment remains, the gate should not fire so the
+    label gets re-applied).
 
 This makes re-runs on already-triaged issues (including duplicates) a
 no-op.
@@ -235,6 +239,11 @@ have them.)
 Always use the literal marker string from
 `missing_info.comment_marker` so the idempotency gate can find it
 later. Also add the `needs-info` label via `add_labels`.
+
+If a prior comment with the marker is already present but the
+`needs-info` label is missing (e.g. a maintainer removed it), do
+**not** post a second comment — just re-apply the `needs-info` label
+via `add_labels` so the issue state is consistent.
 
 Do **not** post this comment for issues whose only type label is
 outside `missing_info.applies_to_labels` (e.g. `enhancement`,
