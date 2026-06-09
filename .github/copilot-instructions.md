@@ -1,181 +1,87 @@
 # Copilot instructions for ChessTrainer
 
-These notes capture project conventions for AI coding assistants (e.g. the
-GitHub Copilot CLI) working in this repository. Human contributors are
-welcome to follow them too.
+Multi-project .NET 10 solution: Blazor Server app, EF Core data layer, Azure Functions ingestion, in-house chess engine.
+
+## Code review checklist
+
+Apply these rules to every change.
+
+### Never silence warnings
+- Warnings include compiler/analyzer warnings, npm/webpack `compiled with N warnings`, and framework runtime `warn:` output during smoke tests (e.g. EF Core `EF[10102]`/`EF[10103]`). All count; all must be zero.
+- Fix the underlying cause (add the missing `OrderBy`, tighten the nullable annotation, etc.).
+- Don't disable `Nullable` at file or project level — fix the annotation.
+- No `#pragma warning disable`, `<NoWarn>` entries, `[SuppressMessage]` attributes, or analyzer rule-set relaxations unless the user explicitly approves that specific suppression. Approved suppressions must be narrow and include a justification comment.
+- Third-party deprecation noise (e.g. legacy SCSS in `node_modules`) may be quieted only at the tool boundary (e.g. `quietDeps: true` for sass-loader), never inside our source.
+
+### Don't leak `Data.Models.*` outside `ChessTrainer.Data`
+EF entities (`MjrChess.Trainer.Data.Models.*`) are deliberately separate from public domain models (`MjrChess.Trainer.Models.*` in `ChessTrainer.Common`). Repositories are registered as `IRepository<TPublicModel>`; the generic `EFRepository<TEntity, TPublicModel>` (or specialized repos like `TacticsPuzzleRepository`) does the AutoMapper bridging. Consumers depend on the public `Models` namespace only.
+
+### Connection string has two names — update both
+- **ChessTrainerApp** → `ConnectionStrings:PuzzleDatabase` (key is `PuzzleDatabase`, not `PuzzleDb`).
+- **IngestionFunctions** → `PuzzleDbConnectionString` env var. Also what `PuzzleDbContextFactory` reads for `dotnet ef` tooling. See `src/IngestionFunctions/README.md` for the full recipe.
+
+### Auth: don't depend on Azure AD B2C user-flow IDs
+`Startup.cs` wires Microsoft Identity Web against B2C, but the configured tenant is dead (issue #39, migrating to Entra External ID). Don't add code that depends on `B2C_1_*` user-flow IDs — they're going away.
+
+### Application Insights is opt-in
+Register `AddApplicationInsightsTelemetry()` **only** when `ApplicationInsights:ConnectionString` or `:InstrumentationKey` is configured — the 3.x SDK throws on startup if called with neither. Use `GetService<TelemetryConfiguration>()`, not `GetRequiredService`.
+
+### Code style
+- C# `latest`, `Nullable` enabled solution-wide (`Directory.Build.props`).
+- StyleCop.Analyzers is added by `Directory.Build.targets`; rules tuned in `rules.ruleset` and `stylecop.json`: 4-space indent; system `using` directives NOT required first; blank line between using groups; `using` directives outside the namespace; file must end with newline.
+- Razor: `@page` routes in `src/ChessTrainerApp/Pages/`; reusable components in `src/ChessTrainerApp/Components/` and `Shared/`.
+- Static web assets go under `src/ChessTrainerApp/app/` (webpack bundles them into `wwwroot/dist/`, which `Program.cs` serves via `UseWebRoot("wwwroot/dist")`). Don't hand-edit `wwwroot/dist`.
 
 ## PR feedback workflow
 
-When addressing review comments on a pull request, the task is **not**
-complete after pushing a fix commit. Always:
+When addressing review comments, the task is **not** complete after pushing a fix commit. For every comment thread:
+1. **Reply** with a short note explaining the change, citing the fix commit SHA when possible.
+2. **Mark the thread resolved.**
 
-1. **Reply to every review comment** with a short note explaining what
-   was changed and, where possible, citing the commit SHA of the fix.
-2. **Mark each thread as resolved** once a reply has been posted and
-   the fix has landed on the PR branch.
-
-A PR feedback round is only "done" when every comment thread has both
-(a) a reply and (b) a resolved state. Pushing the code change without
-the reply + resolve is treated as incomplete work.
-
-## Build hygiene
-
-Builds must complete with **zero errors and zero warnings** before any
-change is considered done. This applies to:
-
-* The local Debug build you use while iterating.
-* The Release build (which has `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`
-  in `Directory.Build.props`, so warnings will fail the build outright).
-* Front-end / npm builds (e.g. `npm run webpack-prod` for `ChessTrainerApp`)
-  — `compiled successfully` only, no `compiled with N warnings`.
-* Runtime logs during smoke tests — fix anything that surfaces as a
-  `warn:` from framework loggers (e.g. EF Core query warnings such as
-  EF[10102]/[10103]), not just compiler warnings.
-
-Rules when a warning appears:
-
-1. **Fix the underlying cause.** Add the missing `OrderBy`, tighten the
-   nullable annotation, etc. — don't paper over it.
-2. **Never silence a warning to make the build pass** — no
-   `#pragma warning disable`, `<NoWarn>` entries, `[SuppressMessage]`
-   attributes, or analyzer rule-set tweaks unless the user explicitly
-   approves that specific suppression. Third-party deprecation noise
-   (e.g. legacy SCSS deep inside `node_modules`) can be quieted only at
-   the tool boundary (e.g. `quietDeps: true` for sass-loader), never
-   inside our own source.
-3. **Run both Debug and Release** at least once before declaring a task
-   complete, since `TreatWarningsAsErrors` only fires in Release.
-4. **Pre-existing warnings count too.** If you touch a file or project,
-   you own the warnings it surfaces — clean them up as part of the
-   change rather than leaving them for the next person.
+A round is "done" only when every thread has both a reply and a resolved state.
 
 ## Solution layout
 
-This is a multi-project .NET 10 solution. **Project folder names don't
-match their root namespaces** — keep this in mind when adding `using`
-directives or searching for symbols:
+**Project folder names don't match root namespaces:**
 
-| Project (`src/`)     | Root namespace                          | Role |
-|----------------------|-----------------------------------------|------|
-| `ChessTrainerApp`    | `MjrChess.Trainer`                      | Blazor Server web app + Razor Pages auth UI. Entry point (`Program.cs`/`Startup.cs`). |
-| `ChessTrainer.Data`  | `MjrChess.Trainer.Data`                 | EF Core `PuzzleDbContext`, repositories, migrations, AutoMapper profile. |
-| `ChessTrainer.Common`| `MjrChess.Trainer` (`MjrChess.Trainer.Models` for the model types, which live under `Models/`) | Public domain models shared across projects. |
-| `Engine`             | `MjrChess.Engine`                       | In-house chess move generator/validator (`ChessEngine`). Not a UCI engine — see issue #35. |
-| `IngestionFunctions` | `IngestionFunctions` (`IngestionFunctions.Services`, `IngestionFunctions.Models`) | Azure Functions (isolated worker) that scrape Lichess / Chess.com and queue games. See `src/IngestionFunctions/README.md` for the full setup story (Azurite + SQL container + `func start`); don't re-derive it. |
+| Project (`src/`)     | Root namespace | Role |
+|----------------------|----------------|------|
+| `ChessTrainerApp`    | `MjrChess.Trainer` | Blazor Server web app + Razor Pages auth UI. Entry point `Program.cs`/`Startup.cs`. |
+| `ChessTrainer.Data`  | `MjrChess.Trainer.Data` | EF Core `PuzzleDbContext`, repositories, migrations, AutoMapper profile. |
+| `ChessTrainer.Common`| `MjrChess.Trainer` (models under `MjrChess.Trainer.Models` in `Models/`) | Public domain models shared across projects. |
+| `Engine`             | `MjrChess.Engine` | In-house chess move generator/validator (`ChessEngine`). Not UCI (issue #35). |
+| `IngestionFunctions` | `IngestionFunctions(.Services, .Models)` | Azure Functions (isolated worker) scraping Lichess/Chess.com. See `src/IngestionFunctions/README.md`. |
 
-Tests in `test/` mirror project names (e.g. `test/ChessTrainer.Data.Test`). xUnit + Coverlet, .NET 10.
+Tests in `test/` mirror project names (xUnit + Coverlet, .NET 10).
+
+Azure deployment lives in `infrastructure/ChessTrainerRG/` (ARM templates). Issue #31 tracks modernizing to Bicep + GitHub Actions.
+
+## Companion repository (ChessPuzzleFinder)
+
+This solution works along with the [ChessPuzzleFinder](https://github.com/mjrousos/ChessPuzzleFinder/) repository, which contains a Go utility for finding candidate puzzles from games queued by this app. The puzzles are then written to the database for use by this app. The two repos are separate but are usually deployed together in a containerized environment.
+
+## Build hygiene
+
+**Run both Debug and Release** before declaring a task done — `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` in `Directory.Build.props` only fires in Release, and there's no CI yet (issue #36).
 
 ## Build, test, and run
 
 ```powershell
-# Full solution (Release fails on any warning — see Directory.Build.props)
+# Full solution (Release fails on any warning)
 dotnet build ChessTrainer.sln -c Release
 dotnet test  ChessTrainer.sln -c Release
 
-# Single test method (xUnit filter syntax)
+# Single test (xUnit filter)
 dotnet test test/ChessTrainer.Data.Test --filter "FullyQualifiedName~MyClass.MyMethod"
 
-# Or a whole class / namespace
-dotnet test test/ChessTrainer.Data.Test --filter "FullyQualifiedName~MyClass"
-
-# Run the Blazor app (Debug)
+# Run the Blazor app
 dotnet run --project src/ChessTrainerApp
 
-# Front-end (auto-invoked by the ChessTrainerApp build via the
-# `DebugRunWebpack` MSBuild target when wwwroot/dist is missing, so a
-# plain `dotnet build` is usually enough). Direct commands:
+# Front-end (auto-invoked by ChessTrainerApp's DebugRunWebpack target
+# when wwwroot/dist is missing — plain `dotnet build` is usually enough)
 cd src/ChessTrainerApp
 npm install
-npm run webpack-dev      # one-off dev build
-npm run watch            # rebuild on change while iterating on SCSS / JS
-npm run webpack-prod     # production build (zero-warning requirement)
+npm run webpack-dev    # one-off dev build
+npm run watch          # rebuild on change
+npm run webpack-prod   # production build (zero-warning requirement)
 ```
-
-The web app serves static assets from **`wwwroot/dist`**, not `wwwroot/`
-— `Program.cs` calls `UseWebRoot("wwwroot/dist")` and webpack writes
-there. New static assets go under `src/ChessTrainerApp/app/` (let
-webpack bundle/copy them); don't hand-edit `wwwroot/dist`.
-
-There's no GitHub Actions CI workflow yet (tracked in issue #36), so
-**run both Debug and Release builds locally** before claiming a task is
-done — `TreatWarningsAsErrors` only fires in Release.
-
-## Architecture notes
-
-### Data layer: `Data.Models` ↔ public `Models` via AutoMapper
-
-`ChessTrainer.Data` deliberately keeps EF entities separate from the
-public domain models, and AutoMapper bridges between them:
-
-- `MjrChess.Trainer.Data.Models.*` — EF Core entities (on-disk shape).
-- `MjrChess.Trainer.Models.*` — public domain models exposed to the
-  rest of the app (lives in `ChessTrainer.Common`).
-
-Repositories are registered as `IRepository<TPublicModel>` (see
-`DataExtensions.AddChessTrainerData`) and the generic
-`EFRepository<TEntity, TPublicModel>` (or a specialized repo like
-`TacticsPuzzleRepository`) does the mapping. **Don't leak
-`Data.Models.*` types out of `ChessTrainer.Data`** — every consumer
-depends on the public `Models` namespace.
-
-### Database connection string has two names
-
-The same SQL database is read under two different configuration keys
-depending on the host. When changing connection details, update both:
-
-- **ChessTrainerApp** → `ConnectionStrings:PuzzleDatabase` (the key is
-  `PuzzleDatabase`, not `PuzzleDb`).
-- **IngestionFunctions** → `PuzzleDbConnectionString` env var. This is
-  also the variable `PuzzleDbContextFactory` reads, which is why
-  `dotnet ef` commands work against `ChessTrainer.Data` directly with
-  no startup project. See `src/IngestionFunctions/README.md` for the
-  full `dotnet ef` recipe.
-
-### Authentication
-
-`Startup.cs` wires Microsoft Identity Web
-(`AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAdB2C"))`).
-The configured Azure AD B2C tenant's OIDC metadata endpoint no longer
-responds, so sign-in is currently broken — tracked in issue #39, with
-migration to Microsoft Entra External ID planned. Don't add code that
-depends on B2C-specific user-flow IDs (`B2C_1_*`); they'll go away with
-the migration.
-
-### Application Insights is opt-in
-
-`AddApplicationInsightsTelemetry()` is registered **only** when
-`ApplicationInsights:ConnectionString` or
-`ApplicationInsights:InstrumentationKey` is configured. The 3.x SDK
-throws on startup if called with neither, so don't unconditionally
-register telemetry, and use `GetService<TelemetryConfiguration>()`
-(not `GetRequiredService`) anywhere you reach for it.
-
-### Health endpoint already exists
-
-`endpoints.MapHealthChecks("/hc")` is wired up in `Startup.cs`. Issue
-#38 tracks splitting it into `/healthz` (liveness) and `/readyz`
-(readiness) with tagged DB checks — don't add a parallel endpoint.
-
-### Azure deployment
-
-ARM-based deployment lives in `infrastructure/ChessTrainerRG/`
-(`.deployproj`, `azuredeploy.json`, `azuredeploy.parameters.json`,
-`Deployment.md`). Issue #31 tracks modernizing this to Bicep +
-GitHub Actions; until then, treat the existing files as the source of
-truth for prod resource shape.
-
-## Code style
-
-- C# `latest` with `Nullable` enabled solution-wide
-  (`Directory.Build.props`). Don't disable nullable at file or project
-  level to silence warnings — fix the annotation.
-- StyleCop.Analyzers is added to every project by
-  `Directory.Build.targets`, with rules tuned in `rules.ruleset` and
-  `stylecop.json`: 4-space indent, system `using` directives NOT
-  required first, blank line required between using groups, `using`
-  directives outside the namespace, file must end with a newline. Match
-  this style — don't relax the ruleset to make warnings go away
-  (Build hygiene above applies).
-- Razor `@page` routes live under `src/ChessTrainerApp/Pages/`;
-  reusable Razor components live under
-  `src/ChessTrainerApp/Components/` and `Shared/`.
