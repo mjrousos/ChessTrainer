@@ -1,6 +1,8 @@
 # Copilot instructions for ChessTrainer
 
-Multi-project .NET 10 solution: Blazor Server app, EF Core data layer, Azure Functions ingestion, in-house chess engine.
+> The full project conventions, architecture notes, build commands, and PR feedback workflow live in [`AGENTS.md`](../AGENTS.md) at the repo root. That file is the source of truth, and is read by Copilot Chat, Copilot CLI, and the Copilot cloud agent (as well as by Codex and Claude Code).
+>
+> This file mirrors only the **Code review checklist** from `AGENTS.md`, so that Copilot Code Review (which truncates any instruction file past ~4,000 characters) reliably sees every review-actionable rule. When you change a rule below, update the matching section in `AGENTS.md` too.
 
 ## Code review checklist
 
@@ -24,64 +26,10 @@ EF entities (`MjrChess.Trainer.Data.Models.*`) are deliberately separate from pu
 `Startup.cs` wires Microsoft Identity Web against B2C, but the configured tenant is dead (issue #39, migrating to Entra External ID). Don't add code that depends on `B2C_1_*` user-flow IDs — they're going away.
 
 ### Application Insights is opt-in
-Register `AddApplicationInsightsTelemetry()` **only** when `ApplicationInsights:ConnectionString` or `:InstrumentationKey` is configured — the 3.x SDK throws on startup if called with neither. Use `GetService<TelemetryConfiguration>()`, not `GetRequiredService`.
+Register `AddApplicationInsightsTelemetry()` **only** when `ApplicationInsights:ConnectionString` or `ApplicationInsights:InstrumentationKey` is configured — the 3.x SDK throws on startup if called with neither. Use `GetService<TelemetryConfiguration>()`, not `GetRequiredService`.
 
 ### Code style
 - C# `latest`, `Nullable` enabled solution-wide (`Directory.Build.props`).
 - StyleCop.Analyzers is added by `Directory.Build.targets`; rules tuned in `rules.ruleset` and `stylecop.json`: 4-space indent; system `using` directives NOT required first; blank line between using groups; `using` directives outside the namespace; file must end with newline.
 - Razor: `@page` routes in `src/ChessTrainerApp/Pages/`; reusable components in `src/ChessTrainerApp/Components/` and `Shared/`.
 - Static web assets go under `src/ChessTrainerApp/app/` (webpack bundles them into `wwwroot/dist/`, which `Program.cs` serves via `UseWebRoot("wwwroot/dist")`). Don't hand-edit `wwwroot/dist`.
-
-## PR feedback workflow
-
-When addressing review comments, the task is **not** complete after pushing a fix commit. For every comment thread:
-1. **Reply** with a short note explaining the change, citing the fix commit SHA when possible.
-2. **Mark the thread resolved.**
-
-A round is "done" only when every thread has both a reply and a resolved state.
-
-## Solution layout
-
-**Project folder names don't match root namespaces:**
-
-| Project (`src/`)     | Root namespace | Role |
-|----------------------|----------------|------|
-| `ChessTrainerApp`    | `MjrChess.Trainer` | Blazor Server web app + Razor Pages auth UI. Entry point `Program.cs`/`Startup.cs`. |
-| `ChessTrainer.Data`  | `MjrChess.Trainer.Data` | EF Core `PuzzleDbContext`, repositories, migrations, AutoMapper profile. |
-| `ChessTrainer.Common`| `MjrChess.Trainer` (models under `MjrChess.Trainer.Models` in `Models/`) | Public domain models shared across projects. |
-| `Engine`             | `MjrChess.Engine` | In-house chess move generator/validator (`ChessEngine`). Not UCI (issue #35). |
-| `IngestionFunctions` | `IngestionFunctions(.Services, .Models)` | Azure Functions (isolated worker) scraping Lichess/Chess.com. See `src/IngestionFunctions/README.md`. |
-
-Tests in `test/` mirror project names (xUnit + Coverlet, .NET 10).
-
-Azure deployment lives in `infrastructure/ChessTrainerRG/` (ARM templates). Issue #31 tracks modernizing to Bicep + GitHub Actions.
-
-## Companion repository (ChessPuzzleFinder)
-
-This solution works along with the [ChessPuzzleFinder](https://github.com/mjrousos/ChessPuzzleFinder/) repository, which contains a Go utility for finding candidate puzzles from games queued by this app. The puzzles are then written to the database for use by this app. The two repos are separate but are usually deployed together in a containerized environment.
-
-## Build hygiene
-
-**Run both Debug and Release** before declaring a task done — `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` in `Directory.Build.props` only fires in Release, and there's no CI yet (issue #36).
-
-## Build, test, and run
-
-```powershell
-# Full solution (Release fails on any warning)
-dotnet build ChessTrainer.sln -c Release
-dotnet test  ChessTrainer.sln -c Release
-
-# Single test (xUnit filter)
-dotnet test test/ChessTrainer.Data.Test --filter "FullyQualifiedName~MyClass.MyMethod"
-
-# Run the Blazor app
-dotnet run --project src/ChessTrainerApp
-
-# Front-end (auto-invoked by ChessTrainerApp's DebugRunWebpack target
-# when wwwroot/dist is missing — plain `dotnet build` is usually enough)
-cd src/ChessTrainerApp
-npm install
-npm run webpack-dev    # one-off dev build
-npm run watch          # rebuild on change
-npm run webpack-prod   # production build (zero-warning requirement)
-```
