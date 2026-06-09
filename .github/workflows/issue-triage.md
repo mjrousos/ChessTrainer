@@ -92,7 +92,9 @@ keywords that are not in it.
 Use `get_issue` to load the title, body, current labels, current
 assignees, and the existing comments. Note the full set of labels
 already on the issue and scan comments for the hidden HTML markers
-`<!-- triage-bot:duplicate -->` and `<!-- triage-bot:needs-info -->`.
+defined by `duplicate.comment_marker` and
+`missing_info.comment_marker` in the config (currently
+`<!-- triage-bot:duplicate -->` and `<!-- triage-bot:needs-info -->`).
 
 ### 3. Idempotency gate
 
@@ -110,7 +112,9 @@ Handle the two terminal states first:
   - the issue already carries at least one area label from the
     config, **and**
   - the issue already carries a priority label (`P0`–`P3`), **and**
-  - if the issue carries the `bug` label and lacks any of the
+  - the issue already has at least one assignee, **and**
+  - if the issue carries any label listed in
+    `missing_info.applies_to_labels` and lacks any of the
     `missing_info.required_sections`, the needs-info comment is
     already present.
 
@@ -135,7 +139,10 @@ Only act when **all** of the following hold:
 When acting:
 
 - apply the `duplicate` label via `add_labels`, **and**
-- post one `add_comment` of the form:
+- post one `add_comment` that **begins with** the
+  `duplicate.comment_marker` from the config (currently
+  `<!-- triage-bot:duplicate -->`) on its own line, followed by a
+  short body like:
 
   ```text
   <!-- triage-bot:duplicate -->
@@ -144,7 +151,8 @@ When acting:
   original in the meantime.
   ```
 
-  (Do not actually close the issue; closing is a maintainer action.)
+  Always use the literal marker string from `duplicate.comment_marker`
+  so the idempotency gate can find it later.
 
 If you mark the issue as a duplicate, skip steps 5–9 for this run.
 The `duplicate` label plus the duplicate marker comment is what the
@@ -202,11 +210,14 @@ entirely if the user is already assigned).
 
 ### 9. Missing-info follow-up
 
-If the issue ends up with the `bug` label (whether you applied it in
-step 5 or it was already there) and its body is missing any of
+If the issue ends up carrying any label listed in
+`missing_info.applies_to_labels` (whether you applied it in step 5 or
+it was already there) and its body is missing any of
 `missing_info.required_sections`, **and** no prior comment on this
 issue contains the `missing_info.comment_marker`, post **one**
-`add_comment` like:
+`add_comment` that **begins with** the `missing_info.comment_marker`
+from the config (currently `<!-- triage-bot:needs-info -->`) on its
+own line, followed by a body like:
 
 ```text
 <!-- triage-bot:needs-info -->
@@ -221,10 +232,14 @@ following to the issue description?
 have them.)
 ```
 
-Also add the `needs-info` label via `add_labels`.
+Always use the literal marker string from
+`missing_info.comment_marker` so the idempotency gate can find it
+later. Also add the `needs-info` label via `add_labels`.
 
-Do **not** post this comment for `enhancement`, `documentation`, or
-`question` issues — only when the `bug` label is applied.
+Do **not** post this comment for issues whose only type label is
+outside `missing_info.applies_to_labels` (e.g. `enhancement`,
+`documentation`, or `question` issues when the config only lists
+`bug`).
 
 ## Safe outputs
 
