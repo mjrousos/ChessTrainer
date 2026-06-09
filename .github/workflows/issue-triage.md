@@ -101,7 +101,7 @@ explanation and stop:
   present or a comment with the duplicate marker exists), the
   duplicate link comment is already present,
   **and**
-- if the issue is classified as a `bug` and lacks any of the
+- if the issue carries the `bug` label and lacks any of the
   `missing_info.required_sections`, the needs-info comment is already
   present.
 
@@ -192,7 +192,7 @@ have them.)
 Also add the `needs-info` label via `add_labels`.
 
 Do **not** post this comment for `enhancement`, `documentation`, or
-`question` issues — only when the classification is `bug`.
+`question` issues — only when the `bug` label is applied.
 
 ## Safe outputs
 

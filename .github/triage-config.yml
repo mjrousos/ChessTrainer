@@ -26,7 +26,7 @@ areas:
       - castling
     paths:
       - src/Engine/**
-      - test/MjrChess.Engine.Test/**
+      - test/Engine/**
 
   data:
     labels: [data]
