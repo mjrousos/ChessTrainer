@@ -96,6 +96,44 @@ Copilot *can* run the three builds itself and read the output, so a skill isn't 
 
 ---
 
+### 6. Adopt awesome-copilot `dependency-license-checker` and `secrets-scanner` as `sessionEnd` hooks
+
+**Decision.** Installed both hooks from [`github/awesome-copilot`](https://github.com/github/awesome-copilot) at `.github/hooks/dependency-license-checker/` and `.github/hooks/secrets-scanner/`. Both fire on `sessionEnd` in **`block` mode** (exit non-zero on findings to prevent the session from auto-committing). Each hook ships two interchangeable scripts — the upstream `.sh` and a hand-ported PowerShell equivalent (`.ps1`) — and both are referenced from `hooks.json` via the `bash` and `powershell` fields so Copilot picks the right one per OS automatically. Hook output goes to `logs/copilot/{license-checker,secrets}/` which is gitignored.
+
+**Why a hook (not a skill or instruction).**
+- **Guardrails belong on the lifecycle, not on the model's discretion.** A license violation or a leaked secret is exactly the kind of thing we don't want depending on the model remembering to check. `sessionEnd` runs deterministically before the session is considered done — Copilot can't forget to invoke it.
+- **Skills require the model to choose to load them.** For background safety scans the model never knows it should run, that's the wrong invocation pattern. Skills are right for *workflows the model executes deliberately* (`zero-warnings-build`); hooks are right for *invariants the runtime enforces*.
+- **Instructions are weaker still** — they ask the model to remember rules, with no enforcement.
+
+**Why adopt rather than author from scratch.**
+- The awesome-copilot versions are maintained, cover multiple ecosystems (npm/pip/Go/Ruby/Rust for licenses; ~25 secret patterns including cloud creds, GitHub tokens, private keys, connection strings, JWTs), include allowlist support, write structured JSON logs, and redact matched secrets in the logs. Re-authoring this from scratch would add zero value and add maintenance burden.
+
+**Default to `block`, not `warn`.**
+- Both env-var modes (`LICENSE_MODE=block`, `SCAN_MODE=block`) exit non-zero on findings so the session is stopped before any auto-commit. Stricter default than awesome-copilot's `warn`-by-default, chosen because the cost of a leaked credential or a copyleft dep landing in a PR is higher than the inconvenience of resolving an occasional false positive.
+- Fallback path when a finding turns out to be a false positive: add the offending substring to `SECRETS_ALLOWLIST` / `LICENSE_ALLOWLIST` in the corresponding `hooks.json`, or flip that one hook back to `warn` temporarily.
+
+**Cross-platform via dual `bash` + `powershell` scripts.**
+- Hooks must run on whatever platform Copilot is invoked from. The Cloud agent runs Linux, but local Copilot CLI runs on Windows (primary dev platform here).
+- Each hook's `hooks.json` references both a `.sh` (kept byte-identical to upstream awesome-copilot) and a `.ps1` (hand-ported with identical env-var contract, JSON log shape, console output, and exit codes). Copilot picks the matching field per OS.
+- The PowerShell ports are local additions — not in awesome-copilot upstream. If awesome-copilot ships breaking changes to the `.sh` files in the future, the `.ps1` files will need a corresponding edit. This is the maintenance cost of cross-platform parity.
+
+**Bootstrap allowlist for the scanner's own files.**
+- The secrets-scanner finds its own pattern definitions (e.g., `-----BEGIN PGP PRIVATE KEY BLOCK-----` is a regex literal inside the script) and its README's documentation examples (`postgresql://user:pass@host/db`, `192.168.1.1:8080`, etc.) as "secrets" — 7 false positives on a default scan, which in `block` mode would block every session.
+- Mitigated by setting `SECRETS_ALLOWLIST` in `secrets-scanner/hooks.json` to six unique substrings (`BEGIN PGP PRIVATE KEY BLOCK`, `BEGIN RSA PRIVATE KEY`, `service_account`, `user:pass@host`, `192.168.1.1:8080`, `wJalr`). These substrings appear only in the hook's own files and are specific enough not to mask real secrets elsewhere in the repo.
+- If awesome-copilot updates the README with new example secrets, the allowlist may need a new entry. Documented here so the cause is obvious next time the scanner blocks unexpectedly.
+
+**Operational notes.**
+- **Line endings.** Git's `core.autocrlf` may convert the `.sh` files to CRLF on Windows checkout, which breaks `#!/bin/bash` on Linux. The shell scripts' executable bit is set in the git index (`git update-index --chmod=+x`); if line-ending issues bite, add `.gitattributes` entries forcing LF for `.github/hooks/**/*.sh`.
+- **Scope on Cloud agent.** The Cloud agent commits and pushes autonomously, so `sessionEnd` is the right last-chance gate.
+- **Hooks do not run inside MCP server processes.** Per the Copilot hooks docs, `preToolUse` covers Copilot's own tools; MCP server tool calls are out of scope. Fine for these session-end safety checks; just worth knowing.
+
+**Revisit triggers.**
+- If `block` mode interrupts work too often → flip individual env var to `warn` while we triage, or extend the allowlist.
+- If upstream awesome-copilot ships a meaningful update → re-pull the `.sh` files and bring the `.ps1` ports back into sync.
+- If we add a new ecosystem the license checker doesn't recognize (e.g. NuGet — currently absent) → either contribute upstream or fork the script.
+
+---
+
 ## Key constraints to remember
 
 - **Copilot Code Review cap:** ~4,000 chars per custom instruction file. Content past the cap is silently truncated *for Code Review only*. Chat, CLI, and Cloud agent have no documented cap. Source: [docs.github.com/en/copilot/concepts/prompting/response-customization](https://docs.github.com/en/copilot/concepts/prompting/response-customization).

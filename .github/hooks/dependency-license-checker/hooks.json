@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionEnd": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/dependency-license-checker/check-licenses.sh",
+        "powershell": "pwsh -NoProfile -File .github/hooks/dependency-license-checker/check-licenses.ps1",
+        "cwd": ".",
+        "env": {
+          "LICENSE_MODE": "block"
+        },
+        "timeoutSec": 60
+      }
+    ]
+  }
+}

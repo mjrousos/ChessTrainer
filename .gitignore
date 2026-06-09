@@ -86,3 +86,5 @@ PublishScripts/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+# Copilot hook output (dependency-license-checker, secrets-scanner)
+logs/
