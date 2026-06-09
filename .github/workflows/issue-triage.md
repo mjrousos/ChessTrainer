@@ -27,6 +27,10 @@ tools:
 safe-outputs:
   add-labels:
     allowed:
+      - bug
+      - enhancement
+      - documentation
+      - question
       - engine
       - data
       - ui
@@ -92,22 +96,26 @@ already on the issue and scan comments for the hidden HTML markers
 
 ### 3. Idempotency gate
 
-If **all** of the following are true, call `noop` with a short
-explanation and stop:
+Handle the two terminal states first:
 
-- the issue already carries at least one area label from the config,
-  **and**
-- the issue already carries at least one priority label (`P0`–`P3`),
-  **and**
-- if a duplicate was previously detected (a `duplicate` label is
-  present or a comment with the duplicate marker exists), the
-  duplicate link comment is already present,
-  **and**
-- if the issue carries the `bug` label and lacks any of the
-  `missing_info.required_sections`, the needs-info comment is already
-  present.
+- **Confirmed duplicate** — if the issue already carries the
+  `duplicate` label **and** a prior comment on this issue contains the
+  `duplicate.comment_marker`, call `noop` with a short explanation and
+  stop. Confirmed duplicates do not need area, priority, or type
+  labels.
+- **Fully triaged** — otherwise, if **all** of the following are
+  true, call `noop` and stop:
+  - the issue already carries a type label (`bug`, `enhancement`,
+    `documentation`, or `question`), **and**
+  - the issue already carries at least one area label from the
+    config, **and**
+  - the issue already carries a priority label (`P0`–`P3`), **and**
+  - if the issue carries the `bug` label and lacks any of the
+    `missing_info.required_sections`, the needs-info comment is
+    already present.
 
-This makes re-runs on already-triaged issues a no-op.
+This makes re-runs on already-triaged issues (including duplicates) a
+no-op.
 
 ### 4. Duplicate detection
 
@@ -138,10 +146,30 @@ When acting:
 
   (Do not actually close the issue; closing is a maintainer action.)
 
-If you mark the issue as a duplicate, you may skip area and priority
-labeling for this run.
+If you mark the issue as a duplicate, skip steps 5–9 for this run.
+The `duplicate` label plus the duplicate marker comment is what the
+idempotency gate uses to recognize the issue as fully handled.
 
-### 5. Area classification
+### 5. Type classification
+
+Apply exactly one of these labels via `add_labels` to record what kind
+of issue this is:
+
+- `bug` — describes broken or unexpected behavior, errors, stack
+  traces, crashes, regressions.
+- `enhancement` — describes a new feature, capability, or improvement
+  to existing behavior.
+- `documentation` — purely about docs, READMEs, comments,
+  clarification, or examples.
+- `question` — a how-to or clarification request that does not by
+  itself describe broken behavior or a feature.
+
+If the type is already set, do not re-apply it. If you genuinely
+cannot decide between two types, prefer `bug` when there is any
+evidence of broken behavior, and otherwise apply `needs-triage`
+instead of guessing.
+
+### 6. Area classification
 
 Match the issue against each area in `areas` using:
 
@@ -154,7 +182,7 @@ match more than one area; apply all that genuinely fit, up to a small
 number (1–3 is normal, 4 is the realistic max). If nothing matches
 confidently, add `needs-triage` instead of guessing.
 
-### 6. Priority classification
+### 7. Priority classification
 
 Score the issue against the `priority` keyword lists in order
 `P0 → P1 → P2 → P3`. Apply the **single** highest-severity label
@@ -165,17 +193,18 @@ Severity-clarifying signals that are not just keyword hits also count
 (e.g. an explicit "users cannot sign in at all" warrants `P1` even if
 the keyword list is mild).
 
-### 7. Owner assignment
+### 8. Owner assignment
 
 For the most specific matching area, assign the area's `owner` via
 `assign_to_user`. If no area matched confidently, assign
 `default_owner`. Only assign one user per issue (skip the call
 entirely if the user is already assigned).
 
-### 8. Missing-info follow-up
+### 9. Missing-info follow-up
 
-If the issue ends up with the `bug` label and its body is missing any
-of `missing_info.required_sections`, **and** no prior comment on this
+If the issue ends up with the `bug` label (whether you applied it in
+step 5 or it was already there) and its body is missing any of
+`missing_info.required_sections`, **and** no prior comment on this
 issue contains the `missing_info.comment_marker`, post **one**
 `add_comment` like:
 
