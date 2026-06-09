@@ -117,19 +117,23 @@ Copilot *can* run the three builds itself and read the output, so a skill isn't 
 - Each hook's `hooks.json` references both a `.sh` (kept byte-identical to upstream awesome-copilot) and a `.ps1` (hand-ported with identical env-var contract, JSON log shape, console output, and exit codes). Copilot picks the matching field per OS.
 - The PowerShell ports are local additions — not in awesome-copilot upstream. If awesome-copilot ships breaking changes to the `.sh` files in the future, the `.ps1` files will need a corresponding edit. This is the maintenance cost of cross-platform parity.
 
-**Bootstrap allowlist for the scanner's own files.**
-- The secrets-scanner finds its own pattern definitions (e.g., `-----BEGIN PGP PRIVATE KEY BLOCK-----` is a regex literal inside the script) and its README's documentation examples (`postgresql://user:pass@host/db`, `192.168.1.1:8080`, etc.) as "secrets" — 7 false positives on a default scan, which in `block` mode would block every session.
-- Mitigated by setting `SECRETS_ALLOWLIST` in `secrets-scanner/hooks.json` to six unique substrings (`BEGIN PGP PRIVATE KEY BLOCK`, `BEGIN RSA PRIVATE KEY`, `service_account`, `user:pass@host`, `192.168.1.1:8080`, `wJalr`). These substrings appear only in the hook's own files and are specific enough not to mask real secrets elsewhere in the repo.
-- If awesome-copilot updates the README with new example secrets, the allowlist may need a new entry. Documented here so the cause is obvious next time the scanner blocks unexpectedly.
+**Self-exclude the scanner's own directory.**
+- The secrets-scanner would otherwise find its own regex pattern definitions (e.g. `-----BEGIN PGP PRIVATE KEY BLOCK-----` is a literal inside the script) and its README's documentation examples (`postgresql://user:pass@host/db`, `192.168.1.1:8080`, `wJalr...`, etc.) as "secrets" — ~7 false positives per session.
+- An earlier iteration tried to handle this with `SECRETS_ALLOWLIST` substrings, but the upstream allowlist mechanism does substring matching against the matched value (not the file path), so entries like `BEGIN RSA PRIVATE KEY` or `service_account` would have suppressed *real* secrets anywhere in the repo, not just the scanner's own files. (Caught in code review.)
+- Final fix: a small local divergence from upstream — both `scan-secrets.sh` and `scan-secrets.ps1` skip any file under `.github/hooks/secrets-scanner/`. This is a path-scoped exclusion that can't accidentally mask real secrets elsewhere. The change is small (one `case` arm in bash, one `-like` check in PowerShell) and isolated, so future awesome-copilot updates can still be re-pulled with minimal merge.
 
 **Operational notes.**
 - **Line endings.** Git's `core.autocrlf` may convert the `.sh` files to CRLF on Windows checkout, which breaks `#!/bin/bash` on Linux. The shell scripts' executable bit is set in the git index (`git update-index --chmod=+x`); if line-ending issues bite, add `.gitattributes` entries forcing LF for `.github/hooks/**/*.sh`.
 - **Scope on Cloud agent.** The Cloud agent commits and pushes autonomously, so `sessionEnd` is the right last-chance gate.
 - **Hooks do not run inside MCP server processes.** Per the Copilot hooks docs, `preToolUse` covers Copilot's own tools; MCP server tool calls are out of scope. Fine for these session-end safety checks; just worth knowing.
+- **PowerShell port specifics learned the hard way (code review caught all of these).**
+  - `Get-Content` returns a `[String]` (not an array) for single-line files; indexing then iterates character-by-character. The scanner wraps `Get-Content` in `@(...)` to force array semantics so single-line files (`.env`, compact JSON, etc.) are scanned as one line, not one character at a time.
+  - `Get-ChildItem -Filter` matches only the directory leaf name, so a pattern containing path separators (e.g. for nested Go modules like `github.com/foo/bar`) never matches. The Go module lookup filters on `FullName -like` instead of `-Filter`.
+  - The bash scripts wrap `npm view`, `pip show`, `gem spec`, and `cargo metadata` with `timeout 5`. The PowerShell port mirrors this with a `Start-Job` + `Wait-Job -Timeout` helper so a hung package-manager CLI can't blow the 60s hook timeout in `block` mode.
 
 **Revisit triggers.**
-- If `block` mode interrupts work too often → flip individual env var to `warn` while we triage, or extend the allowlist.
-- If upstream awesome-copilot ships a meaningful update → re-pull the `.sh` files and bring the `.ps1` ports back into sync.
+- If `block` mode interrupts work too often → flip individual env var to `warn` while we triage, or extend per-script self-exclusion.
+- If upstream awesome-copilot ships a meaningful update → re-pull the `.sh` files (re-apply the self-exclusion patch on top) and bring the `.ps1` ports back into sync.
 - If we add a new ecosystem the license checker doesn't recognize (e.g. NuGet — currently absent) → either contribute upstream or fork the script.
 
 ---

@@ -139,12 +139,23 @@ $placeholderRegex = '(?i)(example|placeholder|your[_-]|xxx|changeme|TODO|FIXME|r
 function Scan-File([string]$FilePath, [string]$ReadPath = $null) {
     if (-not $ReadPath) { $ReadPath = $FilePath }
     if (-not (Test-Path -LiteralPath $ReadPath)) { return }
+    # Self-exclude this hook's own files: pattern definitions in the script
+    # and example credentials in the README would otherwise produce false
+    # positives every session. Also exclude copilot-customization.md, which
+    # documents the same hooks and references the same trigger strings.
+    # Normalized to forward slashes so a single check covers Windows + Linux.
+    $normalized = $FilePath -replace '\\','/'
+    if ($normalized -like '.github/hooks/secrets-scanner/*' -or
+        $normalized -eq 'copilot-customization.md') { return }
     $name = Split-Path -Leaf $FilePath
     if ($name -in $skipNames -or $FilePath -match '\.lock$|\.sum$') { return }
     if (-not (Test-IsTextFile $ReadPath)) { return }
 
-    $lines = Get-Content -LiteralPath $ReadPath -ErrorAction SilentlyContinue
-    if (-not $lines) { return }
+    # Force array semantics: Get-Content returns a scalar [string] for a
+    # one-line file, which would then be indexed character-by-character and
+    # silently miss any secret in single-line files (.env, compact JSON, etc.).
+    $lines = @(Get-Content -LiteralPath $ReadPath -ErrorAction SilentlyContinue)
+    if ($lines.Count -eq 0) { return }
 
     for ($i = 0; $i -lt $lines.Count; $i++) {
         $line = $lines[$i]

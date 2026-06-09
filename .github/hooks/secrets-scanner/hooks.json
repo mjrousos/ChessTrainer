@@ -9,8 +9,7 @@
         "cwd": ".",
         "env": {
           "SCAN_MODE": "block",
-          "SCAN_SCOPE": "diff",
-          "SECRETS_ALLOWLIST": "BEGIN PGP PRIVATE KEY BLOCK,BEGIN RSA PRIVATE KEY,service_account,user:pass@host,192.168.1.1:8080,wJalr"
+          "SCAN_SCOPE": "diff"
         },
         "timeoutSec": 30
       }

@@ -62,6 +62,28 @@ function Test-BlockedLicense([string]$License) {
     return $false
 }
 
+# Mirror the bash `timeout 5 <cmd>` wrapper. Some package-manager CLIs (npm
+# view, pip show, gem spec, cargo metadata) can hang indefinitely on network
+# issues; without a per-call cap the whole hook would blow its 60s budget and
+# block the session in `block` mode.
+function Invoke-WithTimeout {
+    param(
+        [Parameter(Mandatory)][scriptblock]$Script,
+        [int]$TimeoutSec = 10,
+        [object[]]$Args = @()
+    )
+    $job = Start-Job -ScriptBlock $Script -ArgumentList $Args
+    try {
+        if (Wait-Job -Job $job -Timeout $TimeoutSec) {
+            return Receive-Job -Job $job -ErrorAction SilentlyContinue
+        }
+        Stop-Job -Job $job -ErrorAction SilentlyContinue
+        return $null
+    } finally {
+        Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+    }
+}
+
 function Get-AddedLines([string]$File) {
     if (-not (Test-Path $File)) { return @() }
     $diff = & git diff HEAD -- $File 2>$null
@@ -144,7 +166,7 @@ function Get-License([string]$Ecosystem, [string]$Package) {
                 }
                 if (-not $license -or $license -eq 'UNKNOWN') {
                     if (Get-Command npm -ErrorAction SilentlyContinue) {
-                        $out = & npm view $Package license 2>$null
+                        $out = Invoke-WithTimeout -TimeoutSec 10 -Args @($Package) { param($p) & npm view $p license 2>$null }
                         if ($out) { $license = ($out -join '').Trim() }
                     }
                 }
@@ -153,7 +175,7 @@ function Get-License([string]$Ecosystem, [string]$Package) {
                 $pip = Get-Command pip -ErrorAction SilentlyContinue
                 if (-not $pip) { $pip = Get-Command pip3 -ErrorAction SilentlyContinue }
                 if ($pip) {
-                    $out = & $pip.Source show $Package 2>$null
+                    $out = Invoke-WithTimeout -TimeoutSec 10 -Args @($pip.Source, $Package) { param($cmd, $p) & $cmd show $p 2>$null }
                     $line = $out | Where-Object { $_ -match '^[Ll]icense:' } | Select-Object -First 1
                     if ($line) { $license = ($line -replace '^[Ll]icense:\s*','').Trim() }
                 }
@@ -162,8 +184,14 @@ function Get-License([string]$Ecosystem, [string]$Package) {
                 $gopath = if ($env:GOPATH) { $env:GOPATH } else { Join-Path $env:USERPROFILE 'go' }
                 $modCache = Join-Path $gopath 'pkg\mod'
                 if (Test-Path $modCache) {
-                    $pat = "$($Package -replace '/','\')@*"
-                    $cand = Get-ChildItem -Path $modCache -Directory -Recurse -Depth 4 -Filter $pat -ErrorAction SilentlyContinue | Select-Object -First 1
+                    # Match the bash version's `find -path "*${pkg}@*"`: filter on
+                    # FullName, not -Filter (which only matches the directory leaf
+                    # and so loses everything before the last path segment for
+                    # nested modules like github.com/foo/bar).
+                    $pkgPath = $Package -replace '/','\'
+                    $cand = Get-ChildItem -Path $modCache -Directory -Recurse -Depth 4 -ErrorAction SilentlyContinue |
+                            Where-Object { $_.FullName -like "*$pkgPath@*" } |
+                            Select-Object -First 1
                     if ($cand) {
                         $licFile = Get-ChildItem $cand -Filter 'LICENSE*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
                         if ($licFile) {
@@ -184,16 +212,21 @@ function Get-License([string]$Ecosystem, [string]$Package) {
             }
             'ruby' {
                 if (Get-Command gem -ErrorAction SilentlyContinue) {
-                    $out = & gem spec $Package license 2>$null
+                    $out = Invoke-WithTimeout -TimeoutSec 10 -Args @($Package) { param($p) & gem spec $p license 2>$null }
                     $line = $out | Where-Object { $_ -notmatch '^---' -and $_ -notmatch '^\.\.\.' } | Select-Object -First 1
                     if ($line) { $license = ($line -replace '^-\s*','').Trim() }
                 }
             }
             'rust' {
                 if (Get-Command cargo -ErrorAction SilentlyContinue) {
-                    $meta = & cargo metadata --format-version 1 2>$null | ConvertFrom-Json
-                    $pkgMeta = $meta.packages | Where-Object { $_.name -eq $Package } | Select-Object -First 1
-                    if ($pkgMeta -and $pkgMeta.license) { $license = $pkgMeta.license }
+                    $metaJson = Invoke-WithTimeout -TimeoutSec 10 { & cargo metadata --format-version 1 2>$null }
+                    if ($metaJson) {
+                        try {
+                            $meta = ($metaJson -join "`n") | ConvertFrom-Json
+                            $pkgMeta = $meta.packages | Where-Object { $_.name -eq $Package } | Select-Object -First 1
+                            if ($pkgMeta -and $pkgMeta.license) { $license = $pkgMeta.license }
+                        } catch { }
+                    }
                 }
             }
         }

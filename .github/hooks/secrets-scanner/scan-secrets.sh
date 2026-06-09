@@ -160,6 +160,14 @@ scan_file() {
   # Skip if source does not exist (e.g., deleted)
   [[ -f "$read_path" ]] || return 0
 
+  # Self-exclude this hook's own files and the strategy doc that describes
+  # them (both reference the same trigger strings as documentation). Local
+  # divergence from upstream awesome-copilot.
+  case "$filepath" in
+    .github/hooks/secrets-scanner/*) return 0 ;;
+    copilot-customization.md)        return 0 ;;
+  esac
+
   # Skip binary files (type detection uses the original path for MIME lookup)
   if ! is_text_file "$filepath"; then
     return 0
