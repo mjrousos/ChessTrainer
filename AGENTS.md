@@ -58,7 +58,7 @@ A round is "done" only when every thread has both a reply and a resolved state.
 | `Engine`             | `MjrChess.Engine` | In-house chess move generator/validator (`ChessEngine`). Not UCI (issue #35). |
 | `IngestionFunctions` | `IngestionFunctions(.Services, .Models)` | Azure Functions (isolated worker) scraping Lichess/Chess.com. See `src/IngestionFunctions/README.md`. |
 
-Tests in `test/` mirror project names (xUnit + Coverlet, .NET 10).
+Tests in `test/` mirror project names (xUnit + Coverlet, .NET 10). See [`.github/instructions/testing.instructions.md`](.github/instructions/testing.instructions.md) for test-architecture conventions (bUnit, parallelization, env-var helpers, migration regression guard).
 
 Azure deployment lives in `infrastructure/ChessTrainerRG/` (ARM templates). Issue #31 tracks modernizing to Bicep + GitHub Actions.
 
@@ -76,9 +76,6 @@ This solution works along with the [ChessPuzzleFinder](https://github.com/mjrous
 # Full solution (Release fails on any warning)
 dotnet build ChessTrainer.sln -c Release
 dotnet test  ChessTrainer.sln -c Release
-
-# Single test (xUnit filter)
-dotnet test test/ChessTrainer.Data.Test --filter "FullyQualifiedName~MyClass.MyMethod"
 
 # Run the Blazor app
 dotnet run --project src/ChessTrainerApp
