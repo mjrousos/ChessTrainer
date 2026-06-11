@@ -60,7 +60,7 @@ dotnet test test/ChessTrainer.Data.Test
 dotnet test test/ChessTrainer.Data.Test --filter "FullyQualifiedName~PuzzleDbContextFactoryTests.CreateDbContext_UsesEnvironmentVariableWhenSet"
 
 # Check for pending EF model changes (run from repo root).
-dotnet ef migrations has-pending-model-changes --project src\ChessTrainer.Data
+dotnet ef migrations has-pending-model-changes --project src/ChessTrainer.Data
 ```
 
 Always run both Debug and Release builds before declaring a test task done — `TreatWarningsAsErrors` only fires in Release.
