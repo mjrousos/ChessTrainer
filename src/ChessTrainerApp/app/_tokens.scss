@@ -1,0 +1,105 @@
+// Theme tokens — single source of truth for the visual language.
+//
+// Colors, spacing, and typography are exposed as CSS custom properties so the
+// app can switch between light and dark at runtime by toggling the
+// `data-theme` attribute on <html> (see app.js / _Host.cshtml). The light
+// values here mirror the compile-time `$mdc-theme-*` Sass variables in
+// _variables.scss; keep the two in sync when changing the light palette.
+
+:root {
+    // Brand
+    --ct-color-primary: #2e7d32; // Green 800
+    --ct-on-primary: #ffffff;
+    --ct-color-secondary: #424242; // Grey 800
+    --ct-on-secondary: #ffffff;
+
+    // Surfaces / background
+    --ct-surface: #fdfefb;
+    --ct-on-surface: #000000;
+    --ct-background: #fafafa;
+    --ct-on-background: #000000;
+    --ct-text-secondary: #424242; // Grey 800
+    --ct-border: rgba(0, 0, 0, 0.12);
+
+    // Chrome
+    --ct-app-bar-bg: var(--ct-color-primary);
+    --ct-app-bar-on: var(--ct-on-primary);
+    --ct-drawer-bg: #ffffff;
+    --ct-drawer-on: rgba(0, 0, 0, 0.87);
+
+    // Status
+    --ct-success: #2e7d32; // Green 800
+    --ct-error: #b00020;
+    --ct-correct: #2e7d32;
+    --ct-incorrect: #8b0000; // darkred
+
+    // Form validation
+    --ct-valid-outline: #26b050;
+    --ct-invalid-outline: #d32f2f;
+
+    // Board / decorators
+    --ct-spinner-track: #d3d3d3;
+    --ct-spinner-accent: var(--ct-color-primary);
+    // Filter applied to the board <img> (SVG internals aren't CSS-addressable);
+    // identity in light mode.
+    --ct-board-filter: none;
+
+    // States
+    --ct-focus-ring: var(--ct-color-primary);
+    --ct-disabled-on: rgba(0, 0, 0, 0.38);
+
+    // Spacing scale
+    --ct-space-1: 4px;
+    --ct-space-2: 8px;
+    --ct-space-3: 12px;
+    --ct-space-4: 16px;
+    --ct-space-5: 24px;
+    --ct-space-6: 32px;
+
+    // Typography
+    --ct-font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+[data-theme="dark"] {
+    color-scheme: dark;
+
+    // Brand — lighten the green so it keeps contrast on dark surfaces.
+    --ct-color-primary: #66bb6a; // Green 400
+    --ct-on-primary: #06210a;
+    --ct-color-secondary: #b0b0b0;
+    --ct-on-secondary: #000000;
+
+    // Surfaces / background
+    --ct-surface: #1e1e1e;
+    --ct-on-surface: #e6e6e6;
+    --ct-background: #121212;
+    --ct-on-background: #e6e6e6;
+    --ct-text-secondary: #b0b0b0;
+    --ct-border: rgba(255, 255, 255, 0.18);
+
+    // Chrome — use a dark surface for the app bar rather than the brand green.
+    --ct-app-bar-bg: #272727;
+    --ct-app-bar-on: #e6e6e6;
+    --ct-drawer-bg: #1e1e1e;
+    --ct-drawer-on: rgba(255, 255, 255, 0.87);
+
+    // Status
+    --ct-success: #66bb6a;
+    --ct-error: #cf6679;
+    --ct-correct: #66bb6a;
+    --ct-incorrect: #ef5350;
+
+    // Form validation
+    --ct-valid-outline: #66bb6a;
+    --ct-invalid-outline: #cf6679;
+
+    // Board / decorators
+    --ct-spinner-track: #3a3a3a;
+    --ct-spinner-accent: var(--ct-color-primary);
+    // Soften the bright white board squares so they don't glare in dark mode.
+    --ct-board-filter: brightness(0.82) saturate(0.9);
+
+    // States
+    --ct-focus-ring: var(--ct-color-primary);
+    --ct-disabled-on: rgba(255, 255, 255, 0.38);
+}

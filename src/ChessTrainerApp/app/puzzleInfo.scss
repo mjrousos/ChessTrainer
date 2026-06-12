@@ -24,11 +24,11 @@
 }
 
 .correctMessage {
-    color: green;
+    color: var(--ct-correct);
 }
 
 .incorrectMessage {
-    color: darkred;
+    color: var(--ct-incorrect);
 }
 
 .mdc-card .piece {

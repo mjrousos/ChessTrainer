@@ -12,6 +12,12 @@
         </section>
         <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
             @ChildContent
+            <button class="material-icons mdc-top-app-bar__action-item mdc-icon-button"
+                    aria-label="@ThemeToggleLabel"
+                    title="@ThemeToggleLabel"
+                    @onclick="ToggleTheme">
+                @ThemeToggleIcon
+            </button>
             <SignIn></SignIn>
         </section>
     </div>
@@ -38,6 +44,34 @@
 @code {
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    private bool isDarkTheme;
+
+    private string ThemeToggleIcon => isDarkTheme ? "light_mode" : "dark_mode";
+
+    private string ThemeToggleLabel => isDarkTheme ? "Switch to light theme" : "Switch to dark theme";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var theme = await JSRuntime.InvokeAsync<string>("getTheme");
+            var darkActive = theme == "dark";
+            if (darkActive != isDarkTheme)
+            {
+                isDarkTheme = darkActive;
+                StateHasChanged();
+            }
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    async Task ToggleTheme()
+    {
+        var theme = await JSRuntime.InvokeAsync<string>("toggleTheme");
+        isDarkTheme = theme == "dark";
+    }
 
     async Task ToggleMainMenuDrawer()
     {
