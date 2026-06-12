@@ -122,3 +122,28 @@ window.getSelectValue = (selectElement) => {
     var selected = selectElement.querySelector('.mdc-list-item--selected');
     return (selected ? selected.getAttribute('data-value') : null);
 };
+
+// Theme handling — light/dark switch persisted in localStorage. The initial
+// theme is applied by a small inline script in _Host.cshtml before the page
+// renders (to avoid a flash of the wrong theme); these helpers let the Blazor
+// toggle read and update it at runtime.
+const THEME_STORAGE_KEY = 'ct-theme';
+
+window.getTheme = () => {
+    return document.documentElement.getAttribute('data-theme') || 'light';
+};
+
+window.setTheme = (theme) => {
+    const normalized = theme === 'dark' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', normalized);
+    try {
+        localStorage.setItem(THEME_STORAGE_KEY, normalized);
+    } catch (e) {
+        // Ignore storage failures (e.g. private mode); theme still applies for the session.
+    }
+    return normalized;
+};
+
+window.toggleTheme = () => {
+    return window.setTheme(window.getTheme() === 'dark' ? 'light' : 'dark');
+};

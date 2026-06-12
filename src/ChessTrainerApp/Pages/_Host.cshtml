@@ -18,6 +18,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chess Trainer</title>
+    @* Apply the saved theme before any content renders to avoid a flash of the
+       wrong theme. Defaults to light when no preference has been stored. *@
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('ct-theme');
+                document.documentElement.setAttribute('data-theme', stored === 'dark' ? 'dark' : 'light');
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
     <link href="app.bundle.css" rel="stylesheet" />
     @if (javaScriptSnippet is not null)
     {

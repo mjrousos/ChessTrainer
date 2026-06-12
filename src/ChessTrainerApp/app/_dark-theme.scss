@@ -1,0 +1,189 @@
+// Dark "skin" for Material Components Web.
+//
+// MDC 4.0 bakes its light theme colors into the compiled CSS, so we can't
+// re-theme it by changing Sass variables at runtime. Instead, when
+// `data-theme="dark"` is set on <html>, we restyle the MDC component surfaces
+// we actually use, pulling colors from the --ct-* tokens in _tokens.scss.
+
+[data-theme="dark"] {
+    background-color: var(--ct-background);
+    color: var(--ct-on-background);
+
+    body {
+        background-color: var(--ct-background);
+        color: var(--ct-on-background);
+    }
+
+    // Top app bar
+    .mdc-top-app-bar {
+        background-color: var(--ct-app-bar-bg);
+        color: var(--ct-app-bar-on);
+    }
+
+    .mdc-top-app-bar__title a,
+    .mdc-top-app-bar__title.link {
+        color: var(--ct-app-bar-on);
+    }
+
+    .mdc-top-app-bar .mdc-icon-button,
+    .mdc-top-app-bar .mdc-button {
+        color: var(--ct-app-bar-on);
+    }
+
+    // Navigation drawer
+    .mdc-drawer {
+        background-color: var(--ct-drawer-bg);
+        border-color: var(--ct-border);
+        color: var(--ct-drawer-on);
+    }
+
+    .mdc-drawer .mdc-list-item {
+        color: var(--ct-drawer-on);
+    }
+
+    .mdc-drawer .mdc-list-item__graphic {
+        color: var(--ct-text-secondary);
+    }
+
+    .mdc-drawer .mdc-list-item--activated {
+        color: var(--ct-color-primary);
+    }
+
+    .mdc-drawer .mdc-list-item--activated .mdc-list-item__graphic {
+        color: var(--ct-color-primary);
+    }
+
+    // Cards
+    .mdc-card {
+        background-color: var(--ct-surface);
+        color: var(--ct-on-surface);
+    }
+
+    .mdc-card .mdc-list-item__text,
+    .mdc-card .mdc-icon-button {
+        color: var(--ct-on-surface);
+    }
+
+    .mdc-card .mdc-list-item__secondary-text {
+        color: var(--ct-text-secondary);
+    }
+
+    // Generic typography / text
+    .mdc-typography--subtitle2,
+    .mdc-typography--subtitle2 svg {
+        color: var(--ct-text-secondary);
+    }
+
+    // Lists
+    .mdc-list-item__primary-text {
+        color: var(--ct-on-surface);
+    }
+
+    .mdc-list-item__secondary-text {
+        color: var(--ct-text-secondary);
+    }
+
+    // Text fields (filled + outlined)
+    .mdc-text-field {
+        background-color: rgba(255, 255, 255, 0.04);
+    }
+
+    .mdc-text-field:not(.mdc-text-field--disabled) .mdc-text-field__input {
+        color: var(--ct-on-surface);
+        caret-color: var(--ct-color-primary);
+    }
+
+    .mdc-text-field:not(.mdc-text-field--disabled) .mdc-floating-label {
+        color: var(--ct-text-secondary);
+    }
+
+    .mdc-text-field:not(.mdc-text-field--disabled) .mdc-line-ripple::before {
+        border-bottom-color: var(--ct-border);
+    }
+
+    .mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-floating-label {
+        color: var(--ct-color-primary);
+    }
+
+    // Select
+    .mdc-select:not(.mdc-select--disabled) .mdc-select__selected-text {
+        color: var(--ct-on-surface);
+    }
+
+    .mdc-select:not(.mdc-select--disabled) .mdc-floating-label {
+        color: var(--ct-text-secondary);
+    }
+
+    .mdc-select__dropdown-icon {
+        background: none;
+    }
+
+    // Menus / select menu surface
+    .mdc-menu-surface {
+        background-color: var(--ct-surface);
+        color: var(--ct-on-surface);
+    }
+
+    .mdc-menu-surface .mdc-list-item {
+        color: var(--ct-on-surface);
+    }
+
+    // Snackbars (toast notifications)
+    .mdc-snackbar__surface {
+        background-color: var(--ct-snackbar-surface);
+        color: var(--ct-snackbar-on);
+    }
+
+    .mdc-snackbar__label {
+        color: var(--ct-snackbar-on);
+    }
+
+    .mdc-snackbar__action {
+        color: var(--ct-color-primary);
+    }
+
+    .mdc-snackbar__dismiss {
+        color: var(--ct-snackbar-on-muted);
+    }
+
+    // Chips
+    .mdc-chip {
+        background-color: rgba(255, 255, 255, 0.08);
+        color: var(--ct-on-surface);
+    }
+
+    // Buttons
+    .mdc-button:not(:disabled) {
+        color: var(--ct-color-primary);
+    }
+
+    .mdc-button--raised:not(:disabled),
+    .mdc-button--unelevated:not(:disabled) {
+        background-color: var(--ct-color-primary);
+        color: var(--ct-on-primary);
+    }
+
+    // Disabled states
+    .mdc-button:disabled {
+        color: var(--ct-disabled-on);
+    }
+
+    // Focus states — keep a visible, themed focus ring on interactive chrome.
+    .mdc-icon-button:focus-visible,
+    .mdc-button:focus-visible,
+    .mdc-list-item:focus-visible,
+    .link:focus-visible {
+        outline: 2px solid var(--ct-focus-ring);
+        outline-offset: 2px;
+    }
+
+    // Black pieces are solid-black artwork. On the board they sit on the
+    // (still light) board squares, but the captured-piece tray and the puzzle
+    // info card are dark surfaces in dark mode, so the black pieces would
+    // disappear. Add a light halo to keep them legible without inverting them
+    // (which would erase the white/black distinction).
+    .capturedPieces .piece--black,
+    .mdc-card .piece--black {
+        filter: drop-shadow(0 0 1px var(--ct-piece-outline)) drop-shadow(0 0 1.5px var(--ct-piece-outline));
+    }
+}

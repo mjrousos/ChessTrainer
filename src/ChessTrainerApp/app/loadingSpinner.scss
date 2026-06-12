@@ -16,9 +16,9 @@
     position: absolute;
     left: 50%;
     top: 50%;
-    border: 16px solid #d3d3d3; /* Light grey */
-    border-top: 16px solid #2e7d32; /* Green 800 */
-    border-bottom: 16px solid #2e7d32; /* Green 800 */
+    border: 16px solid var(--ct-spinner-track);
+    border-top: 16px solid var(--ct-spinner-accent);
+    border-bottom: 16px solid var(--ct-spinner-accent);
     border-radius: 50%;
     margin: -76px 0 0 -76px;
     width: 120px;

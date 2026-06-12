@@ -12,7 +12,7 @@
     [Parameter]
     public int Rank { get; set; }
 
-    public string Class => $"piece {ChessFormatter.FileToString(File)}{ChessFormatter.RankToString(Rank)}";
+    public string Class => $"piece piece--{(ChessFormatter.IsPieceWhite(PieceType) ? "white" : "black")} {ChessFormatter.FileToString(File)}{ChessFormatter.RankToString(Rank)}";
 
     string ImageSource => $"{SpriteSource}#{SvgView}";
 

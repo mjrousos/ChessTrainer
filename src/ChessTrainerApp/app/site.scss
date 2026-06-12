@@ -1,4 +1,5 @@
 @import "./variables";
+@import "./tokens";
 @import "./loadingSpinner";
 @import "./puzzleInfo";
 @import "https://fonts.googleapis.com/icon?family=Material+Icons";
@@ -16,6 +17,7 @@
 @import "@material/layout-grid/mdc-layout-grid";
 @import "@material/snackbar/mdc-snackbar";
 @import "@material/typography/mdc-typography";
+@import "./dark-theme";
 
 /* Make sure the app bar shows over the menu drawer */
 .mdc-top-app-bar {
@@ -36,13 +38,13 @@
 }
 
 .mdc-typography--subtitle2 {
-    color: $mdc-theme-text-secondary-on-background;
+    color: var(--ct-text-secondary);
     margin-top: 0px;
 }
 
 .mdc-typography--subtitle2 svg {
     margin: 0px 0px 1px 3px;
-    color: $mdc-theme-text-secondary-on-background;
+    color: var(--ct-text-secondary);
 }
 
 .mdc-text-field .mdc-floating-label--float-above {
@@ -62,15 +64,15 @@
 }
 
 .mdc-card .mdc-list-item__text {
-    color: $mdc-list-item-primary-text-ink-color;
+    color: var(--ct-on-surface);
 }
 
 .mdc-card .mdc-list-item__secondary-text {
-    color: $mdc-list-item-secondary-text-ink-color;
+    color: var(--ct-text-secondary);
 }
 
 .mdc-card .mdc-icon-button {
-    color: $mdc-list-item-primary-text-ink-color;
+    color: var(--ct-on-surface);
 }
 
 .mdc-text-field--dense {
@@ -91,7 +93,7 @@
 }
 
 .mdc-top-app-bar__title a {
-    color: white;
+    color: var(--ct-app-bar-on);
     text-decoration: none;
 }
 
@@ -103,7 +105,7 @@
 
 .activePlayer h2 {
     font-weight: bold;
-    color: $mdc-theme-primary;
+    color: var(--ct-color-primary);
 }
 
 .selectable-list-item {
@@ -129,6 +131,8 @@
 body {
     height: 100vh;
     margin: 0;
+    background-color: var(--ct-background);
+    color: var(--ct-on-background);
 }
 
 body button {
@@ -136,19 +140,19 @@ body button {
 }
 
 html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: var(--ct-font-family);
 }
 
 .valid.modified:not([type=checkbox]) {
-    outline: 1px solid #26b050;
+    outline: 1px solid var(--ct-valid-outline);
 }
 
 .invalid {
-    outline: 1px solid red;
+    outline: 1px solid var(--ct-invalid-outline);
 }
 
 .validation-message {
-    color: red;
+    color: var(--ct-error);
 }
 
 /* Nested vertical grids can occupy the entire row of the parent grid */
@@ -173,6 +177,7 @@ html, body {
     width: 100%;
     height: auto;
     z-index: 0;
+    filter: var(--ct-board-filter);
 }
 
 .boardSquareDecorator {

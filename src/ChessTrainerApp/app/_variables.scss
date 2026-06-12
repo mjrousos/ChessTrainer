@@ -1,4 +1,8 @@
-﻿$mdc-theme-primary: #2e7d32; // Green 800
+﻿// MDC Web 4.0 compiles these theme colors statically. They mirror the light
+// values of the runtime CSS variables in _tokens.scss — keep the two in sync
+// when changing the light palette. Dark mode is handled at runtime via the
+// --ct-* tokens and _dark-theme.scss, not here.
+$mdc-theme-primary: #2e7d32; // Green 800
 $mdc-theme-on-primary: #ffffff;
 $mdc-theme-secondary: #424242; // Grey 800
 $mdc-theme-on-secondary: #ffffff;
