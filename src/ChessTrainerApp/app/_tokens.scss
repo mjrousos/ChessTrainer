@@ -107,4 +107,10 @@
     // States
     --ct-focus-ring: var(--ct-color-primary);
     --ct-disabled-on: rgba(255, 255, 255, 0.38);
+
+    // Snackbar — intentionally inverted (light surface, dark text) per Material,
+    // even in dark mode.
+    --ct-snackbar-surface: #e6e6e6;
+    --ct-snackbar-on: #121212;
+    --ct-snackbar-on-muted: rgba(18, 18, 18, 0.7);
 }
