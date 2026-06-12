@@ -138,6 +138,37 @@ Copilot *can* run the three builds itself and read the output, so a skill isn't 
 
 ---
 
+### 7. Customize Copilot Code Review behavior via a `code-review` skill at `.agents/skills/`, pointed at from both instruction files
+
+**Decision.** Author repo-specific code-review guidance as a skill at [`.agents/skills/code-review/SKILL.md`](.agents/skills/code-review/SKILL.md) — modeled on [`dotnet/runtime`'s skill of the same name](https://github.com/dotnet/runtime/blob/main/.github/skills/code-review/SKILL.md) — and add a one-line pointer to it in **both** [`AGENTS.md`](AGENTS.md) and [`.github/copilot-instructions.md`](.github/copilot-instructions.md) instructing reviewing agents to use it.
+
+The skill covers:
+- A "reviewer mindset" persona (polite but skeptical; treat the PR description as claims to verify).
+- A staged review process: gather code context → form independent assessment *before* reading the PR description → reconcile with the author's narrative → apply the repo checklist → detailed analysis with severity labels.
+- A "Multi-Model Review" section instructing agents to run the review across 2-3 distinct model families in parallel when the environment supports it.
+- Repository-specific review guidelines (data-layer, Blazor Server lifecycle, Engine performance, IngestionFunctions, auth, PR feedback follow-up) — seeded small, expected to grow.
+- A standard review output format with AI-generated-content disclosure.
+
+**Why a skill (not just more bullets in `AGENTS.md`).**
+- **Cost.** Review process narrative is long (hundreds of lines). Putting it in `AGENTS.md` would push past the Copilot Code Review ~4 KB cap and inflate every non-review chat turn. As a skill, the body loads on-demand only when an agent is reviewing.
+- **Discoverable by name.** Codex/Copilot CLI/Cloud agent see skill `name` + `description` during the discovery phase, so a pointer like *"use the `code-review` skill"* in `AGENTS.md` resolves automatically.
+- **Mirrors a known-good pattern.** `dotnet/runtime` validated this layout at scale; copying their structure means future contributors familiar with that repo recognize ours.
+
+**Why `.agents/skills/` (consistent with decision #3).**
+- This keeps the skill in the same location as the rest of our project skills (e.g. `zero-warnings-build`, `playwright-cli`) — the location chosen in decision #3 because it's read by both Copilot and Codex.
+- We initially considered `.github/skills/` (mirroring `dotnet/runtime`'s layout) because Copilot Code Review on github.com is the primary consumer and reads other `.github/` files by convention. However, since `copilot-instructions.md` references the skill by **explicit relative path** (`../.agents/skills/code-review/SKILL.md`), Code Review can resolve the file from anywhere in the repo — there's no requirement that the file itself live under `.github/`. Given that, the consistency win of decision #3 dominates.
+- The other expected consumers — Copilot Cloud agent, Copilot CLI, IDE agent mode — also resolve relative-path references from instruction files.
+- Claude Code does not auto-discover `.agents/skills/`; if code review under Claude Code becomes a frequent task, duplicate the skill into `.claude/skills/code-review/` on demand (same on-demand strategy decision #3 takes generally).
+
+**Why the pointer in *both* instruction files (small, deliberate duplication).**
+- `AGENTS.md` is read by Copilot Chat/CLI/Cloud agent and by Codex/Claude Code — that pointer routes those tools to the skill.
+- `.github/copilot-instructions.md` is the only instruction file Copilot Code Review on github.com is documented to read. Without a pointer there, the github.com PR review surface never learns about the skill.
+- The pointer is one sentence (~150 chars), placed immediately after the intro notes so it lands well inside the ~4 KB cap.
+
+**Drift mitigation.** The skill is the source of truth for *how* to review; the **Code review checklist** sections in `AGENTS.md` / `copilot-instructions.md` remain the source of truth for *what* rules to enforce. The skill links to the checklist rather than re-stating it. Repository-specific gotchas that emerge during real reviews go into the skill's "Repository-Specific Review Guidelines" section; checklist-grade rules (always-applicable, blocking) go in `AGENTS.md` and get mirrored to `copilot-instructions.md` per decision #1.
+
+---
+
 ## Key constraints to remember
 
 - **Copilot Code Review cap:** ~4,000 chars per custom instruction file. Content past the cap is silently truncated *for Code Review only*. Chat, CLI, and Cloud agent have no documented cap. Source: [docs.github.com/en/copilot/concepts/prompting/response-customization](https://docs.github.com/en/copilot/concepts/prompting/response-customization).

@@ -63,7 +63,7 @@ Walk the diff against every rule in the **Code review checklist** section of [`A
 
 Also check the always-applicable items:
 
-- **Tests.** New behavior needs tests. Follow the conventions in [`.github/instructions/testing.instructions.md`](../../instructions/testing.instructions.md) (xUnit + bUnit, parallelization, env-var helpers, the migration regression guard). For data-layer changes, run `dotnet ef migrations has-pending-model-changes --project src\ChessTrainer.Data` mentally — if the entity changed but no migration was added, flag it.
+- **Tests.** New behavior needs tests. Follow the conventions in [`.github/instructions/testing.instructions.md`](../../../.github/instructions/testing.instructions.md) (xUnit + bUnit, parallelization, env-var helpers, the migration regression guard). For data-layer changes, run `dotnet ef migrations has-pending-model-changes --project src\ChessTrainer.Data` mentally — if the entity changed but no migration was added, flag it.
 
 ### Step 4: Detailed Analysis
 
