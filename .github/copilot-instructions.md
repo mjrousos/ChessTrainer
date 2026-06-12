@@ -4,6 +4,8 @@
 >
 > This file mirrors only the **Code review checklist** from `AGENTS.md`, so that Copilot Code Review (which truncates any instruction file past ~4,000 characters) reliably sees every review-actionable rule. When you change a rule below, update the matching section in `AGENTS.md` too.
 
+**When reviewing pull requests, use the [`code-review`](../.agents/skills/code-review/SKILL.md) skill unless the user has stated they will review the changes themselves.**
+
 ## Code review checklist
 
 Apply these rules to every change.

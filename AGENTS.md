@@ -4,6 +4,8 @@ Conventions for AI coding agents (Copilot, Codex, Claude Code, etc.) working in 
 
 Multi-project .NET 10 solution: Blazor Server app, EF Core data layer, Azure Functions ingestion, in-house chess engine.
 
+**When reviewing pull requests, use the [`code-review`](.agents/skills/code-review/SKILL.md) skill unless the user has stated they will review the changes themselves.**
+
 > **Note on file layout.** This file is the source of truth. `.github/copilot-instructions.md` is a slim copy of the "Code review checklist" section below, so that Copilot Code Review (which truncates instruction files past ~4,000 characters) reliably sees the review-actionable rules. Update both when changing those rules.
 >
 > **Note on customization strategy.** Decisions about *how* we customize Copilot/Codex/Claude Code for this repo (file layout, warning policy, skills locations, etc.) and the reasoning behind them are recorded in [`copilot-customization.md`](copilot-customization.md). Whenever you change the customization strategy — adding/removing an instruction file, adopting a new mechanism (skills, hooks, prompt files), or revising tool-compatibility tradeoffs — update `copilot-customization.md` alongside the change so the decision history stays current.
