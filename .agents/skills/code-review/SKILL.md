@@ -57,7 +57,7 @@ parallel:
 Give every sub-agent the **same prompt**: the PR number/diff, a pointer to this skill and [`AGENTS.md`](../../../AGENTS.md), instructions to produce findings in the severity format from [Review Output Format](#review-output-format), and an instruction **not to post comments to GitHub** — synthesis and posting are the orchestrator's job.
 
 **Synthesis:**
-1. Wait for all sub-agents. **Timeout handling:** if a sub-agent has not completed after 10 minutes and you have results from ≥2 others, proceed without it and note which model is missing.
+1. Wait for all sub-agents. **Timeout handling:** if a sub-agent has not completed after 10 minutes and you have results from ≥2 others, proceed without it and note which model is missing. If only 2 sub-agents were launched and one has not completed after 10 minutes, proceed with the single completed result and explicitly note the incomplete coverage in the `_Reviewed by:_` line.
 2. Deduplicate findings that appear across models.
 3. Elevate confidence on issues flagged by multiple models (mark with `✕N` where N is the count).
 4. Include unique findings from individual models that meet the confidence bar in the [Detailed Analysis](#step-5-detailed-analysis) rules.
