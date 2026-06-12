@@ -1,13 +1,22 @@
 ---
 name: code-review
-description: Review code changes in ChessTrainer for correctness, performance, and consistency with project conventions. Use when reviewing PRs or code changes.
+description: Review code changes in ChessTrainer for correctness, performance, and consistency with project conventions. Use when reviewing PRs or code changes. Always launched as a parallel multi-model review (2-3 sub-agents with distinct model families) unless the environment cannot support it.
 ---
 
 # ChessTrainer Code Review
 
 Review code changes against the conventions, architecture, and gotchas documented in [`AGENTS.md`](../../../AGENTS.md). The "Code review checklist" section of that file is the source of truth for repo-specific review-blocking rules; this skill describes *how* to conduct the review.
 
+> **Before doing anything else:** If you are responding to a review request (e.g., `/review`, "please review PR #X", "look at this change") and you have the `task` tool with a `model` parameter, your *next action* is to enumerate available models, select 2-3 from distinct families per the rules in [Step 0: Orchestration](#step-0-orchestration--fan-out-first), and launch them in parallel. Do not perform the review yourself, do not delegate the whole review to a single sub-agent, and do not read further until those sub-agents are running.
+
 **Reviewer mindset:** Be polite but very skeptical. Your job is to help speed the review process for maintainers, which includes not only finding problems the PR author may have missed but also questioning the value of the PR in its entirety. Treat the PR description and linked issues as claims to verify, not facts to accept. Question the stated direction and probe edge cases.
+
+## Two Roles, Two Responsibilities
+
+This skill is executed by two distinct kinds of agents. Know which one you are before reading further.
+
+- **Orchestrator** — the agent that received the review request from the user (e.g., the CLI agent responding to `/review`). Your job is to launch N parallel reviewer sub-agents with **distinct models** and synthesize their outputs into one unified review. You do **not** perform the review yourself, and you do **not** delegate the whole review to a single sub-agent. Skip to [Step 0: Orchestration](#step-0-orchestration--fan-out-first).
+- **Reviewer sub-agent** — an agent invoked by the orchestrator via the `task` tool with `agent_type: code-review` and a specific `model`. Your job is to execute [Step 1: Gather Code Context](#step-1-gather-code-context-no-pr-narrative-yet) through [Step 5: Detailed Analysis](#step-5-detailed-analysis) on your assigned model and return findings to the orchestrator. Do **not** fan out further, and do **not** post comments to GitHub — the orchestrator handles synthesis and posting.
 
 ## When to Use This Skill
 
@@ -19,7 +28,45 @@ Use this skill when:
 
 ## Review Process
 
-### Step 0: Gather Code Context (No PR Narrative Yet)
+### Step 0: Orchestration — Fan Out First
+
+**This step is for the orchestrator only.** Reviewer sub-agents skip to Step 1.
+
+**Multi-model review is the default execution mode.** A review is incomplete unless ≥2 model families have reviewed independently. Skip the fan-out *only* if the `task` tool has no `model` parameter, if fewer than 2 eligible model families exist after applying the selection rules below, or if there is no `task` tool available — and in these cases, explicitly state the reason in the final output.
+
+**Model selection rules:**
+- Pick only from models explicitly listed as available in the environment. Do not guess or assume model names.
+- Select 2-3 models from distinct model families (e.g., one Claude, one GPT, one Gemini). If fewer than 2 eligible families are available, use what is available.
+- From each selected family, pick the highest-capability tier ("premium" or "standard" over "fast/cheap"). Never pick models labeled "mini", "fast", or "cheap".
+- Do not select the same model that is already running the primary/orchestrator session — the goal is diverse perspectives.
+- **Do not use `gpt-5.4`** (last verified 2026-06-12; revisit after 2026-09-12 — remove this exclusion if the gpt-5.4 sub-agent timeout issue has been resolved upstream) — known sub-agent timeout issues. Prefer `gpt-5.5` or `gpt-5.3-codex`; otherwise the highest-version non-blocked GPT model that satisfies the other rules.
+- If multiple standard-tier models exist in the same family (excluding blocked models), pick the highest version. Prefer `-codex` variants over general-purpose for code review.
+
+**Orchestrator pattern (do this, not a single delegation):**
+
+```
+# In ONE response, launch all sub-agents in parallel:
+parallel:
+  task(agent_type=code-review, model=<claude family>,  mode=background, prompt=<full review prompt>)
+  task(agent_type=code-review, model=<gpt family>,     mode=background, prompt=<full review prompt>)
+  task(agent_type=code-review, model=<gemini family>,  mode=background, prompt=<full review prompt>)
+
+# Then wait for completion notifications, read each with read_agent, and synthesize.
+```
+
+Give every sub-agent the **same prompt**: the PR number/diff, a pointer to this skill and [`AGENTS.md`](../../../AGENTS.md), instructions to produce findings in the severity format from [Review Output Format](#review-output-format), and an instruction **not to post comments to GitHub** — synthesis and posting are the orchestrator's job.
+
+**Synthesis:**
+1. Wait for all sub-agents. **Timeout handling:** if a sub-agent has not completed after 20 minutes and you have results from ≥2 others, proceed without it and note which model is missing. If only 2 sub-agents were launched and one has not completed after 20 minutes, proceed with the single completed result and explicitly note the incomplete coverage in the `_Reviewed by:_` line.
+2. Deduplicate findings that appear across models.
+3. Elevate confidence on issues flagged by multiple models (mark with `✕N` where N is the count).
+4. Include unique findings from individual models that meet the confidence bar in the [Detailed Analysis](#step-5-detailed-analysis) rules.
+5. Produce one unified review in the [Review Output Format](#review-output-format). The `_Reviewed by: …_` line at the bottom is **mandatory** — see the output format section.
+6. After posting the review, immediately exit. Do not wait for any remaining sub-agents.
+
+**If no `task` tool is available or if the environment only has one eligible model**, perform the review yourself by executing Steps 1-5 below, and explicitly note the single-model limitation in the final output.
+
+### Step 1: Gather Code Context (No PR Narrative Yet)
 
 Before analyzing anything, collect as much relevant **code** context as you can. **Critically, do NOT read the PR description, linked issues, or existing review comments yet.** Form your own independent assessment of what the code does, why it might be needed, what problems it has, and whether the approach is sound — before being exposed to the author's framing. Reading the author's narrative first anchors your judgment and makes you less likely to find real problems.
 
@@ -31,7 +78,7 @@ Before analyzing anything, collect as much relevant **code** context as you can.
 6. **README files in the area.** Walk from the changed directory up to the repo root and read any `README.md` files you find (especially `src/IngestionFunctions/README.md` and `src/ChessTrainerApp/app/README.md`). They contain build/run/auth recipes that the diff may break.
 7. **Git history.** `git --no-pager log --oneline -20 -- <file>` on changed files reveals recent churn, reverts, or prior attempts to fix the same problem.
 
-### Step 1: Form an Independent Assessment
+### Step 2: Form an Independent Assessment
 
 Based **only** on the code context gathered above, answer:
 
@@ -42,7 +89,7 @@ Based **only** on the code context gathered above, answer:
 
 Write down your independent assessment before proceeding.
 
-### Step 2: Incorporate PR Narrative and Reconcile
+### Step 3: Incorporate PR Narrative and Reconcile
 
 Now read the PR description, labels, linked issues (in full), author information, and any existing review comments. Treat all of this as **claims to verify**, not facts to accept.
 
@@ -50,7 +97,7 @@ Now read the PR description, labels, linked issues (in full), author information
 2. Reconcile your assessment with the author's claims. Where your independent reading of the code disagrees with the PR description or issue, investigate further — but do not simply defer to the author's framing.
 3. Update your holistic assessment only if the additional context genuinely changes your evaluation (e.g., a linked issue proves the bug is real). Do not soften findings just because the PR description sounds reasonable.
 
-### Step 3: Apply the ChessTrainer Code Review Checklist
+### Step 4: Apply the ChessTrainer Code Review Checklist
 
 Walk the diff against every rule in the **Code review checklist** section of [`AGENTS.md`](../../../AGENTS.md). Today that means at minimum:
 
@@ -65,7 +112,7 @@ Also check the always-applicable items:
 
 - **Tests.** New behavior needs tests. Follow the conventions in [`.github/instructions/testing.instructions.md`](../../../.github/instructions/testing.instructions.md) (xUnit + bUnit, parallelization, env-var helpers, the migration regression guard). For data-layer changes, run `dotnet ef migrations has-pending-model-changes --project src\ChessTrainer.Data` mentally — if the entity changed but no migration was added, flag it.
 
-### Step 4: Detailed Analysis
+### Step 5: Detailed Analysis
 
 1. **Focus on what matters.** Prioritize bugs, performance regressions (especially N+1 EF queries, missing `AsNoTracking`, missing `OrderBy` before `Skip`/`Take`), safety issues, race conditions, resource leaks, and incorrect assumptions about Blazor Server's circuit/scoped DI lifetime. Do not comment on trivial style issues unless they violate an explicit rule.
 2. **Consider collateral damage.** For every changed code path, brainstorm: what other callers, scenarios, or inputs flow through this code? Could any of them break? Surface plausible risks even if you can't fully confirm them — the tradeoff is the author's decision; your job is to make it visible.
@@ -85,22 +132,6 @@ Also check the always-applicable items:
    - **Never assert that something "does not exist," "is deprecated," or "is unavailable" based on training data alone.** Your knowledge has a cutoff date. When uncertain, ask.
 9. **Ensure code suggestions are valid.** Any code you suggest must compile under the repo's analyzers (Nullable on, StyleCop, `TreatWarningsAsErrors` in Release).
 10. **Label in-scope vs. follow-up.** Distinguish between issues the PR should fix and out-of-scope improvements.
-
-## Multi-Model Review
-
-When the environment supports launching sub-agents with different models (e.g., the `task` tool with a `model` parameter), run the review in parallel across multiple model families to get diverse perspectives. Different models catch different classes of issues. If the environment does not support this, proceed with a single-model review.
-
-**How to execute (when supported):**
-1. Inspect the available model list and select models from 2-3 distinct model families, up to 3 sub-agent models total. If fewer than 2 eligible families are available, use what is available. **Model selection rules:**
-   - Pick only from models explicitly listed as available in the environment. Do not guess or assume model names.
-   - From each selected family, pick the model with the highest capability tier (prefer "premium" or "standard" over "fast/cheap").
-   - Never pick models labeled "mini", "fast", or "cheap" for code review.
-   - Do not select the same model that is already running the primary review. The goal is diverse perspectives from different model families.
-   - **Do not use `gpt-5.4`** (last verified 2026-06-12; revisit after 2026-09-12 — remove this exclusion if the gpt-5.4 sub-agent timeout issue has been resolved upstream) — it has known reliability issues causing sub-agent timeouts in the majority of affected runs. For the OpenAI/GPT family, prefer `gpt-5.5` or `gpt-5.3-codex` if they are explicitly listed as available; otherwise fall back to the highest-version non-blocked GPT model that satisfies the other rules.
-   - If multiple standard-tier models exist in the same family (excluding blocked models), pick the one with the highest version number. Prefer "-codex" variants over general-purpose for code review tasks.
-2. Launch a sub-agent for each selected model in parallel, giving each the same review prompt: the PR diff, the rules in this skill, [`AGENTS.md`](../../../AGENTS.md), and instructions to produce findings in the severity format above.
-3. Wait for all agents, then synthesize: deduplicate findings that appear across models, elevate issues flagged by multiple models (higher confidence), and include unique findings from individual models that meet the confidence bar. **Timeout handling:** If a sub-agent has not completed after 10 minutes and you have results from other agents, proceed with what you have.
-4. Present a single unified review, noting when an issue was flagged by multiple models. **After posting the review, immediately exit.** Do not wait for any remaining sub-agents.
 
 ## Repository-Specific Review Guidelines
 
@@ -173,9 +204,9 @@ When presenting the final review (whether as a PR comment or as output to the us
 ### Out of Scope / Follow-ups
 - <any improvements deliberately left for a later PR>
 
-<if multi-model review was used>
 _Reviewed by: <model A>, <model B>, <model C>. Issues marked ✕N were flagged by N models._
-</if>
 ```
+
+**The `_Reviewed by: …_` line is mandatory.** Every posted review must end with it, listing every model that contributed (including the orchestrator's synthesis model only if it added analysis beyond synthesis). If only one model is listed, the orchestrator skipped multi-model and the review is incomplete — re-run with the orchestrator pattern in [Step 0](#step-0-orchestration--fan-out-first). If multi-model was genuinely impossible (no `model` parameter, or <2 eligible families), say so explicitly on that line instead, e.g. `_Reviewed by: claude-opus-4.7 (single-model: only one eligible family available)._`
 
 If no issues were found, say so explicitly with ✅ LGTM and skip the empty sections.

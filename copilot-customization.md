@@ -145,7 +145,7 @@ Copilot *can* run the three builds itself and read the output, so a skill isn't 
 The skill covers:
 - A "reviewer mindset" persona (polite but skeptical; treat the PR description as claims to verify).
 - A staged review process: gather code context → form independent assessment *before* reading the PR description → reconcile with the author's narrative → apply the repo checklist → detailed analysis with severity labels.
-- A "Multi-Model Review" section instructing agents to run the review across 2-3 distinct model families in parallel when the environment supports it.
+- A "Step 0: Orchestration — Fan Out First" section making multi-model review the mandatory default: a review is incomplete unless ≥2 model families have reviewed independently; single-model execution is only permitted when the `task` tool is unavailable, has no `model` parameter, or fewer than 2 eligible families exist — and in those cases the reason must be stated explicitly.
 - Repository-specific review guidelines (data-layer, Blazor Server lifecycle, Engine performance, IngestionFunctions, auth, PR feedback follow-up) — seeded small, expected to grow.
 - A standard review output format with AI-generated-content disclosure.
 
