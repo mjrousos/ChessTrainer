@@ -177,4 +177,14 @@
         outline: 2px solid var(--ct-focus-ring);
         outline-offset: 2px;
     }
+
+    // Black pieces are solid-black artwork. On the board they sit on the
+    // (still light) board squares, but the captured-piece tray and the puzzle
+    // info card are dark surfaces in dark mode, so the black pieces would
+    // disappear. Add a light halo to keep them legible without inverting them
+    // (which would erase the white/black distinction).
+    .capturedPieces .piece--black,
+    .mdc-card .piece--black {
+        filter: drop-shadow(0 0 1px var(--ct-piece-outline)) drop-shadow(0 0 1.5px var(--ct-piece-outline));
+    }
 }
