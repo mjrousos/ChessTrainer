@@ -34,7 +34,7 @@ Do **not** use it for single-project builds — `dotnet build src/<Project>/<Pro
 
 ## Workflow
 
-1. Run the bundled script from the repo root:
+1. Run the [bundled script](./check-warnings.ps1) from the repo root:
 
    ```powershell
    pwsh ./.agents/skills/zero-warnings-build/check-warnings.ps1
