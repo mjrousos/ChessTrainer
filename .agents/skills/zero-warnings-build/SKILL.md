@@ -1,19 +1,12 @@
 ---
 name: zero-warnings-build
 description: >-
-  **WORKFLOW SKILL** — Run the full zero-warnings build verification
-  (Debug + Release + webpack-prod) and report every warning AND error with
-  location so the agent can fix the underlying cause. Enforces the repo
-  policy of zero warnings and zero errors on every build; suppressions require
-  explicit user approval.
-  USE FOR: zero warnings, no warnings, fix warnings, fix build errors, build is
-  failing, release build failure, TreatWarningsAsErrors, treat warnings as errors,
-  verify build is clean before PR, pre-PR validation, webpack compiled with N
-  warnings, EF Core warning, full build check, run Debug and Release builds.
-  DO NOT USE FOR: a single targeted build of one project (use `dotnet build` on
-  that project directly), runtime warnings from a running app (those come from
-  smoke tests, not builds), or suppressing/silencing warnings (the project policy
-  in AGENTS.md bans suppressions without explicit user approval).
+  **WORKFLOW SKILL** — Run ChessTrainer's full zero-warnings build verification
+  (Debug + Release + webpack-prod) and report every warning and error with
+  file/line/code so the agent fixes the root cause. WHEN: "zero warnings",
+  "fix build errors", "release build failure", "TreatWarningsAsErrors",
+  "verify build is clean before PR". INVOKES: dotnet build, npm run webpack-prod.
+  FOR SINGLE OPERATIONS: run `dotnet build` on one project.
 allowed-tools: shell
 ---
 
