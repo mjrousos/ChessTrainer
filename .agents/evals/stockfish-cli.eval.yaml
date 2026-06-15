@@ -421,9 +421,12 @@ stimuli:
       What is the best move in this position?
       this/is/not/a/valid fen z !! - - 0 0
     graders:
-      - type: skill-invocation
-        config:
-          required: ["stockfish-cli"]
+      # Note: no `skill-invocation: required` grader here. The input is so
+      # obviously malformed that the agent can (and often does) reject it
+      # in a single turn without loading the skill or invoking Stockfish.
+      # That's the desired behavior — forcing the skill to load would waste
+      # tokens. The `prompt` grader below enforces the real contract:
+      # don't fabricate a best move on garbage input.
       - type: tool-calls
         config:
           disallowed:
