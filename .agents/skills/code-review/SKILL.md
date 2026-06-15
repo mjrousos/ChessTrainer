@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Review code changes in ChessTrainer for correctness, performance, and consistency with project conventions. Use when reviewing PRs or code changes. Always launched as a parallel multi-model review (2-3 sub-agents with distinct model families) unless the environment cannot support it.
+description: "Review code changes in ChessTrainer for correctness, performance, and consistency with project conventions. Always launched as a parallel multi-model review (2-3 sub-agents with distinct model families) unless the environment cannot support it. USE WHEN: reviewing PRs or code changes."
 ---
 
 # ChessTrainer Code Review

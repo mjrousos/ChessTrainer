@@ -1,9 +1,9 @@
 ---
 name: zero-warnings-build
 description: >-
-  **WORKFLOW SKILL** — Run the full zero-warnings build verification for ChessTrainer
+  **WORKFLOW SKILL** — Run the full zero-warnings build verification
   (Debug + Release + webpack-prod) and report every warning AND error with
-  file/line/code so the agent can fix the underlying cause. Enforces the repo
+  location so the agent can fix the underlying cause. Enforces the repo
   policy of zero warnings and zero errors on every build; suppressions require
   explicit user approval.
   USE FOR: zero warnings, no warnings, fix warnings, fix build errors, build is
