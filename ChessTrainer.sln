@@ -30,8 +30,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		stylecop.json = stylecop.json
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "infrastructure", "infrastructure", "{10841A69-94D1-45D3-A792-801F2D5841DE}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChessTrainer.Data", "src\ChessTrainer.Data\ChessTrainer.Data.csproj", "{94A6CA81-85D2-4512-9942-00497A6E1770}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChessTrainer.Common", "src\ChessTrainer.Common\ChessTrainer.Common.csproj", "{EEEB0172-D50F-483A-A515-68D11A25184D}"
