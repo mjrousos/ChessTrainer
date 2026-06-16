@@ -23,3 +23,14 @@ jobs:
       run: dotnet build ChessTrainer.sln -c Release --no-restore
     - name: Test
       run: dotnet test ChessTrainer.sln -c Release --no-build --verbosity normal
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 'lts/*'
+        cache: 'npm'
+        cache-dependency-path: src/ChessTrainerApp/package-lock.json
+    - name: Front-end build
+      working-directory: src/ChessTrainerApp
+      run: |
+        npm ci
+        npm run webpack-prod
