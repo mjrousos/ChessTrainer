@@ -18,8 +18,8 @@ jobs:
       with:
         dotnet-version: 10.0.x
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore ChessTrainer.sln
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build ChessTrainer.sln -c Release --no-restore
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test ChessTrainer.sln -c Release --no-build --verbosity normal
