@@ -103,6 +103,32 @@ environment:
 
 `timeout: 180` fails lint. Use `timeout: 3m` / `timeout: 300s`.
 
+### Suite `evals:` globs can't traverse dot-prefixed directories
+
+Vally's glob matcher refuses to descend into directories whose names start
+with `.` (e.g. `.agents/`). Every glob form that *should* match was tested
+and produced `⚠ No eval files matched the suite's eval patterns`:
+
+- `.agents/**/*.eval.yaml`
+- `**/.agents/**/*.eval.yaml`
+- `./.agents/**/*.eval.yaml`
+- `.agents/evals/**`
+
+**Workaround**: list each eval file explicitly in the suite's `evals:` field:
+
+```yaml
+suites:
+  full:
+    evals:
+      - ".agents/evals/skill-a.eval.yaml"
+      - ".agents/evals/skill-b.eval.yaml"
+      # ... one line per file; update when adding a new eval
+```
+
+This also applies to any `paths.evals` entry that points under a
+dot-prefixed root — auto-discovery still works for those (since `paths.evals`
+is a literal directory, not a glob), but suite-level `evals:` globs do not.
+
 ### `tool-calls` grader matches command *substrings* with regex
 
 A `required` matcher's `name` is regex (unanchored unless you anchor it). The

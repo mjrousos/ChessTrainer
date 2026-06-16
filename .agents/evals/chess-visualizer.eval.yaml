@@ -1,0 +1,535 @@
+name: chess-visualizer
+description: >
+  Validates the chess-visualizer skill: it should trigger for intent-based
+  requests to render chess positions from FEN into PNG files, pass supported
+  rendering options to fen_to_png.py, report malformed FEN input clearly, and
+  stay silent on chess evaluation, annotation, and explanation requests.
+version: "1.0"
+type: capability
+
+# Root-level tags inherited by every stimulus (each stimulus may add its own).
+tags:
+  type: integration
+  skill: chess-visualizer
+
+config:
+  runs: 5
+  timeout: 5m
+  executor: copilot-sdk
+  model: claude-sonnet-4.6
+
+environment:
+  skills:
+    - ../skills/chess-visualizer/SKILL.md
+
+scoring:
+  # Weights chosen so each grader is "binding" at threshold: 0.9 — i.e.
+  # failing any single grader drops the weighted aggregate below 0.9 and
+  # fails the trial. Math (positive stimulus, 5 graders, total weight 8.5):
+  #   - lose skill-invocation (2.0)  → 6.5/8.5 = 0.765
+  #   - lose tool-calls       (1.5)  → 7.0/8.5 = 0.824
+  #   - lose file-exists      (2.5)  → 6.0/8.5 = 0.706
+  #   - lose prompt           (2.5)  → 6.0/8.5 = 0.706
+  #   - lose output-not-match (1.5)  → 7.0/8.5 = 0.824
+  #   - lose completed        (1.0)  → 7.5/8.5 = 0.882
+  # All < 0.9, so every grader genuinely matters. Correctness graders
+  # (file-exists / prompt) are weighted 2.5 specifically so missing PNG output
+  # or bad error handling cannot pass even if every other grader is green.
+  weights:
+    skill-invocation: 2.0
+    tool-calls: 1.5
+    output-not-matches: 1.5
+    file-exists: 2.5
+    prompt: 2.5
+    completed: 1.0
+  # 0.9 makes every grader binding (see weight math above). With runs: 5
+  # we measure invocation/correctness rate per trial; this threshold is
+  # per-trial, and pass@5 / pass^5 statistics are reported separately.
+  threshold: 0.9
+
+# Root-level constraints apply to every stimulus. Keeps trials bounded so a
+# misbehaving agent can't loop indefinitely or run up huge token bills.
+constraints:
+  max_turns: 10
+  max_tokens: 2000
+
+# -----------------------------------------------------------------------------
+# Helper grader patterns used across "should invoke" stimuli.
+# Inlined per stimulus below (Vally has no native YAML-anchor support guarantee
+# in lint), but documented here for reviewer convenience:
+#
+#   required tool calls (multi-matcher — each satisfied by ANY single tool call):
+#     1. command: fen_to_png\.py   ↳ proves the renderer script was invoked
+#     2. command: <FEN fragment>   ↳ proves the requested position was passed
+#     3. command: (?:^|\s)(?:-o|--output)\b
+#                                  ↳ proves a PNG output path was supplied
+#   ↳ Together these prove the skill ran the real renderer on the user's
+#     position and asked it to write a file. The matchers are deliberately split
+#     so both single-shell-call and multi-step invocation styles are tolerated.
+#
+#   configuration stimuli add flag matchers:
+#     command: (?:^|\s)--flip\b
+#     command: (?:^|\s)--no-coords\b
+#     command: (?:^|\s)--size\s+\d+
+#   ↳ The whitespace/start anchor avoids the documented `\b--flag\b` pitfall.
+# -----------------------------------------------------------------------------
+
+stimuli:
+  # ---------------------------------------------------------------------------
+  # 1. Skill IS invoked for the most common workflow: render the standard
+  #    starting position to a named PNG. The file-exists grader is the strongest
+  #    correctness signal because the requested artifact must actually exist.
+  # ---------------------------------------------------------------------------
+  - name: render-starting-position
+    tags:
+      tier: smoke
+      area: response-quality
+      cost: free
+    prompt: >
+      Show me a board image for this position and save it as
+      start-position.png in the current workspace:
+      rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["chess-visualizer"]
+      - type: tool-calls
+        config:
+          # Multi-matcher: each `required` entry is satisfied by ANY single
+          # tool call, so this tolerates either one bundled command or split
+          # calls while still proving script + FEN + output path were supplied.
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'fen_to_png\.py'
+            - name: "^(bash|powershell|shell)$"
+              command: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?:^|\s)(?:-o|--output)\b'
+      - type: file-exists
+        config:
+          path: start-position.png
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 2. Skill IS invoked for a mid-game full FEN. The FEN-fragment matcher checks
+  #    that the piece-placement field was transcribed rather than replaced with
+  #    a default board.
+  # ---------------------------------------------------------------------------
+  - name: render-italian-game-position
+    tags:
+      tier: full
+      area: response-quality
+      cost: free
+    prompt: >
+      Render this chess position as a PNG named italian-game.png:
+      r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["chess-visualizer"]
+      - type: tool-calls
+        config:
+          # Multi-matcher: script, position fragment, and output option may
+          # appear in separate shell calls, but all three are required.
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'fen_to_png\.py'
+            - name: "^(bash|powershell|shell)$"
+              command: 'r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?:^|\s)(?:-o|--output)\b'
+      - type: file-exists
+        config:
+          path: italian-game.png
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 3. Skill IS invoked when the user supplies only the piece-placement field.
+  #    The script supports this input variant because it consumes only the
+  #    first FEN field.
+  # ---------------------------------------------------------------------------
+  - name: render-piece-placement-only
+    tags:
+      tier: full
+      area: response-quality
+      cost: free
+    prompt: >
+      Make an image of this board layout and write the PNG to
+      piece-placement-only.png:
+      8/8/3k4/8/4K3/8/8/8
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["chess-visualizer"]
+      - type: tool-calls
+        config:
+          # Multi-matcher: proves the script ran, the board-only FEN field was
+          # passed, and an explicit output file option was used.
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'fen_to_png\.py'
+            - name: "^(bash|powershell|shell)$"
+              command: '8/8/3k4/8/4K3/8/8/8'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?:^|\s)(?:-o|--output)\b'
+      - type: file-exists
+        config:
+          path: piece-placement-only.png
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 4. Skill IS invoked and honors orientation / coordinate configuration. The
+  #    extra matchers require both flags, using the safe flag-regex pattern.
+  # ---------------------------------------------------------------------------
+  - name: render-flipped-without-coordinates
+    tags:
+      tier: full
+      area: configuration
+      cost: free
+    prompt: >
+      Visualize this position from Black's perspective, hide the coordinate
+      labels, and save the PNG as black-perspective-no-coords.png:
+      r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["chess-visualizer"]
+      - type: tool-calls
+        config:
+          # Multi-matcher: script + FEN + output are the base rendering
+          # contract; `--flip` and `--no-coords` prove configuration was passed.
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'fen_to_png\.py'
+            - name: "^(bash|powershell|shell)$"
+              command: 'r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?:^|\s)(?:-o|--output)\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?:^|\s)--flip\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?:^|\s)--no-coords\b'
+      - type: file-exists
+        config:
+          path: black-perspective-no-coords.png
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 5. Skill IS invoked and honors a custom output size. The size matcher checks
+  #    for the flag shape and value while the file-exists grader checks the PNG.
+  # ---------------------------------------------------------------------------
+  - name: render-custom-size
+    tags:
+      tier: full
+      area: configuration
+      cost: free
+    prompt: >
+      Create a 768 pixel square PNG of this board and save it as
+      custom-size-768.png:
+      4k3/8/8/8/8/8/8/4K3 w - - 0 1
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["chess-visualizer"]
+      - type: tool-calls
+        config:
+          # Multi-matcher: proves the renderer ran on the requested board,
+          # wrote an output file, and received `--size 768`.
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'fen_to_png\.py'
+            - name: "^(bash|powershell|shell)$"
+              command: '4k3/8/8/8/8/8/8/4K3'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?:^|\s)(?:-o|--output)\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?:^|\s)--size\s+768\b'
+      - type: file-exists
+        config:
+          path: custom-size-768.png
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 6. Skill IS invoked for a malformed FEN but reports the input problem rather
+  #    than silently creating an image as though the position were valid. The
+  #    script exits 2 and prints an invalid-FEN error, so an LLM judge checks
+  #    that the agent surfaced that semantic failure to the user.
+  # ---------------------------------------------------------------------------
+  - name: invalid-fen-handling
+    tags:
+      tier: full
+      area: error-handling
+      cost: llm
+    prompt: >
+      Try to make a PNG named invalid-fen.png from this position:
+      this/is/not/a/valid fen z !! - - 0 0
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["chess-visualizer"]
+      - type: tool-calls
+        config:
+          # Multi-matcher: require the renderer to run against the malformed
+          # input and receive an output target; correctness is judged by whether
+          # the final answer reports the invalid input instead of claiming
+          # success.
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'fen_to_png\.py'
+            - name: "^(bash|powershell|shell)$"
+              command: 'this/is/not/a/valid'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?:^|\s)(?:-o|--output)\b'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user supplied this string as a chess position and asked for a
+            PNG file:
+
+              this/is/not/a/valid fen z !! - - 0 0
+
+            This is not a valid FEN. It has the wrong number of ranks, contains
+            words and illegal characters in the board field, and has corrupt
+            trailing fields. A correct response should not claim that a normal
+            board image was produced from this input.
+
+            Score 1 (pass) if the agent's final response clearly identifies
+            the input as invalid / malformed / unparseable, or otherwise
+            communicates that it could not create the requested board image
+            because the position text is not a real FEN. Wording can vary:
+            "invalid", "malformed", "not a valid FEN", "couldn't parse",
+            "bad position", or an equivalent error explanation all qualify.
+
+            Score 0 (fail) if the agent silently claims success, reports that
+            invalid-fen.png was produced as a normal board image, or otherwise
+            behaves as though the malformed input represented a valid chess
+            position.
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 7. Skill is NOT invoked for chess-engine evaluation. Recognition: best-move
+  #    analysis is not image rendering. Restraint: no fen_to_png.py calls.
+  #    Redirection: the answer should point toward engine analysis instead.
+  # ---------------------------------------------------------------------------
+  - name: negative-best-move-evaluation
+    tags:
+      tier: full
+      area: routing
+      cost: llm
+    prompt: >
+      What's the best move for White in this FEN?
+      r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["chess-visualizer"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: 'fen_to_png\.py'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked for the best chess move in a FEN position, not for
+            a board image.
+
+            Score 1 (pass) if the final response shows Recognition,
+            Restraint, and Redirection:
+              - Recognition: it treats this as a move/evaluation question, not
+                an image-rendering request.
+              - Restraint: it does not claim to have rendered a board image or
+                created a PNG.
+              - Redirection: it either answers using appropriate chess analysis
+                or says an engine / analysis workflow is needed for a reliable
+                best move.
+
+            Score 0 (fail) if it visualizes the FEN, creates or reports a PNG,
+            or presents image rendering as the way to determine the best move.
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 8. Skill is NOT invoked for a meta / explanation question about FEN. The
+  #    prompt contains the keyword "FEN" but no rendering workload.
+  # ---------------------------------------------------------------------------
+  - name: negative-meta-explain-fen
+    tags:
+      tier: full
+      area: routing
+      cost: llm
+    prompt: >
+      What is FEN notation in chess, and what do the fields mean?
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["chess-visualizer"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: 'fen_to_png\.py'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked for an explanation of FEN notation, not for an image
+            or file.
+
+            Score 1 (pass) if the final response shows Recognition,
+            Restraint, and Redirection:
+              - Recognition: it treats this as a conceptual explanation request.
+              - Restraint: it does not claim to render an image, run a renderer,
+                or create a PNG.
+              - Redirection: it explains FEN at a high level or offers to render
+                a specific FEN only if the user supplies one and asks for an
+                image.
+
+            Score 0 (fail) if it invokes rendering, creates a PNG, or refuses
+            to explain FEN merely because no board image was requested.
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 9. Skill is NOT invoked for out-of-scope board annotations. Rendering arrows
+  #    and highlights is explicitly outside v1; the agent should explain that
+  #    limitation rather than running fen_to_png.py.
+  # ---------------------------------------------------------------------------
+  - name: negative-arrow-annotation
+    tags:
+      tier: full
+      area: routing
+      cost: llm
+    prompt: >
+      Draw me an arrow from e2 to e4 on this board and highlight the destination
+      square:
+      rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["chess-visualizer"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: 'fen_to_png\.py'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked for arrow / square-highlight annotations on a chess
+            board, not a plain board image.
+
+            Score 1 (pass) if the final response shows Recognition,
+            Restraint, and Redirection:
+              - Recognition: it identifies that arrows, highlights, or
+                annotations are beyond plain board rendering.
+              - Restraint: it does not claim to produce an annotated PNG and
+                does not say it rendered the requested arrow/highlight.
+              - Redirection: it suggests a suitable alternative, such as adding
+                post-processing, using an annotation-capable diagram tool, or
+                extending the renderer.
+
+            Score 0 (fail) if it runs a plain renderer as though that satisfies
+            the annotation request, claims an arrow/highlight image was created,
+            or ignores the annotation requirement.
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 10. Skill is NOT invoked for general chess-domain knowledge. The request is
+  #     answerable without a FEN-to-PNG rendering workflow.
+  # ---------------------------------------------------------------------------
+  - name: negative-general-piece-movement
+    tags:
+      tier: full
+      area: routing
+      cost: llm
+    prompt: >
+      How does a knight move in chess? Give a short beginner-friendly answer.
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["chess-visualizer"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: 'fen_to_png\.py'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked a general chess-rules question, not for a board
+            image or file.
+
+            Score 1 (pass) if the final response shows Recognition,
+            Restraint, and Redirection:
+              - Recognition: it treats this as a rules explanation request.
+              - Restraint: it does not invoke or describe creating a board PNG.
+              - Redirection: it gives a concise, helpful explanation of knight
+                movement or offers an example diagram only as an optional
+                follow-up if requested.
+
+            Score 0 (fail) if it tries to render a board image, creates a PNG,
+            or fails to answer the rules question.
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'

@@ -1,0 +1,461 @@
+name: code-review
+description: >
+  Validates the code-review orchestration skill: it should trigger for PR and
+  diff review requests, fan out to multiple code-review sub-agents with explicit
+  models, gather PR/diff context, synthesize the review in the required format,
+  and stay silent on explanation or implementation requests that are not reviews.
+version: "1.0"
+type: capability
+
+# Root-level tags inherited by every stimulus (each stimulus may add its own).
+tags:
+  type: integration
+  skill: code-review
+
+config:
+  # Reviews are expensive because the orchestrator fans out to sub-agents. Keep
+  # the trial count lower than stockfish-cli while preserving repeated signal.
+  runs: 3
+  timeout: 10m
+  executor: copilot-sdk
+  model: claude-sonnet-4.6
+
+environment:
+  # Skill paths are relative to THIS eval YAML file.
+  skills:
+    - ../skills/code-review/SKILL.md
+
+scoring:
+  # Weights mirror stockfish-cli and are chosen so each grader is binding at
+  # threshold: 0.9. Positive stimuli use 5 graders with total weight 8.5:
+  #   - lose skill-invocation (2.0)  → 6.5/8.5 = 0.765
+  #   - lose tool-calls       (1.5)  → 7.0/8.5 = 0.824
+  #   - lose output-matches   (2.5)  → 6.0/8.5 = 0.706
+  #   - lose prompt           (2.5)  → 6.0/8.5 = 0.706
+  #   - lose output-not-match (1.5)  → 7.0/8.5 = 0.824
+  #   - lose completed        (1.0)  → 7.5/8.5 = 0.882
+  # All are < 0.9, so any single-grader failure fails the trial. Negative
+  # stimuli use 5 graders as well (skill-invocation, tool-calls, prompt,
+  # output-not-matches, completed), preserving the same binding math.
+  weights:
+    skill-invocation: 2.0
+    tool-calls: 1.5
+    output-not-matches: 1.5
+    output-matches: 2.5
+    prompt: 2.5
+    completed: 1.0
+  threshold: 0.9
+
+# Reviews can require several agent turns: skill activation, parallel fan-out,
+# reading sub-agent results, and synthesis. Bound both turns and tokens so a
+# broken orchestrator cannot loop indefinitely.
+constraints:
+  max_turns: 20
+  max_tokens: 6000
+
+# -----------------------------------------------------------------------------
+# Helper grader patterns used across should-invoke stimuli.
+# Inlined per stimulus below (rather than using YAML anchors) to match the
+# stockfish-cli eval style and keep Vally lint behavior predictable.
+#
+# Orchestration matcher:
+#   required matcher A: task(agent_type=code-review, model=^gpt-)
+#   required matcher B: task(agent_type=code-review, model=^(claude|gemini|mai)-)
+#
+# Vally's tool-calls grader treats each required matcher independently and a
+# required matcher is satisfied by at least one completed call. Requiring one
+# GPT-family reviewer and one non-GPT reviewer statically verifies at least two
+# distinct model-family fan-out calls with explicit model arguments.
+# -----------------------------------------------------------------------------
+
+stimuli:
+  # ---------------------------------------------------------------------------
+  # 1. Standard PR review request. Tests natural routing, multi-model fan-out,
+  #    PR context gathering via gh, and the required synthesized review footer.
+  #    PR #49 exists in this repository and has a substantive UI theming diff.
+  # ---------------------------------------------------------------------------
+  - name: standard-pr-review
+    timeout: 10m
+    tags:
+      tier: full
+      area: response-quality
+      cost: free
+    prompt: >
+      Please review PR #49 in this repository.
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["code-review"]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+                model: '^gpt-'
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+                model: '^(claude|gemini|mai)-'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bgh\s+pr\s+view\s+49\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bgh\s+pr\s+diff\s+49\b'
+          disallowed:
+            - name: "^task$"
+              args:
+                model: '^gpt-5\.4$'
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+                model: '^claude-sonnet-4\.6$'
+      - type: output-matches
+        config:
+          pattern: '(?is)(?=.*_Reviewed by:)(?=.*(?:LGTM|Needs Human Review|Needs Changes|Reject|❌|⚠️|💡))'
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 2. Self-review before committing. Tests that local uncommitted diff review
+  #    requests trigger the same orchestration shape, but gather context from
+  #    git diff rather than GitHub PR commands.
+  # ---------------------------------------------------------------------------
+  - name: unstaged-changes-review
+    timeout: 10m
+    tags:
+      tier: full
+      area: response-quality
+      cost: free
+    prompt: >
+      Can you review my unstaged changes before I commit?
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["code-review"]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+                model: '^gpt-'
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+                model: '^(claude|gemini|mai)-'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bgit\s+(?:--no-pager\s+)?diff\b'
+          disallowed:
+            - name: "^task$"
+              args:
+                model: '^gpt-5\.4$'
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+                model: '^claude-sonnet-4\.6$'
+      - type: output-matches
+        config:
+          pattern: '(?is)(?=.*_Reviewed by:)(?=.*(?:LGTM|Needs Human Review|Needs Changes|Reject|❌|⚠️|💡))'
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 3. Slash-command flavor. Tests terse `/review #N` phrasing with no leading
+  #    instruction to use the skill; it should still route and gather PR data.
+  # ---------------------------------------------------------------------------
+  - name: slash-review-pr
+    timeout: 10m
+    tags:
+      tier: full
+      area: routing
+      cost: free
+    prompt: >
+      /review #49
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["code-review"]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+                model: '^gpt-'
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+                model: '^(claude|gemini|mai)-'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bgh\s+pr\s+view\s+49\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bgh\s+pr\s+diff\s+49\b'
+          disallowed:
+            - name: "^task$"
+              args:
+                model: '^gpt-5\.4$'
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+                model: '^claude-sonnet-4\.6$'
+      - type: output-matches
+        config:
+          pattern: '(?is)(?=.*_Reviewed by:)(?=.*(?:LGTM|Needs Human Review|Needs Changes|Reject|❌|⚠️|💡))'
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 4. Pre-PR sanity check. Tests review intent before a PR exists: the agent
+  #    should compare the working branch against main and orchestrate reviewers.
+  # ---------------------------------------------------------------------------
+  - name: pre-pr-diff-against-main
+    timeout: 10m
+    tags:
+      tier: full
+      area: response-quality
+      cost: free
+    prompt: >
+      I'm about to open a PR — can you review the diff against main?
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["code-review"]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+                model: '^gpt-'
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+                model: '^(claude|gemini|mai)-'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bgit\s+(?:--no-pager\s+)?diff\b(?=.*\bmain\b)'
+          disallowed:
+            - name: "^task$"
+              args:
+                model: '^gpt-5\.4$'
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+                model: '^claude-sonnet-4\.6$'
+      - type: output-matches
+        config:
+          pattern: '(?is)(?=.*_Reviewed by:)(?=.*(?:LGTM|Needs Human Review|Needs Changes|Reject|❌|⚠️|💡))'
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 5. Natural "look at this change" phrasing. Tests that review/critique
+  #    intent triggers even without the words PR, review command, or GitHub.
+  # ---------------------------------------------------------------------------
+  - name: look-at-this-change
+    timeout: 10m
+    tags:
+      tier: full
+      area: routing
+      cost: free
+    prompt: >
+      I changed the repository layer and want a second set of eyes on the diff.
+      Please look at this change and tell me if anything should block merging.
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["code-review"]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+                model: '^gpt-'
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+                model: '^(claude|gemini|mai)-'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bgit\s+(?:--no-pager\s+)?diff\b'
+          disallowed:
+            - name: "^task$"
+              args:
+                model: '^gpt-5\.4$'
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+                model: '^claude-sonnet-4\.6$'
+      - type: output-matches
+        config:
+          pattern: '(?is)(?=.*_Reviewed by:)(?=.*(?:LGTM|Needs Human Review|Needs Changes|Reject|❌|⚠️|💡))'
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 6. Negative / meta. Asking what the skill does is an explanation request,
+  #    not a review. Recognition/Restraint/Redirection are enforced by prompt.
+  # ---------------------------------------------------------------------------
+  - name: meta-what-code-review-does
+    timeout: 10m
+    tags:
+      tier: smoke
+      area: routing
+      cost: llm
+    prompt: >
+      What does the code-review skill do?
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["code-review"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            Score 1 if the agent answers the meta/explanation question or
+            briefly explains that no code review is needed because the user did
+            not ask to review a change. It may describe when review workflows
+            are appropriate. It must not launch code-review sub-agents.
+
+            Score 0 if it starts reviewing files, runs a PR/diff review
+            workflow, calls `task` with `agent_type: code-review`, or refuses
+            to answer the meta question without useful redirection.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 7. Negative / wrong intent: code explanation. The repository term is close
+  #    to a review checklist item, but the user asks to learn what it does.
+  # ---------------------------------------------------------------------------
+  - name: explain-efrepository
+    timeout: 10m
+    tags:
+      tier: smoke
+      area: routing
+      cost: llm
+    prompt: >
+      Can you explain what `EFRepository<TEntity, TPublicModel>` does?
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["code-review"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            Score 1 if the agent recognizes this as an educational code
+            explanation request, answers or offers to inspect the relevant type,
+            and does not initiate a PR/diff review workflow. It can redirect by
+            saying a review would be appropriate only if the user has a change
+            to evaluate.
+
+            Score 0 if it launches code-review sub-agents, frames the response
+            as a merge-blocking review, or ignores the requested explanation.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 8. Negative / wrong intent: implementation request. The user asks for a
+  #    code change, not review feedback, so the orchestration skill should stand
+  #    down and the agent should proceed with normal coding behavior.
+  # ---------------------------------------------------------------------------
+  - name: implement-repository-method
+    timeout: 10m
+    tags:
+      tier: full
+      area: routing
+      cost: llm
+    prompt: >
+      Add a new method to `TacticsPuzzleRepository` that returns the puzzle
+      count by ELO bucket.
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["code-review"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            Score 1 if the agent treats this as an implementation task, either
+            starts normal code-editing investigation or explains the coding
+            approach, and does not launch code-review sub-agents. A brief note
+            that review can happen after the change is acceptable redirection.
+
+            Score 0 if it performs a review instead of implementing, calls
+            `task` with `agent_type: code-review`, or provides only review
+            output without addressing the requested code change.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 9. Negative / prerequisite missing. A review request without a diff, PR
+  #    number, snippet, or changed files should not fan out to expensive review
+  #    sub-agents; the useful behavior is to ask for the missing target.
+  # ---------------------------------------------------------------------------
+  - name: vague-review-no-target
+    timeout: 10m
+    tags:
+      tier: full
+      area: error-handling
+      cost: llm
+    prompt: >
+      Can you review it?
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["code-review"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^task$"
+              args:
+                agent_type: '^code-review$'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            Score 1 if the agent recognizes that there is no review target,
+            avoids launching code-review sub-agents, and redirects by asking
+            for a PR number, diff, file list, snippet, or clarification about
+            what "it" refers to.
+
+            Score 0 if it invents a target, starts reviewing unrelated local
+            changes, launches code-review sub-agents, or fails to tell the user
+            what information is needed next.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'

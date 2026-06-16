@@ -1,20 +1,102 @@
 ---
 name: stockfish-cli
-description: "Use a powerful chess engine to analyze positions, find best moves, and evaluate game states. USE WHEN: you need to evaluate a chess position or find the best chess move given a position."
+description: "Use a powerful chess engine to analyze positions, find best moves, and evaluate game states. USE WHEN: you need to evaluate a chess position or find the best chess move given a position. ON WINDOWS: never pipe into stockfish (`| stockfish`); use the Invoke-Stockfish co-process helper documented in this skill — piping silently returns wrong answers."
 allowed-tools: Bash(stockfish:*) Bash(printf:*) Bash(echo:*) Bash(grep:*) Bash(awk:*) Bash(sed:*) Bash(tail:*) Bash(head:*) Bash(brew:*) Bash(apt:*) Bash(winget:*) Bash(choco:*)
 ---
 
 # Chess analysis with stockfish
 
-Stockfish is a free, GPL-licensed UCI (Universal Chess Interface) chess engine. Unlike a typical one-shot CLI, **Stockfish is an interactive REPL** that reads UCI commands on stdin and streams analysis on stdout. You drive it either by piping a script of commands or by running it interactively and feeding commands line by line.
+Stockfish is a free, GPL-licensed UCI (Universal Chess Interface) chess engine. It is an **interactive REPL** that reads UCI commands on stdin and streams analysis on stdout.
 
-## Quick start
+> ## ⛔ READ THIS FIRST — DO NOT PIPE INTO STOCKFISH ON WINDOWS
+>
+> **NEVER** write `... | stockfish` or `$cmds | stockfish` in PowerShell.
+> **NEVER** write `Get-Content sf_in.txt | stockfish`. **NEVER** redirect a
+> file or array into `stockfish` via the pipe operator on Windows. Doing this
+> closes stdin so quickly that Stockfish **silently returns a wrong answer**
+> from a depth-0 or depth-1 search with zero `info` lines — there is no error
+> message and the agent will report it as a successful result.
+>
+> **On Windows, the ONLY correct invocation is the co-process pattern below.**
+> Use the `Invoke-Stockfish` helper in [Quick start — PowerShell](#quick-start--powershell-windows).
+> If you find yourself reaching for `|` followed by `stockfish` in a PowerShell
+> command, STOP and use `Invoke-Stockfish` instead.
+>
+> The bash examples further down DO use `printf ... | stockfish`. That's a
+> deliberate trade-off on Linux/macOS (lower-depth result, but usually a useful
+> answer). It is **NOT** OK on Windows. Detect your shell first.
+>
+> **Sanity check after every run, any platform:** if your captured output
+> contains a `bestmove` line but no preceding `info depth N ...` line, the
+> search was aborted by EOF. The `bestmove` is meaningless — re-run with the
+> co-process pattern.
 
-> **Important caveat about piping commands.** When you pipe a script to Stockfish, `go` returns immediately and the engine then reads the next command. If that next command is `quit` (or stdin reaches EOF), the engine calls `stop` and the search terminates **before** reaching the requested depth/time/node limit.
->
-> On Linux/macOS bash this usually still produces a useful (lower-depth) `bestmove`. **On Windows PowerShell the failure mode is much worse:** the search is frequently aborted before *any* `info` line is emitted, and the engine returns a near-instant `bestmove` from a depth-0 / depth-1 search — a wrong answer, not a low-depth answer, with no visible warning. **Do not use the pipe pattern on Windows.** Use the PowerShell co-process recipe in [references/scripted-usage.md](references/scripted-usage.md#powershell-co-process-pattern) instead.
->
-> Detection rule: if `bestmove` arrives with no preceding `info depth N ...` line in the captured output, the search was aborted by EOF — switch to the co-process pattern.
+## Quick start — PowerShell (Windows)
+
+**This is the recipe to use on Windows.** Copy the `Invoke-Stockfish`
+function verbatim (it is the only safe way to drive Stockfish from
+PowerShell), then call it with your UCI commands. The helper writes commands
+to stdin and waits for `bestmove` before sending `quit`, which is what makes
+it safe.
+
+```powershell
+function Invoke-Stockfish {
+  param(
+    [Parameter(Mandatory)][string[]]$Commands,
+    [int]$TimeoutMs = 60000,
+    [string]$ExePath = 'stockfish'
+  )
+  $psi = [System.Diagnostics.ProcessStartInfo]@{
+    FileName               = $ExePath
+    RedirectStandardInput  = $true
+    RedirectStandardOutput = $true
+    UseShellExecute        = $false
+    CreateNoWindow         = $true
+  }
+  $p = [System.Diagnostics.Process]::Start($psi)
+  try {
+    foreach ($c in $Commands) { $p.StandardInput.WriteLine($c) }
+    $p.StandardInput.Flush()
+    $lines    = [System.Collections.Generic.List[string]]::new()
+    $deadline = (Get-Date).AddMilliseconds($TimeoutMs)
+    while (-not $p.StandardOutput.EndOfStream) {
+      if ((Get-Date) -gt $deadline) { throw "Stockfish timed out waiting for bestmove" }
+      $l = $p.StandardOutput.ReadLine()
+      if ($null -ne $l) {
+        $lines.Add($l)
+        if ($l -like 'bestmove*') { break }
+      }
+    }
+    $lines
+  }
+  finally {
+    if (-not $p.HasExited) { $p.StandardInput.WriteLine('quit'); $p.WaitForExit(2000) | Out-Null }
+    if (-not $p.HasExited) { $p.Kill() }
+  }
+}
+
+# Evaluate an arbitrary FEN
+$fen = "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4"
+$out = Invoke-Stockfish @(
+  "uci"
+  "ucinewgame"
+  "isready"
+  "position fen $fen"
+  "go depth 20"
+)
+
+# Sanity-check that a real search ran (see "READ THIS FIRST" above):
+if (-not ($out | Where-Object { $_ -match '^info depth ' })) {
+  throw "Stockfish returned bestmove with no info lines — search was aborted."
+}
+$out | Select-String "multipv 1|^bestmove" | Select-Object -Last 2
+```
+
+See [references/scripted-usage.md](references/scripted-usage.md#powershell-equivalents) for additional helpers (batch analysis, persistent process across positions, etc.).
+
+## Quick start — bash (Linux / macOS only)
+
+**Do not adapt these to PowerShell by replacing `|` with `|` — see the warning at the top of this file.** On bash the pipe pattern produces a useful (if lower-depth) result; on PowerShell it produces a wrong answer.
 
 ```bash
 # Evaluate the starting position to depth 20 — prints the best move (depth may be partial)
@@ -29,19 +111,7 @@ printf 'position startpos moves e2e4 e7e5\ngo depth 18\nquit\n' \
   | stockfish | grep '^bestmove' | awk '{print $2}'
 ```
 
-PowerShell — **do not pipe**; use the co-process helper from [references/scripted-usage.md](references/scripted-usage.md#powershell-co-process-pattern):
-
-```powershell
-# Invoke-Stockfish is defined in references/scripted-usage.md
-$fen = "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4"
-Invoke-Stockfish @(
-  "uci"
-  "ucinewgame"
-  "isready"
-  "position fen $fen"
-  "go depth 20"
-) | Select-String "multipv 1|^bestmove" | Select-Object -Last 2
-```
+For bash analysis where the actual depth matters (analysis tools, batch runs), use the co-process pattern in [references/scripted-usage.md](references/scripted-usage.md) instead of the pipe.
 
 ## How a UCI session works
 
@@ -79,6 +149,40 @@ position fen <FEN> moves <m1> <m2> ...
 ```
 
 Prefer `position startpos moves ...` over a FEN whenever you have the move list — the move history is required for correct threefold-repetition detection. `position` itself does **no** computation; it only sets the internal board.
+
+#### Advance a position by playing moves — let Stockfish do it
+
+When the user gives you a starting position (FEN or "after these moves") and then says "and then White played X and Black played Y", **do not compute the resulting FEN yourself**. Hand-updating a FEN is silent-failure territory: a single mis-typed rank, miscounted empty squares, or forgotten castling-rights / en-passant / halfmove update produces a *different* position that the engine will happily analyze, returning a confident-but-wrong answer.
+
+Instead, feed the moves to Stockfish via the `moves` suffix and let it apply them:
+
+```
+position fen <starting-FEN> moves <move1> <move2> ...
+```
+
+Stockfish applies each move to the internal board, updates side-to-move / castling rights / en-passant / fullmove number automatically, and exposes the result. If you need to see the resulting board to sanity-check (or extract the post-move FEN for a later call), follow with the `d` command — it prints the ASCII board and the *current* FEN as the engine sees it.
+
+Your only manual job is **SAN → long-algebraic-UCI translation** (e.g. `Bb5` → `f1b5`, `Nxd4` → `c6d4`, `O-O` → `e1g1`, `e8=Q` → `e7e8q`). Use the move-notation rules in [How a UCI session works](#how-a-uci-session-works). When in doubt:
+
+- Run `position fen <starting-FEN>` followed by `d` to see the current board, identify which piece can legally make the SAN move, and emit `<from><to>` for that piece.
+- If the user's input is already in UCI long-algebraic form, pass it through unchanged.
+- Never invent piece-placement squares from memory — verify against the board printed by `d`.
+
+Example: user says *"starting from FEN X, I played Bb5 and my opponent played Nxd4 — what's my next move?"*:
+
+```
+position fen <X> moves f1b5 c6d4
+d                                # sanity-check: confirm the board matches what the user described
+go depth 22
+```
+
+NOT:
+
+```
+# WRONG — hand-computed the new FEN; bug-prone
+position fen <X-with-Bb5-and-Nxd4-baked-in-by-hand>
+go depth 22
+```
 
 ### Search a position (`go` / `stop`)
 
@@ -285,16 +389,18 @@ When analyzing many positions, **reuse a single Stockfish process** — each col
 
 ## Common pitfalls
 
+0. **NEVER pipe into `stockfish` on Windows PowerShell** (`| stockfish`, `$cmds | stockfish`, `Get-Content x.txt | stockfish` — all are broken). The pipe closes stdin so fast the engine returns a wrong answer from a depth-0/1 search with zero `info` lines and no error message. Use the `Invoke-Stockfish` co-process helper at the top of this file. See the ⛔ callout near the top.
 1. **Always `isready` after `setoption` / `ucinewgame`** — Hash resize, Threads change, EvalFile load, and Syzygy probing can all take noticeable time. Send a command before `readyok` and the engine may not have processed your config yet.
 2. **`ucinewgame` between unrelated positions** — without it, TT entries from a previous position leak into the next analysis and can subtly skew scores.
 3. **`position` does NOT start a search** — only `go` does. Multiple `position` commands without `go` just overwrite each other.
 4. **`stop` is required to end `go infinite`** — the engine will never terminate the search on its own.
 5. **Move notation is long algebraic only** (`e2e4`, `g1f3`, `e7e8q`). SAN (`e4`, `Nf3`) is **not** accepted.
 6. **Malformed FENs can crash the engine** — modern Stockfish prints `info string CRITICAL ERROR: ...` and calls `std::exit(1)` for invalid FEN syntax. **Illegal moves in `position ... moves ...` are different** — they are silently truncated at the first invalid move, with no error, leaving you analyzing a position different from what you intended. Validate FENs *and* check the resulting position with `d` in automation.
-7. **`searchmoves` must be the last `go` token** — it greedily consumes all remaining tokens as move names.
-8. **Score perspective differs by command** — `info score` is from side-to-move's view; `eval` is from White's view. Don't mix them up.
-9. **Set `Threads` before `Hash`** — Hash is reallocated when Threads changes, so setting Hash first wastes the work.
-10. **Don't use `eval` for analysis** — it has no search and the wiki explicitly recommends against it. Use `go depth N` instead.
+7. **Don't hand-compute the FEN after applying moves** — when the user describes "I played X then Y", append `moves <uci1> <uci2>` to the `position fen` command instead of editing the FEN's piece-placement field yourself. Hand-edits are silent-failure territory (mis-typed rank, miscounted empty squares, forgotten castling/EP/halfmove updates) and the engine will analyze the wrong position without complaining. See [Advance a position by playing moves](#advance-a-position-by-playing-moves--let-stockfish-do-it).
+8. **`searchmoves` must be the last `go` token** — it greedily consumes all remaining tokens as move names.
+9. **Score perspective differs by command** — `info score` is from side-to-move's view; `eval` is from White's view. Don't mix them up.
+10. **Set `Threads` before `Hash`** — Hash is reallocated when Threads changes, so setting Hash first wastes the work.
+11. **Don't use `eval` for analysis** — it has no search and the wiki explicitly recommends against it. Use `go depth N` instead.
 
 ## Installation
 
