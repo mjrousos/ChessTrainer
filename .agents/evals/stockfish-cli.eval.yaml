@@ -41,9 +41,9 @@ scoring:
     output-matches: 2.5
     prompt: 2.5
     completed: 1.0
-  # 0.9 makes every grader binding (see weight math above). With runs: 5
+  # 0.9 makes every grader binding (see weight math above). With runs: 3
   # we measure invocation/correctness rate per trial; this threshold is
-  # per-trial, and pass@5 / pass^5 statistics are reported separately.
+  # per-trial, and pass@3 / pass^3 statistics are reported separately.
   threshold: 0.9
 
 # Root-level constraints apply to every stimulus. Keeps trials bounded so a
