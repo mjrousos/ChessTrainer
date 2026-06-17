@@ -354,7 +354,12 @@ stimuli:
           #       basename "SKILL.md" is treated as a directory name by
           #       pipeline/run.js:620). The fixed file should have just
           #       `- ../skills/tiny-demo` with no SKILL.md suffix.
-          pattern: '(?is)(?=.*name:\s+\S+)(?=.*timeout:\s+\d+\s*[smh]\b)(?=.*-\s+\.\./skills/tiny-demo\s*$)(?!.*\.\./skills/tiny-demo/SKILL\.md)'
+          # Regex needs the `m` flag (multiline) so `$` in the third lookahead
+          # matches end-of-LINE, not end-of-string. Without it, the regex only
+          # passed when the skills entry was the very last line of the file —
+          # which is never true for a real eval YAML that has stimuli/graders
+          # after the skills block.
+          pattern: '(?ims)(?=.*name:\s+\S+)(?=.*timeout:\s+\d+\s*[smh]\b)(?=.*-\s+\.\./skills/tiny-demo\s*$)(?!.*\.\./skills/tiny-demo/SKILL\.md)'
       # Common graders (apply to every stimulus).
       - type: completed
       - type: output-not-matches
