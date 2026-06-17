@@ -1,7 +1,7 @@
 paths:
   skills: [.agents/skills]
   evals: [.agents/evals]
-  results: eval-results/
+  results: vally-results/
   evalFilenames: ["eval.yaml", "eval.yml", "*.eval.yaml", "*.eval.yml"]
 
 # -----------------------------------------------------------------------------
