@@ -255,13 +255,13 @@ stimuli:
             The agent was asked to perform a code review. Per
             code-review/SKILL.md, a review is incomplete unless the
             orchestrator fanned out to >=2 sub-agents from DISTINCT model
-            families (claude, gpt, gemini, mai) via the 	ask tool. The
+            families (claude, gpt, gemini, mai) via the task tool. The
             single-model exception only applies if the environment has
             <2 eligible families — and in that case the agent must say
             so explicitly in the _Reviewed by: line.
 
-            Inspect the trajectory's 	ask tool calls (look for tool
-            name == "task" with gent_type: code-review). Note the
+            Inspect the trajectory's task tool calls (look for tool
+            name == "task" with agent_type: code-review). Note the
             model argument on each.
 
             Score 1 (pass) if EITHER:
@@ -332,13 +332,13 @@ stimuli:
             The agent was asked to perform a code review. Per
             code-review/SKILL.md, a review is incomplete unless the
             orchestrator fanned out to >=2 sub-agents from DISTINCT model
-            families (claude, gpt, gemini, mai) via the 	ask tool. The
+            families (claude, gpt, gemini, mai) via the task tool. The
             single-model exception only applies if the environment has
             <2 eligible families — and in that case the agent must say
             so explicitly in the _Reviewed by: line.
 
-            Inspect the trajectory's 	ask tool calls (look for tool
-            name == "task" with gent_type: code-review). Note the
+            Inspect the trajectory's task tool calls (look for tool
+            name == "task" with agent_type: code-review). Note the
             model argument on each.
 
             Score 1 (pass) if EITHER:
@@ -407,13 +407,13 @@ stimuli:
             The agent was asked to perform a code review. Per
             code-review/SKILL.md, a review is incomplete unless the
             orchestrator fanned out to >=2 sub-agents from DISTINCT model
-            families (claude, gpt, gemini, mai) via the 	ask tool. The
+            families (claude, gpt, gemini, mai) via the task tool. The
             single-model exception only applies if the environment has
             <2 eligible families — and in that case the agent must say
             so explicitly in the _Reviewed by: line.
 
-            Inspect the trajectory's 	ask tool calls (look for tool
-            name == "task" with gent_type: code-review). Note the
+            Inspect the trajectory's task tool calls (look for tool
+            name == "task" with agent_type: code-review). Note the
             model argument on each.
 
             Score 1 (pass) if EITHER:
@@ -483,13 +483,13 @@ stimuli:
             The agent was asked to perform a code review. Per
             code-review/SKILL.md, a review is incomplete unless the
             orchestrator fanned out to >=2 sub-agents from DISTINCT model
-            families (claude, gpt, gemini, mai) via the 	ask tool. The
+            families (claude, gpt, gemini, mai) via the task tool. The
             single-model exception only applies if the environment has
             <2 eligible families — and in that case the agent must say
             so explicitly in the _Reviewed by: line.
 
-            Inspect the trajectory's 	ask tool calls (look for tool
-            name == "task" with gent_type: code-review). Note the
+            Inspect the trajectory's task tool calls (look for tool
+            name == "task" with agent_type: code-review). Note the
             model argument on each.
 
             Score 1 (pass) if EITHER:
