@@ -205,6 +205,22 @@ stimuli:
       - type: output-not-matches
         config:
           pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+      - type: pairwise
+        config:
+          prompt: |
+            Which response better assesses the position?
+
+            This is the Italian Game / Two Knights Defense main line. The
+            objectively correct engine evaluation (Stockfish at reasonable
+            depth) is a very small White advantage, roughly +0.0 to +0.3
+            pawns (about 0 to +30 centipawns) — essentially equal with a
+            slight pull for White.
+
+            The better response will correctly identify White as having a 
+            small advantage or the position as roughly equal, consistent with 
+            engine evaluation. If numeric evaluations are given, the better
+            response will give an evaluation in the range of 0.00 to +0.50 pawns 
+            from White's perspective.
 
   # ---------------------------------------------------------------------------
   # 3. Skill IS invoked for a mate-in-1 puzzle. Prompt explicitly asks for a
@@ -299,6 +315,24 @@ stimuli:
       - type: output-not-matches
         config:
           pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+      - type: pairwise
+        config:
+          prompt: |
+            Which response better solves this Scholar's-mate-style tactical puzzle?
+
+            The position has White to move with the queen on h5 and bishop
+            on c4, against Black's defensive setup with knight on f6. The
+            ONLY winning move is `Qxf7#` (UCI: `h5f7`) — checkmate, because
+            f7 is undefended (the knight on f6 attacks h5 but does NOT
+            defend f7) and the king on e8 has no escape squares.
+
+            The better response will name the correct move (h5f7 / Qxf7# /
+            Qf7#) and ideally explain WHY it works (mate, f7 undefended,
+            king has no flight squares). Responses that name a different
+            move, miss the mate, or claim the position has no winning
+            tactic are clearly worse. Among responses that find the mate,
+            prefer ones that show the engine output / depth confirming the
+            verdict (mate score) over ones that assert it from memory.
 
   # ---------------------------------------------------------------------------
   # 5. Skill IS invoked when given a PGN move list (not a FEN). The skill
@@ -348,6 +382,26 @@ stimuli:
       - type: output-not-matches
         config:
           pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+      - type: pairwise
+        config:
+          prompt: |
+            Which response better answers what Black's best reply is in
+            the Ruy López after 1. e4 e5 2. Nf3 Nc6 3. Bb5?
+
+            Stockfish's main-line replies in this position are 3...a6
+            (UCI: a7a6, the Morphy Defense — overwhelmingly the most
+            common at the master level), 3...Nf6 (g8f6, the Berlin
+            Defense), and 3...Nge7 (g8e7, Cozio Defense, less common but
+            engine-accepted). All three are reasonable; the better
+            response will name one of them clearly and ideally identify
+            it by name (Morphy / Berlin / Cozio).
+
+            Penalize responses that name a non-main-line move (e.g. d6,
+            f5, Bb4) without engine support, that are vague ("there are
+            many options"), or that don't actually answer the question.
+            Among responses that name a correct move, prefer ones that
+            show actual engine output (depth, score, PV) over ones that
+            assert from memory.
 
   # ---------------------------------------------------------------------------
   # 6. Skill IS invoked for a "best continuation" / main-line request, where
@@ -398,6 +452,31 @@ stimuli:
       - type: output-not-matches
         config:
           pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+      - type: pairwise
+        config:
+          prompt: |
+            Which response better gives the engine's main-line principal
+            variation (PV) from this Italian Game / Two Knights position?
+
+            The position is roughly equal with a small White edge (≈ +0.0
+            to +0.3). Common Stockfish PVs from here typically open with
+            White castling (e1g1) or playing d2d3 / b1c3, followed by
+            Black developing pieces (d7d6, f8e7, e8g8 commonly appear).
+
+            The better response will:
+              - Provide an actual multi-ply move list (at least 4 plies)
+                in a recognizable notation (UCI long-algebraic preferred,
+                SAN with proper piece letters acceptable).
+              - Use moves that are legal in the position and consistent
+                with the side-to-move sequence (White, Black, White, Black).
+              - Match a reasonable Stockfish PV — main-line developing
+                moves, not random or losing moves.
+              - Ideally include the score and depth from the engine.
+
+            Penalize responses that provide only one or two moves, give
+            illegal moves, scramble the side-to-move ordering, invent a
+            line that doesn't match any plausible engine output, or
+            answer with prose only.
 
   # ---------------------------------------------------------------------------
   # 7. Skill is invoked but recognizes a malformed FEN as invalid rather than
