@@ -155,7 +155,7 @@ jobs:
             ARGS+=(--runs "${RUNS}")
             echo "Runs override: ${RUNS}"
           else
-            echo "Runs: (eval.yaml default — currently 5)"
+            echo "Runs: (eval.yaml default — currently 2-3 per eval)"
           fi
           if [ -n "${MODEL}" ]; then
             ARGS+=(--model "${MODEL}")
