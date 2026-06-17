@@ -142,7 +142,7 @@ stimuli:
     tags:
       tier: full
       area: response-quality
-      cost: free
+      cost: llm
     prompt: >
       Please review PR #49 in this repository.
     graders:
@@ -220,7 +220,7 @@ stimuli:
     tags:
       tier: full
       area: response-quality
-      cost: free
+      cost: llm
     prompt: >
       Can you review my unstaged changes before I commit?
     graders:
@@ -295,7 +295,7 @@ stimuli:
     tags:
       tier: full
       area: routing
-      cost: free
+      cost: llm
     prompt: >
       /review #49
     graders:
@@ -372,7 +372,7 @@ stimuli:
     tags:
       tier: full
       area: response-quality
-      cost: free
+      cost: llm
     prompt: >
       I'm about to open a PR — can you review the diff against main?
     graders:
@@ -447,7 +447,7 @@ stimuli:
     tags:
       tier: full
       area: routing
-      cost: free
+      cost: llm
     prompt: >
       I changed the repository layer and want a second set of eyes on the diff.
       Please look at this change and tell me if anything should block merging.
