@@ -96,7 +96,7 @@ See [references/scripted-usage.md](references/scripted-usage.md#powershell-equiv
 
 ## Quick start — bash (Linux / macOS only)
 
-**Do not adapt these to PowerShell by replacing `|` with `|` — see the warning at the top of this file.** On bash the pipe pattern produces a useful (if lower-depth) result; on PowerShell it produces a wrong answer.
+**Do not adapt these to PowerShell — see the warning at the top of this file.** On bash the pipe pattern produces a useful (if lower-depth) result; on PowerShell it produces a wrong answer.
 
 ```bash
 # Evaluate the starting position to depth 20 — prints the best move (depth may be partial)
