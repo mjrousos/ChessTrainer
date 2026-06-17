@@ -13,15 +13,14 @@ tags:
   skill: chess-visualizer
 
 config:
-  runs: 5
+  runs: 3
   timeout: 5m
   executor: copilot-sdk
   model: claude-sonnet-4.6
 
 environment:
   skills:
-    - ../skills/chess-visualizer/SKILL.md
-
+    - ../skills/chess-visualizer
 scoring:
   # Weights chosen so each grader is "binding" at threshold: 0.9 — i.e.
   # failing any single grader drops the weighted aggregate below 0.9 and

@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: "Review code changes in ChessTrainer for correctness, performance, and consistency with project conventions. Always launched as a parallel multi-model review (2-3 sub-agents with distinct model families) unless the environment cannot support it. USE WHEN: reviewing PRs or code changes."
+description: "Review code changes in ChessTrainer for correctness, performance, and consistency with project conventions. Always launched as a parallel multi-model review (2-3 sub-agents with distinct model families) unless the environment cannot support it. USE WHEN: reviewing PRs or code changes. DO NOT USE WHEN: the user has not identified WHAT to review (no PR number, no diff, no specific files) — instead ask for a target before activating this skill."
 ---
 
 # ChessTrainer Code Review
@@ -8,6 +8,23 @@ description: "Review code changes in ChessTrainer for correctness, performance, 
 Review code changes against the conventions, architecture, and gotchas documented in [`AGENTS.md`](../../../AGENTS.md). The "Code review checklist" section of that file is the source of truth for repo-specific review-blocking rules; this skill describes *how* to conduct the review.
 
 > **Before doing anything else:** If you are responding to a review request (e.g., `/review`, "please review PR #X", "look at this change") and you have the `task` tool with a `model` parameter, your *next action* is to enumerate available models, select 2-3 from distinct families per the rules in [Step 0: Orchestration](#step-0-orchestration--fan-out-first), and launch them in parallel. Do not perform the review yourself, do not delegate the whole review to a single sub-agent, and do not read further until those sub-agents are running.
+
+> ## ⛔ MANDATORY OUTPUT FORMAT — every review you post must end with these two lines
+>
+> Every final synthesized review (the message the orchestrator posts back to the user / GitHub) MUST contain BOTH of:
+>
+> 1. A **verdict marker** somewhere in the summary: one of `✅ LGTM`, `⚠️ Needs Human Review`, `⚠️ Needs Changes`, or `❌ Reject`.
+> 2. A **`_Reviewed by: <models>._` line** as the last non-empty line of the review, listing every model that contributed.
+>
+> **Example minimal end-of-review block** (copy-paste this shape):
+>
+> ```
+> **Summary**: ✅ LGTM. Two minor nits otherwise looks good.
+>
+> _Reviewed by: claude-opus-4.7, gpt-5.5, gemini-3.1-pro-preview._
+> ```
+>
+> A review that omits either of these is **incomplete** and will fail the project's eval check (see `.agents/evals/code-review.eval.yaml`). The full output template, severity buckets, and special cases (single-model, missing sub-agent, etc.) are in [Review Output Format](#review-output-format) below; these two requirements are the non-negotiable minimum.
 
 **Reviewer mindset:** Be polite but very skeptical. Your job is to help speed the review process for maintainers, which includes not only finding problems the PR author may have missed but also questioning the value of the PR in its entirety. Treat the PR description and linked issues as claims to verify, not facts to accept. Question the stated direction and probe edge cases.
 
@@ -25,6 +42,27 @@ Use this skill when:
 - Checking your own code for correctness, performance, style, or consistency before opening a PR
 - Asked to review, critique, or provide feedback on a change
 - Validating that a change follows ChessTrainer conventions
+
+### When NOT to use this skill — ask for a target first
+
+If the user's request does not clearly identify *what* to review, **do not
+activate this skill**. Ask one focused clarifying question and wait for the
+answer. Examples of vague requests that should NOT auto-activate:
+
+- "Can you review my code?" (no PR, no files, no diff)
+- "Take a look at my changes" (which changes? unstaged? a branch? a PR?)
+- "Is everything OK?" / "How does my work look?"
+
+Acceptable targets that *do* warrant activation:
+
+- A specific PR number (`/review`, "review PR #49")
+- An explicit diff range or branch comparison
+- Named files or a directory
+- "My unstaged changes" / "what I just committed" (clear locally-resolvable target)
+
+A clarifying question costs the user 5 seconds and saves a 5-minute
+multi-model fan-out on an unknown target. Always ask first when the target
+is unclear.
 
 ## Review Process
 

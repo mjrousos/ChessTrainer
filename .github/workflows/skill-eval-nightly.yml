@@ -1,0 +1,179 @@
+name: Skill Eval (Nightly)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Runs the full Vally eval suite once daily at 06:00 UTC (≈ 02:00 ET).
+# Use this workflow for trend analysis, regression detection, and to exercise
+# the expensive LLM-judge stimuli that are skipped by the PR-gate smoke run.
+#
+# Authentication: uses the built-in `GITHUB_TOKEN` (no PAT required). The
+# `copilot-requests: write` permission below grants that token the privilege
+# to call the Copilot API. Same auth model as the PR workflow. Scheduled
+# runs and workflow_dispatch both get the permission unconditionally (no
+# fork-PR caveat — schedule fires on the default branch only).
+#
+# Trigger:
+#   * Daily at 06:00 UTC via `schedule:` (best-effort — GitHub may delay
+#     scheduled workflows by ~15 min under load).
+#   * On demand via `workflow_dispatch` for ad-hoc nightly-style runs.
+#
+# Cost: full suite is currently 52 stimuli × runs: 5 ≈ 260 trials, ~30-45 min
+# wall time on 5 workers. Multiply against your Actions minute budget if this
+# is a private repo.
+#
+# Failure notifications: this workflow does NOT open issues / send Slack /
+# email on failure. Two easy ways to be alerted:
+#   1. Subscribe to the repo and set your notification preference to receive
+#      "Actions: Workflows I trigger" failure emails.
+#   2. Add a step `if: failure() && github.event_name == 'schedule'` that
+#      uses `gh issue create` or `peter-evans/create-issue-from-file` to
+#      open a labeled issue. Intentionally omitted here to keep the
+#      workflow simple; add later if signal-to-noise warrants it.
+#
+# Cron auto-disable: GitHub disables scheduled workflows after 60 days of
+# repository inactivity. Any push to the default branch resets the clock.
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  schedule:
+    # 06:00 UTC daily ≈ 02:00 ET / 23:00 PT (prev day) — overnight in NA,
+    # results ready when you log in. Adjust if your timezone differs.
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Vally suite to run
+        required: true
+        default: full
+        type: choice
+        options:
+          - full
+          - pr
+          - smoke
+          - routing
+          - response-quality
+          - llm
+      runs:
+        description: Trials per stimulus (overrides eval.yaml default)
+        required: false
+        default: ""
+        type: string
+      model:
+        description: Optional model override (empty = use eval.yaml default).
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  # Grants the built-in GITHUB_TOKEN the privilege to call the Copilot API.
+  copilot-requests: write
+
+concurrency:
+  # Separate group from the PR workflow — nightly should not cancel PRs and
+  # PR runs should not cancel nightly. Within nightly itself, do NOT cancel
+  # an already-running invocation if a manual workflow_dispatch fires while
+  # the scheduled run is still in progress; let both complete so we don't
+  # lose data.
+  group: skill-eval-nightly
+  cancel-in-progress: false
+
+jobs:
+  vally-eval:
+    name: vally eval (full suite)
+    runs-on: ubuntu-latest
+    # Full suite typically runs in ~60-75 min wall time with 5 workers.
+    # 120-minute ceiling gives headroom for flake/retries without runaway.
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js 22 (required by Vally)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup .NET 10
+        # Needed by zero-warnings-build and code-review skills.
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Setup Python 3
+        # Needed by chess-visualizer's `fen_to_png.py` script.
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install Stockfish
+        # Needed by stockfish-cli skill stimuli.
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends stockfish
+
+      - name: Install Pillow (chess-visualizer)
+        run: python3 -m pip install --quiet Pillow
+
+      - name: Install Vally CLI
+        run: npm install -g @microsoft/vally-cli
+
+      - name: Verify prerequisites
+        run: |
+          set -euo pipefail
+          echo "node:      $(node --version)"
+          echo "npm:       $(npm --version)"
+          echo "vally:     $(vally --version)"
+          echo "dotnet:    $(dotnet --version)"
+          echo "python:    $(python3 --version)"
+          echo "pillow:    $(python3 -c 'import PIL; print(PIL.__version__)')"
+          echo "stockfish: $(echo uci | stockfish | grep '^id name' || echo missing)"
+
+      - name: Validate eval specs (vally lint)
+        run: |
+          set -euo pipefail
+          for spec in .agents/evals/*.eval.yaml; do
+            echo "Linting $spec"
+            vally lint --eval-spec "$spec"
+          done
+
+      - name: Run Vally suite
+        # The Copilot SDK reads COPILOT_GITHUB_TOKEN from env. We map the
+        # built-in GITHUB_TOKEN onto it — the `copilot-requests: write`
+        # permission declared above is what grants Copilot API access.
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ github.token }}
+          SUITE: ${{ inputs.suite || 'full' }}
+          RUNS: ${{ inputs.runs }}
+          MODEL: ${{ inputs.model }}
+        run: |
+          set -euo pipefail
+          ARGS=(--suite "${SUITE}" --output-dir ./vally-results)
+          if [ -n "${RUNS}" ]; then
+            ARGS+=(--runs "${RUNS}")
+            echo "Runs override: ${RUNS}"
+          else
+            echo "Runs: (eval.yaml default — currently 5)"
+          fi
+          if [ -n "${MODEL}" ]; then
+            ARGS+=(--model "${MODEL}")
+            echo "Model override: ${MODEL}"
+          else
+            echo "Model: (eval.yaml default — claude-sonnet-4.6)"
+          fi
+          echo "Running: vally eval ${ARGS[*]}"
+          vally eval "${ARGS[@]}"
+
+      - name: Upload eval results
+        # Always upload (even on failure) — nightly artifacts are kept longer
+        # (60 days) than PR artifacts (14 days) so you can do trend analysis
+        # across recent runs.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vally-results-nightly-${{ github.run_id }}-${{ github.run_attempt }}
+          path: vally-results/
+          retention-days: 60
+          if-no-files-found: warn

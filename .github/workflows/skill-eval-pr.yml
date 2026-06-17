@@ -1,0 +1,194 @@
+name: Skill Eval (PR)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Runs the Vally `pr` suite (≈ tier=smoke stimuli) on every pull request and
+# on demand. The `pr` suite is defined in `.vally.yaml` as an alias for
+# `smoke` — cheap routing checks plus a small set of fast positives.
+#
+# Authentication: uses the built-in `GITHUB_TOKEN` (no PAT required). The
+# `copilot-requests: write` permission below grants that token the privilege
+# to call the Copilot API. The Copilot SDK that Vally's `copilot-sdk`
+# executor uses reads `COPILOT_GITHUB_TOKEN` from the environment, so we
+# map `${{ github.token }}` onto that variable name at step level (least
+# privilege).
+#
+# Fork PRs: `pull_request` runs from a fork repo get a READ-ONLY
+# `GITHUB_TOKEN` regardless of declared permissions, so `copilot-requests:
+# write` won't actually be granted. We detect that case and skip the eval
+# cleanly so external contributors don't see a noisy red check (a
+# maintainer can re-run via `workflow_dispatch` after pushing the branch
+# to this repo).
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  # Could be run on every push to a PR branch if the skills were the
+  # primary artifact from this repo, but since these are primarily supporting 
+  # assets, the time investment of running on every push isn't worthwhile.
+  # Instead, we run on demand when skills are changed.
+  # pull_request:
+  #   types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Vally suite to run
+        required: true
+        default: pr
+        type: choice
+        options:
+          - pr
+          - smoke
+          - routing
+          - response-quality
+          - llm
+          - full
+      runs:
+        description: Trials per stimulus
+        required: false
+        default: "1"
+        type: string
+      model:
+        description: Optional model override (empty = use eval.yaml default).
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+  # Grants the built-in GITHUB_TOKEN the privilege to call the Copilot API.
+  # This is what removes the need for a personal access token.
+  copilot-requests: write
+
+concurrency:
+  # Cancel in-progress runs for the same PR when a new commit is pushed.
+  group: skill-eval-pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vally-eval:
+    name: vally eval
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # True when the workflow is allowed to use copilot-requests. False for
+      # fork PRs (whose GITHUB_TOKEN is read-only regardless of declared
+      # permissions). `workflow_dispatch` and same-repo PRs both get write
+      # permissions.
+      CAN_USE_COPILOT: >-
+        ${{
+          github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name == github.repository
+        }}
+
+    steps:
+      - name: Skip when running from a fork PR
+        if: env.CAN_USE_COPILOT != 'true'
+        run: |
+          echo "::warning::This PR is from a fork — the built-in GITHUB_TOKEN \
+          cannot be granted copilot-requests: write permission, so the eval \
+          cannot run. A maintainer can re-run the 'Skill Eval (PR)' workflow \
+          manually via workflow_dispatch after pushing the branch to this repo."
+          exit 0
+
+      - name: Checkout
+        if: env.CAN_USE_COPILOT == 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js 22 (required by Vally)
+        if: env.CAN_USE_COPILOT == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup .NET 10
+        # Needed by the zero-warnings-build skill's smoke stimuli
+        # (`dotnet build`, `dotnet test`) and by code-review's repo-aware
+        # checks. Mirrors the version pinned in Directory.Build.props.
+        if: env.CAN_USE_COPILOT == 'true'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Setup Python 3
+        # Needed by the chess-visualizer skill's `fen_to_png.py` script.
+        if: env.CAN_USE_COPILOT == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install Stockfish
+        # Needed by the stockfish-cli skill's smoke stimuli.
+        if: env.CAN_USE_COPILOT == 'true'
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends stockfish
+
+      - name: Install Pillow (chess-visualizer)
+        if: env.CAN_USE_COPILOT == 'true'
+        run: python3 -m pip install --quiet Pillow
+
+      - name: Install Vally CLI
+        if: env.CAN_USE_COPILOT == 'true'
+        run: npm install -g @microsoft/vally-cli
+
+      - name: Verify prerequisites
+        # Fail fast if any dependency above failed silently — keeps
+        # CI-environment regressions from masquerading as model failures.
+        if: env.CAN_USE_COPILOT == 'true'
+        run: |
+          set -euo pipefail
+          echo "node:      $(node --version)"
+          echo "npm:       $(npm --version)"
+          echo "vally:     $(vally --version)"
+          echo "dotnet:    $(dotnet --version)"
+          echo "python:    $(python3 --version)"
+          echo "pillow:    $(python3 -c 'import PIL; print(PIL.__version__)')"
+          echo "stockfish: $(echo uci | stockfish | grep '^id name' || echo missing)"
+
+      - name: Validate eval specs (vally lint)
+        if: env.CAN_USE_COPILOT == 'true'
+        run: |
+          set -euo pipefail
+          for spec in .agents/evals/*.eval.yaml; do
+            echo "Linting $spec"
+            vally lint --eval-spec "$spec"
+          done
+
+      - name: Run Vally suite
+        if: env.CAN_USE_COPILOT == 'true'
+        # The Copilot SDK (used by Vally's copilot-sdk executor) reads its
+        # auth token from COPILOT_GITHUB_TOKEN. We map the built-in
+        # GITHUB_TOKEN onto that variable name — the `copilot-requests:
+        # write` permission declared above is what grants this token the
+        # Copilot API privilege. No PAT or repo secret required.
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ github.token }}
+          SUITE: ${{ inputs.suite || 'pr' }}
+          RUNS: ${{ inputs.runs || '1' }}
+          MODEL: ${{ inputs.model }}
+        run: |
+          set -euo pipefail
+          MODEL_ARG=()
+          if [ -n "${MODEL}" ]; then
+            MODEL_ARG=(--model "${MODEL}")
+            echo "Model override: ${MODEL}"
+          fi
+          echo "Running suite '${SUITE}' with ${RUNS} run(s) per stimulus"
+          vally eval \
+            --suite "${SUITE}" \
+            --runs "${RUNS}" \
+            --output-dir ./vally-results \
+            "${MODEL_ARG[@]}"
+
+      - name: Upload eval results
+        # Always upload (even on failure) so reviewers can inspect failed
+        # trajectories: results.jsonl + eval-results.md per timestamped run.
+        if: always() && env.CAN_USE_COPILOT == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vally-results-${{ github.run_id }}-${{ github.run_attempt }}
+          path: vally-results/
+          retention-days: 14
+          if-no-files-found: warn

@@ -17,11 +17,11 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v5
       with:
         global-json-file: global.json
     - name: Setup Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: 'lts/*'
         cache: 'npm'

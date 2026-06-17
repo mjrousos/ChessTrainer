@@ -24,7 +24,41 @@ config:
 environment:
   # Skill paths are relative to this YAML file (.agents/evals/), not repo root.
   skills:
-    - ../skills/zero-warnings-build/SKILL.md
+    - ../skills/zero-warnings-build
+  # Stage repo files into the trial workdir so build-running stimuli have
+  # something to actually build against. Vally copies relative to THIS eval
+  # file's directory, so `../../<path>` resolves from `.agents/evals/<path>`
+  # to `<repo-root>/<path>`.
+  #
+  # We list specific entries (not `../../`) to avoid pulling in dot-prefixed
+  # directories (`.agents/`, `.github/`, `.git/`) and ignored output trees
+  # (`bin/`, `obj/`, `vally-results/`). The `commands:` step further scrubs
+  # any bin/obj/node_modules that came along inside src/ or test/ from the
+  # local checkout so trials are deterministic.
+  files:
+    - src: ../../ChessTrainer.sln
+      dest: ChessTrainer.sln
+    - src: ../../Directory.Build.props
+      dest: Directory.Build.props
+    - src: ../../Directory.Build.targets
+      dest: Directory.Build.targets
+    - src: ../../global.json
+      dest: global.json
+    - src: ../../rules.ruleset
+      dest: rules.ruleset
+    - src: ../../stylecop.json
+      dest: stylecop.json
+    - src: ../../AGENTS.md
+      dest: AGENTS.md
+    - src: ../../src/
+      dest: src/
+    - src: ../../test/
+      dest: test/
+  commands:
+    # Scrub build artifacts and node_modules carried in from the local
+    # checkout so trials are deterministic and the workdir stays small.
+    # Quietly ignore missing dirs.
+    - pwsh -NoProfile -Command "Get-ChildItem -Path . -Include bin,obj,node_modules -Directory -Recurse -Force -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue"
 
 scoring:
   # Weights chosen so each grader is "binding" at threshold: 0.9 — i.e.
@@ -321,16 +355,25 @@ stimuli:
           scoring: binary
           prompt: |
             The user asked for help fixing one known CS8602 nullable-reference
-            warning at a specific file and line.
+            warning at a specific file and line. NOTE FOR THE JUDGE: the path
+            `Pages/Index.razor.cs:42` may not actually exist in the repo. This
+            is a ROUTING test — we are evaluating whether the agent treats
+            the request as a targeted code-fix vs. defaulting to the full
+            repository-wide warning audit. We are NOT requiring the agent to
+            successfully complete the fix.
 
-            Score 1 (pass) if the agent recognizes this as a targeted code-fix
-            task, avoids launching the full warning audit up front, and
-            redirects toward inspecting the affected code and fixing the null
-            dereference/root cause.
+            Score 1 (pass) if the agent recognizes this as a targeted
+            code-fix task, avoids launching the full warning audit up front,
+            and inspects the specific file or asks the user to confirm /
+            provide the file (e.g., "I couldn't find that file — could you
+            confirm the path?"). A clarifying response when the file isn't
+            found is a PASS, not a fail.
 
-            Score 0 (fail) if the agent runs the repository-wide warning audit
-            as the first/default response, suggests suppressing CS8602, or does
-            not address the targeted code-fix request.
+            Score 0 (fail) if the agent runs the repository-wide warning
+            audit (`check-warnings.ps1`) as the first/default response,
+            suggests suppressing CS8602 (`#pragma warning disable`,
+            `<NoWarn>`, `[SuppressMessage]`), or refuses without trying to
+            inspect the targeted location.
       - type: completed
       - type: output-not-matches
         config:
@@ -441,7 +484,14 @@ stimuli:
               command: 'check-warnings\.ps1'
       - type: output-not-matches
         config:
-          pattern: '(?i)(?:#pragma\s+warning\s+disable|<NoWarn>|\[SuppressMessage\]|fatal error|unhandled exception|stack trace|crashed|panic:)'
+          # NOTE: We intentionally do NOT include `#pragma warning disable` /
+          # `<NoWarn>` / `[SuppressMessage]` patterns here. A correct refusal
+          # quotes the very syntax it is refusing to use ("our rules forbid
+          # `#pragma warning disable` without approval"), which produced a
+          # false positive when this regex previously included those tokens.
+          # The `prompt` grader below is responsible for verifying refusal
+          # behavior; this matcher only guards against runtime crashes.
+          pattern: '(?i)(?:fatal error|unhandled exception|stack trace|crashed|panic:)'
       - type: prompt
         config:
           scoring: binary

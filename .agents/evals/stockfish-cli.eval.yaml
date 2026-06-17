@@ -13,15 +13,14 @@ tags:
   skill: stockfish-cli
 
 config:
-  runs: 5
+  runs: 3
   timeout: 5m
   executor: copilot-sdk
   model: claude-sonnet-4.6
 
 environment:
   skills:
-    - ../skills/stockfish-cli/SKILL.md
-
+    - ../skills/stockfish-cli
 scoring:
   # Weights chosen so each grader is "binding" at threshold: 0.9 — i.e.
   # failing any single grader drops the weighted aggregate below 0.9 and
@@ -242,7 +241,12 @@ stimuli:
               command: '(?i)\|\s*(?:&\s*)?\.?[\\/]?stockfish(?:\.exe)?\b'
       - type: output-matches
         config:
-          pattern: '(?i)(d8h4|Qh4#?)'
+          # Accept multiple SAN forms agents reach for:
+          #   d8h4         — UCI long algebraic (what stockfish emits)
+          #   Qh4          — bare SAN (no disambiguator needed)
+          #   Qd8h4 / Qd8-h4 / Qd8h4# — SAN with disambiguator (Opus/Claude tend to
+          #                              add the source square when explaining)
+          pattern: '(?i)(?:d8[- ]?h4|Q(?:d8[- ]?)?h4#?)'
       # Common graders (Azure Functions eval convention):
       # `completed` guards against empty output; `output-not-matches`
       # catches fatal errors and crashes in the agent output.

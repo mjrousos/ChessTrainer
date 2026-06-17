@@ -1,6 +1,6 @@
 ---
 name: create-eval
-description: "Author a high-quality Vally eval spec that validates a skill triggers when (and only when) it should, calls its real tools correctly, and returns correct answers. USE WHEN: you need to create or substantially revise a `.eval.yaml` file under `.agents/evals/` (or any Vally eval spec) to validate a skill's behavior. DO NOT USE WHEN: you are reviewing or editing a non-Vally YAML file, debugging an agent's runtime behavior, running an existing eval without modifying it, or writing the skill being tested itself."
+description: "Author a high-quality Vally eval spec that validates a skill triggers when (and only when) it should, calls its real tools correctly, and returns correct answers. USE WHEN: you need to create or substantially revise a `.eval.yaml` file under `.agents/evals/` (or any Vally eval spec) to validate a skill's behavior. DO NOT USE WHEN: you are reviewing or providing feedback on an existing eval YAML without committing changes; reviewing or editing a non-Vally YAML file; debugging an agent's runtime behavior; running an existing eval without modifying it; writing a SKILL.md or any other non-eval file (this skill produces eval specs only — `.eval.yaml` files); or writing the skill being tested itself."
 allowed-tools: Bash(vally:*) Bash(npx:*) Bash(node:*) Bash(npm:*)
 ---
 
@@ -20,6 +20,39 @@ docs:
 - Writing eval specs: <https://microsoft.github.io/vally/guides/writing-eval-specs/>
 - Grader catalog: <https://microsoft.github.io/vally/reference/graders/>
 - Each grader has its own reference page (e.g. `/reference/graders/tool-calls/`)
+
+## ⛔ Hard rules — non-negotiable
+
+1. **YOU MUST run `vally lint --eval-spec <file>` after every edit.**
+   - NOT "at the end." NOT "before the final review." After **EVERY single
+     edit** to the eval YAML — including the final edit that you think
+     completes the task.
+   - NOT acceptable: writing the fixed/new YAML, copying to the final
+     filename, and declaring done without linting the result.
+   - NOT acceptable: claiming "lint passes" or "lint clean" in your
+     response without having actually run the lint command. If the
+     trajectory shows no `vally lint` call, your response that says "lint
+     passes" is a lie.
+   - The lint accepts any of these invocations — all match the eval's
+     compliance check:
+     - `vally lint --eval-spec <file>` (when globally installed)
+     - `npx -y @microsoft/vally-cli@latest lint --eval-spec <file>`
+     - `npx @microsoft/vally-cli lint --eval-spec <file>`
+   - The lint catches schema errors, malformed graders, weight keys that
+     don't match any used grader, and bad duration strings — many of
+     which produce confusing failures only at runtime.
+   - A run without a lint step in the trajectory is a failed eval-
+     authoring session by definition. See also the [completion checklist](#-before-declaring-success--mandatory-checklist)
+     at the end of this skill.
+2. **Do NOT use `args:` filters on the `tool-calls` grader.** Vally's
+   `tool-calls` grader supports only `name`, `command`, and `path`
+   filters — `args:` is silently ignored, reducing your matcher to
+   name-only matching and producing disallow false positives. Use
+   `command:` regex against the rendered shell command instead, or use a
+   `prompt` LLM-judge grader if you need argument-shape validation. See
+   <https://microsoft.github.io/vally/reference/graders/tool-calls/>.
+3. **Verify expected outputs against the real tool, not LLM memory.** See
+   [Verify expected outputs against the real tool](#verify-expected-outputs-against-the-real-tool).
 
 ## Inputs
 
@@ -69,8 +102,7 @@ or invoke the target skill alongside this one.
 5. **Compute weight math** (see [Make every grader binding](#make-every-grader-binding))
    before settling on `weights` and `threshold`. A typo here lets wrong answers
    pass.
-6. **`vally lint --eval-spec <file>` after every change.** The CLI catches typos,
-   bad grader names, invalid scoring keys, malformed durations, etc.
+6. **`vally lint --eval-spec <file>` after EVERY change** (per [Hard Rule #1](#-hard-rules--non-negotiable) above). Not just at the end — after each individual edit. Lint runs in <1 second; running it 10× during authoring is normal and correct. The CLI catches typos, bad grader names, invalid scoring keys, malformed durations, etc.
 7. **Run the eval** at least once empirically (`vally eval --eval-spec <file> --verbose`)
    to surface false negatives that lint can't catch.
 8. **Iterate.** Multi-model code review (e.g. Sonnet + GPT + Gemini) on the
@@ -81,18 +113,39 @@ or invoke the target skill alongside this one.
 
 These are mistakes that look right but break the eval. Memorize them.
 
-### Skill paths in `environment.skills` are relative to the eval YAML file
+### Skill paths in `environment.skills` are SKILL **DIRECTORIES**, not SKILL.md files
 
-Not the repo root. An eval at `.agents/evals/foo.eval.yaml` referencing
-`./.agents/skills/foo/SKILL.md` resolves to `.agents/evals/.agents/skills/...`
-and every trial fails instantly with `ENOENT`. Use a path relative to the
-eval file:
+This catches everyone. Vally treats each `environment.skills` entry as a
+**directory** containing a SKILL.md, not as the SKILL.md file itself.
+Internally it does `basename(entry)` and looks for
+`<workdir>/<basename>/SKILL.md`. So `- ../skills/foo/SKILL.md` gives basename
+`SKILL.md` and Vally hunts for `<workdir>/SKILL.md/SKILL.md` → not found,
+emits a warning on every trial:
+
+```
+environment.skills directory "SKILL.md" contains no SKILL.md — skipping
+```
+
+The skill may still appear to "work" (Vally's executor has built-in skills
+registered separately) but the skill's **bundled reference assets**
+(`check-warnings.ps1`, helper scripts, reference markdown files) are NOT
+staged into the workdir, so any agent that tries to invoke them fails.
+
+**Correct form** — pass the skill directory, NOT the SKILL.md file:
 
 ```yaml
 environment:
   skills:
-    - ../skills/foo/SKILL.md   # not ./.agents/skills/foo/SKILL.md
+    - ../skills/foo            # ✓ directory — Vally finds foo/SKILL.md inside
+    # NOT:
+    # - ../skills/foo/SKILL.md  # ✗ basename becomes "SKILL.md"
 ```
+
+Paths are still relative to the eval YAML file (not the repo root), so an
+eval at `.agents/evals/foo.eval.yaml` should reference `../skills/foo` —
+which resolves to `.agents/skills/foo/`. Note this is also a bug in the
+upstream Vally docs at <https://microsoft.github.io/vally/guides/writing-eval-specs/>
+which show the wrong `.../SKILL.md` form.
 
 ### Stimulus identifier is `name:`, not `id:`
 
@@ -146,6 +199,17 @@ Common mistakes:
   catch trivial variants. PowerShell tool names round-trip in lowercase,
   but `Stockfish` / `.\stockfish.exe` / `& stockfish` etc. need explicit
   alternation.
+- **`args:` filters do NOT work** — and this is the single most damaging
+  authoring mistake we've seen. The `tool-calls` grader supports only
+  `name`, `command`, and `path` filters; an `args:` block on the matcher
+  is silently dropped. The matcher then reduces to name-only matching, so
+  e.g. `disallowed: { name: ^task$, args: { model: '^claude-sonnet' } }`
+  becomes a blanket disallow on every `task` call — firing on every
+  legitimate sub-agent fan-out. Empirically this single bug pattern caused
+  7 of 14 false-failure stimuli in one eval run. Use a `command:` regex
+  against the rendered shell command instead, or use a `prompt` LLM-judge
+  grader to validate argument shape. NEVER write `args:` under a
+  `tool-calls` matcher.
 
 ### `output-matches` regex pitfalls
 
@@ -298,7 +362,8 @@ config:
 
 environment:
   skills:
-    - ../skills/<skill-name>/SKILL.md   # relative to THIS eval file
+    - ../skills/<skill-name>            # directory, NOT .../SKILL.md
+                                        # (relative to THIS eval file)
 
 scoring:
   weights:
@@ -662,3 +727,31 @@ don't re-surface fixed issues.
 | `token-budget` / `tool-call-count` / `turn-count` / `wall-time` | free | Metric thresholds |
 
 All except `pairwise` are reference-free.
+
+## ⛔ Before declaring success — mandatory checklist
+
+Agents wrap up by composing a success summary. That's the moment when the
+`vally lint` step is most often forgotten — the work feels done. Before
+telling the user the eval is ready / fixed / authored / done, verify ALL of
+these:
+
+- [ ] You ran `vally lint --eval-spec <final-path>` (or the `npx`
+      equivalent — see [Hard Rule #1](#-hard-rules--non-negotiable)).
+- [ ] The lint command exited with status 0 (no errors).
+- [ ] You ran lint AFTER your last edit, not before it. If you edited the
+      file again to fix a lint finding, you must re-lint after that fix.
+- [ ] If you ran the eval with `vally eval`, you ran lint first.
+
+If you cannot honestly check ALL four boxes, the task is **INCOMPLETE**.
+Do one of:
+
+1. Run the missing lint now, fix any findings it surfaces, and re-lint
+   until it passes — then declare success.
+2. Tell the user explicitly that you did not lint, and why. (Acceptable
+   only if you were asked to skip lint or the file genuinely cannot be
+   linted in the current environment.)
+
+What is NEVER acceptable: writing a success summary that says "lint
+passes" or "ready to merge" when no `vally lint` call exists in your
+trajectory. That is dishonest and will fail the create-eval eval's
+compliance check.
