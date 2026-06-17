@@ -16,7 +16,7 @@ name: Skill Eval (Nightly)
 #     scheduled workflows by ~15 min under load).
 #   * On demand via `workflow_dispatch` for ad-hoc nightly-style runs.
 #
-# Cost: full suite is currently 52 stimuli × runs: 5 ≈ 260 trials, ~30-45 min
+# Cost: full suite is currently 51 stimuli × runs: 2-3 ≈ 102-153 trials, ~30-45 min
 # wall time on 5 workers. Multiply against your Actions minute budget if this
 # is a private repo.
 #
