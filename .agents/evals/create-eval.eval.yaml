@@ -346,7 +346,15 @@ stimuli:
       - type: file-matches
         config:
           path: tmp-create-eval-fixed-draft.eval.yaml
-          pattern: '(?is)(?=.*name:\s+\S+)(?=.*timeout:\s+\d+[smh]\b)'
+          # Assert all three top-tier fixes the agent was supposed to make:
+          #   (1) name: replaces the broken id: on each stimulus
+          #   (2) timeout: is a duration string (e.g. 2m / 120s), not a bare number
+          #   (3) environment.skills entries are DIRECTORIES — the broken draft
+          #       had `- ../skills/tiny-demo/SKILL.md` which Vally rejects (the
+          #       basename "SKILL.md" is treated as a directory name by
+          #       pipeline/run.js:620). The fixed file should have just
+          #       `- ../skills/tiny-demo` with no SKILL.md suffix.
+          pattern: '(?is)(?=.*name:\s+\S+)(?=.*timeout:\s+\d+\s*[smh]\b)(?=.*-\s+\.\./skills/tiny-demo\s*$)(?!.*\.\./skills/tiny-demo/SKILL\.md)'
       # Common graders (apply to every stimulus).
       - type: completed
       - type: output-not-matches

@@ -152,14 +152,14 @@ stimuli:
       - type: tool-calls
         config:
           required:
+            # NOTE: previously had two ^task$ matchers with args.model filters
+            # (one ^gpt-, one ^(claude|gemini|mai)-) to assert multi-family
+            # fan-out. Vally's tool-calls grader silently ignores args:
+            # (only name/command/path are honored — see tool-call-grader.js:8
+            # ToolArgKeys). Replaced with a single name-only matcher; the
+            # multi-model fan-out check is now done by a prompt LLM-judge
+            # grader on each positive stimulus.
             - name: "^task$"
-              args:
-                agent_type: '^code-review$'
-                model: '^gpt-'
-            - name: "^task$"
-              args:
-                agent_type: '^code-review$'
-                model: '^(claude|gemini|mai)-'
             - name: "^(bash|powershell|shell)$"
               command: '(?i)\bgh\s+pr\s+view\s+49\b'
             - name: "^(bash|powershell|shell)$"
@@ -167,6 +167,44 @@ stimuli:
       - type: output-matches
         config:
           pattern: '(?is)(?=.*_Reviewed by:)(?=.*(?:LGTM|Needs Human Review|Needs Changes|Reject|❌|⚠️|💡))'
+      # Multi-model fan-out check (replaces the broken args.model tool-call
+      # matchers — see note on ^task$ above). Verifies the orchestrator
+      # actually launched sub-agents from at least 2 distinct model
+      # families, which is mandatory per code-review/SKILL.md but cannot
+      # be enforced by tool-calls graders alone.
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The agent was asked to perform a code review. Per
+            code-review/SKILL.md, a review is incomplete unless the
+            orchestrator fanned out to >=2 sub-agents from DISTINCT model
+            families (claude, gpt, gemini, mai) via the 	ask tool. The
+            single-model exception only applies if the environment has
+            <2 eligible families — and in that case the agent must say
+            so explicitly in the _Reviewed by: line.
+
+            Inspect the trajectory's 	ask tool calls (look for tool
+            name == "task" with gent_type: code-review). Note the
+            model argument on each.
+
+            Score 1 (pass) if EITHER:
+              - The orchestrator launched at least 2 task calls with
+                models from distinct families (e.g., one claude-* and
+                one gpt-*; or claude + gemini; or gpt + gemini), OR
+              - The orchestrator launched only 1 model AND the final
+                response explicitly states a single-model limitation
+                (e.g., "_Reviewed by: claude-opus-4.7 (single-model: only
+                one eligible family available)._").
+
+            Score 0 (fail) if:
+              - No task calls were made (orchestrator did the review
+                solo without fanning out), OR
+              - Multiple task calls were made but all used the same model
+                family AND the response does not acknowledge the
+                single-family limitation, OR
+              - The trajectory shows fan-out but the final response is
+                missing the _Reviewed by: line entirely.
       - type: completed
       - type: output-not-matches
         config:
@@ -192,19 +230,57 @@ stimuli:
       - type: tool-calls
         config:
           required:
+            # NOTE: previously had two ^task$ matchers with args.model filters
+            # (one ^gpt-, one ^(claude|gemini|mai)-) to assert multi-family
+            # fan-out. Vally's tool-calls grader silently ignores args:
+            # (only name/command/path are honored — see tool-call-grader.js:8
+            # ToolArgKeys). Replaced with a single name-only matcher; the
+            # multi-model fan-out check is now done by a prompt LLM-judge
+            # grader on each positive stimulus.
             - name: "^task$"
-              args:
-                agent_type: '^code-review$'
-                model: '^gpt-'
-            - name: "^task$"
-              args:
-                agent_type: '^code-review$'
-                model: '^(claude|gemini|mai)-'
             - name: "^(bash|powershell|shell)$"
               command: '(?i)\bgit\s+(?:--no-pager\s+)?diff\b'
       - type: output-matches
         config:
           pattern: '(?is)(?=.*_Reviewed by:)(?=.*(?:LGTM|Needs Human Review|Needs Changes|Reject|❌|⚠️|💡))'
+      # Multi-model fan-out check (replaces the broken args.model tool-call
+      # matchers — see note on ^task$ above). Verifies the orchestrator
+      # actually launched sub-agents from at least 2 distinct model
+      # families, which is mandatory per code-review/SKILL.md but cannot
+      # be enforced by tool-calls graders alone.
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The agent was asked to perform a code review. Per
+            code-review/SKILL.md, a review is incomplete unless the
+            orchestrator fanned out to >=2 sub-agents from DISTINCT model
+            families (claude, gpt, gemini, mai) via the 	ask tool. The
+            single-model exception only applies if the environment has
+            <2 eligible families — and in that case the agent must say
+            so explicitly in the _Reviewed by: line.
+
+            Inspect the trajectory's 	ask tool calls (look for tool
+            name == "task" with gent_type: code-review). Note the
+            model argument on each.
+
+            Score 1 (pass) if EITHER:
+              - The orchestrator launched at least 2 task calls with
+                models from distinct families (e.g., one claude-* and
+                one gpt-*; or claude + gemini; or gpt + gemini), OR
+              - The orchestrator launched only 1 model AND the final
+                response explicitly states a single-model limitation
+                (e.g., "_Reviewed by: claude-opus-4.7 (single-model: only
+                one eligible family available)._").
+
+            Score 0 (fail) if:
+              - No task calls were made (orchestrator did the review
+                solo without fanning out), OR
+              - Multiple task calls were made but all used the same model
+                family AND the response does not acknowledge the
+                single-family limitation, OR
+              - The trajectory shows fan-out but the final response is
+                missing the _Reviewed by: line entirely.
       - type: completed
       - type: output-not-matches
         config:
@@ -229,14 +305,14 @@ stimuli:
       - type: tool-calls
         config:
           required:
+            # NOTE: previously had two ^task$ matchers with args.model filters
+            # (one ^gpt-, one ^(claude|gemini|mai)-) to assert multi-family
+            # fan-out. Vally's tool-calls grader silently ignores args:
+            # (only name/command/path are honored — see tool-call-grader.js:8
+            # ToolArgKeys). Replaced with a single name-only matcher; the
+            # multi-model fan-out check is now done by a prompt LLM-judge
+            # grader on each positive stimulus.
             - name: "^task$"
-              args:
-                agent_type: '^code-review$'
-                model: '^gpt-'
-            - name: "^task$"
-              args:
-                agent_type: '^code-review$'
-                model: '^(claude|gemini|mai)-'
             - name: "^(bash|powershell|shell)$"
               command: '(?i)\bgh\s+pr\s+view\s+49\b'
             - name: "^(bash|powershell|shell)$"
@@ -244,6 +320,44 @@ stimuli:
       - type: output-matches
         config:
           pattern: '(?is)(?=.*_Reviewed by:)(?=.*(?:LGTM|Needs Human Review|Needs Changes|Reject|❌|⚠️|💡))'
+      # Multi-model fan-out check (replaces the broken args.model tool-call
+      # matchers — see note on ^task$ above). Verifies the orchestrator
+      # actually launched sub-agents from at least 2 distinct model
+      # families, which is mandatory per code-review/SKILL.md but cannot
+      # be enforced by tool-calls graders alone.
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The agent was asked to perform a code review. Per
+            code-review/SKILL.md, a review is incomplete unless the
+            orchestrator fanned out to >=2 sub-agents from DISTINCT model
+            families (claude, gpt, gemini, mai) via the 	ask tool. The
+            single-model exception only applies if the environment has
+            <2 eligible families — and in that case the agent must say
+            so explicitly in the _Reviewed by: line.
+
+            Inspect the trajectory's 	ask tool calls (look for tool
+            name == "task" with gent_type: code-review). Note the
+            model argument on each.
+
+            Score 1 (pass) if EITHER:
+              - The orchestrator launched at least 2 task calls with
+                models from distinct families (e.g., one claude-* and
+                one gpt-*; or claude + gemini; or gpt + gemini), OR
+              - The orchestrator launched only 1 model AND the final
+                response explicitly states a single-model limitation
+                (e.g., "_Reviewed by: claude-opus-4.7 (single-model: only
+                one eligible family available)._").
+
+            Score 0 (fail) if:
+              - No task calls were made (orchestrator did the review
+                solo without fanning out), OR
+              - Multiple task calls were made but all used the same model
+                family AND the response does not acknowledge the
+                single-family limitation, OR
+              - The trajectory shows fan-out but the final response is
+                missing the _Reviewed by: line entirely.
       - type: completed
       - type: output-not-matches
         config:
@@ -268,19 +382,57 @@ stimuli:
       - type: tool-calls
         config:
           required:
+            # NOTE: previously had two ^task$ matchers with args.model filters
+            # (one ^gpt-, one ^(claude|gemini|mai)-) to assert multi-family
+            # fan-out. Vally's tool-calls grader silently ignores args:
+            # (only name/command/path are honored — see tool-call-grader.js:8
+            # ToolArgKeys). Replaced with a single name-only matcher; the
+            # multi-model fan-out check is now done by a prompt LLM-judge
+            # grader on each positive stimulus.
             - name: "^task$"
-              args:
-                agent_type: '^code-review$'
-                model: '^gpt-'
-            - name: "^task$"
-              args:
-                agent_type: '^code-review$'
-                model: '^(claude|gemini|mai)-'
             - name: "^(bash|powershell|shell)$"
               command: '(?i)\bgit\s+(?:--no-pager\s+)?diff\b(?=.*\bmain\b)'
       - type: output-matches
         config:
           pattern: '(?is)(?=.*_Reviewed by:)(?=.*(?:LGTM|Needs Human Review|Needs Changes|Reject|❌|⚠️|💡))'
+      # Multi-model fan-out check (replaces the broken args.model tool-call
+      # matchers — see note on ^task$ above). Verifies the orchestrator
+      # actually launched sub-agents from at least 2 distinct model
+      # families, which is mandatory per code-review/SKILL.md but cannot
+      # be enforced by tool-calls graders alone.
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The agent was asked to perform a code review. Per
+            code-review/SKILL.md, a review is incomplete unless the
+            orchestrator fanned out to >=2 sub-agents from DISTINCT model
+            families (claude, gpt, gemini, mai) via the 	ask tool. The
+            single-model exception only applies if the environment has
+            <2 eligible families — and in that case the agent must say
+            so explicitly in the _Reviewed by: line.
+
+            Inspect the trajectory's 	ask tool calls (look for tool
+            name == "task" with gent_type: code-review). Note the
+            model argument on each.
+
+            Score 1 (pass) if EITHER:
+              - The orchestrator launched at least 2 task calls with
+                models from distinct families (e.g., one claude-* and
+                one gpt-*; or claude + gemini; or gpt + gemini), OR
+              - The orchestrator launched only 1 model AND the final
+                response explicitly states a single-model limitation
+                (e.g., "_Reviewed by: claude-opus-4.7 (single-model: only
+                one eligible family available)._").
+
+            Score 0 (fail) if:
+              - No task calls were made (orchestrator did the review
+                solo without fanning out), OR
+              - Multiple task calls were made but all used the same model
+                family AND the response does not acknowledge the
+                single-family limitation, OR
+              - The trajectory shows fan-out but the final response is
+                missing the _Reviewed by: line entirely.
       - type: completed
       - type: output-not-matches
         config:
@@ -306,19 +458,57 @@ stimuli:
       - type: tool-calls
         config:
           required:
+            # NOTE: previously had two ^task$ matchers with args.model filters
+            # (one ^gpt-, one ^(claude|gemini|mai)-) to assert multi-family
+            # fan-out. Vally's tool-calls grader silently ignores args:
+            # (only name/command/path are honored — see tool-call-grader.js:8
+            # ToolArgKeys). Replaced with a single name-only matcher; the
+            # multi-model fan-out check is now done by a prompt LLM-judge
+            # grader on each positive stimulus.
             - name: "^task$"
-              args:
-                agent_type: '^code-review$'
-                model: '^gpt-'
-            - name: "^task$"
-              args:
-                agent_type: '^code-review$'
-                model: '^(claude|gemini|mai)-'
             - name: "^(bash|powershell|shell)$"
               command: '(?i)\bgit\s+(?:--no-pager\s+)?diff\b'
       - type: output-matches
         config:
           pattern: '(?is)(?=.*_Reviewed by:)(?=.*(?:LGTM|Needs Human Review|Needs Changes|Reject|❌|⚠️|💡))'
+      # Multi-model fan-out check (replaces the broken args.model tool-call
+      # matchers — see note on ^task$ above). Verifies the orchestrator
+      # actually launched sub-agents from at least 2 distinct model
+      # families, which is mandatory per code-review/SKILL.md but cannot
+      # be enforced by tool-calls graders alone.
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The agent was asked to perform a code review. Per
+            code-review/SKILL.md, a review is incomplete unless the
+            orchestrator fanned out to >=2 sub-agents from DISTINCT model
+            families (claude, gpt, gemini, mai) via the 	ask tool. The
+            single-model exception only applies if the environment has
+            <2 eligible families — and in that case the agent must say
+            so explicitly in the _Reviewed by: line.
+
+            Inspect the trajectory's 	ask tool calls (look for tool
+            name == "task" with gent_type: code-review). Note the
+            model argument on each.
+
+            Score 1 (pass) if EITHER:
+              - The orchestrator launched at least 2 task calls with
+                models from distinct families (e.g., one claude-* and
+                one gpt-*; or claude + gemini; or gpt + gemini), OR
+              - The orchestrator launched only 1 model AND the final
+                response explicitly states a single-model limitation
+                (e.g., "_Reviewed by: claude-opus-4.7 (single-model: only
+                one eligible family available)._").
+
+            Score 0 (fail) if:
+              - No task calls were made (orchestrator did the review
+                solo without fanning out), OR
+              - Multiple task calls were made but all used the same model
+                family AND the response does not acknowledge the
+                single-family limitation, OR
+              - The trajectory shows fan-out but the final response is
+                missing the _Reviewed by: line entirely.
       - type: completed
       - type: output-not-matches
         config:
@@ -343,9 +533,11 @@ stimuli:
       - type: tool-calls
         config:
           disallowed:
+            # NOTE: previously filtered ^task$ disallow by args.agent_type,
+            # which Vally silently ignores. Now disallows ANY task call,
+            # which is the correct intent for these negative stimuli (the
+            # agent should answer directly, not delegate to sub-agents).
             - name: "^task$"
-              args:
-                agent_type: '^code-review$'
       - type: prompt
         config:
           scoring: binary
@@ -382,9 +574,11 @@ stimuli:
       - type: tool-calls
         config:
           disallowed:
+            # NOTE: previously filtered ^task$ disallow by args.agent_type,
+            # which Vally silently ignores. Now disallows ANY task call,
+            # which is the correct intent for these negative stimuli (the
+            # agent should answer directly, not delegate to sub-agents).
             - name: "^task$"
-              args:
-                agent_type: '^code-review$'
       - type: prompt
         config:
           scoring: binary
@@ -423,9 +617,11 @@ stimuli:
       - type: tool-calls
         config:
           disallowed:
+            # NOTE: previously filtered ^task$ disallow by args.agent_type,
+            # which Vally silently ignores. Now disallows ANY task call,
+            # which is the correct intent for these negative stimuli (the
+            # agent should answer directly, not delegate to sub-agents).
             - name: "^task$"
-              args:
-                agent_type: '^code-review$'
       - type: prompt
         config:
           scoring: binary

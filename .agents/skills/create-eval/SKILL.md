@@ -156,6 +156,58 @@ which show the wrong `.../SKILL.md` form.
 
 `timeout: 180` fails lint. Use `timeout: 3m` / `timeout: 300s`.
 
+### `environment.files` entries MUST have an explicit `dest:`
+
+Vally's markdown reporter calls `text.replace()` directly on `f.dest`
+without a null guard (`reporting/eval-markdown.js:465`). When `dest:` is
+omitted from an `environment.files` entry, the schema accepts it and the
+file copy works, but at the end of the run the reporter crashes with:
+
+```
+Error finalizing secondary reporters: Cannot read properties of
+  undefined (reading 'replace')
+```
+
+The primary `results.jsonl` is written, but the human-readable
+`eval-results.md` never lands. Fix: write every `files:` entry with an
+explicit `dest:`, even when it's identical to the basename of `src:`.
+
+```yaml
+environment:
+  files:
+    - src: ../../ChessTrainer.sln
+      dest: ChessTrainer.sln              # ✓ explicit dest
+    - src: ../../src/
+      dest: src/                          # ✓ explicit dest, trailing slash for dirs
+    # NOT:
+    # - src: ../../ChessTrainer.sln       # ✗ omitting dest crashes the reporter
+```
+
+### YAML plain scalars terminate at `: ` — quote commands that contain it
+
+`environment.commands` entries are strings. YAML plain scalars terminate
+at the first `: ` (colon-space) sequence — anything after becomes a map
+value, and Vally then passes a `{key: value}` object to
+`child_process.exec`, which throws:
+
+```
+The "command" argument must be of type string. Received an instance of Object
+```
+
+Vally lint does NOT catch this (the items are still a list, just of the
+wrong type). Wrap any command that contains `: ` in single-quoted YAML
+(escape inner single-quotes by doubling them) or rephrase the content:
+
+```yaml
+commands:
+  # ✗ Plain scalar — `: ` terminates the scalar, parses as a map.
+  # - pwsh -Command "Add-Content file.txt 'TODO: extend'"
+  # ✓ Single-quoted YAML — colon-space stays inside the string.
+  - 'pwsh -Command "Add-Content file.txt ''TODO: extend''"'
+  # ✓ Or rephrase the content to avoid the colon.
+  - pwsh -Command "Add-Content file.txt 'TODO - extend'"
+```
+
 ### Suite `evals:` globs can't traverse dot-prefixed directories
 
 Vally's glob matcher refuses to descend into directories whose names start
@@ -364,6 +416,26 @@ environment:
   skills:
     - ../skills/<skill-name>            # directory, NOT .../SKILL.md
                                         # (relative to THIS eval file)
+  # Optional: stage repo files into the trial workdir so the agent has
+  # context to operate on (source files for review, fixtures for parsing,
+  # etc.). EVERY entry MUST have an explicit `dest:` — Vally's markdown
+  # reporter calls .replace() on f.dest unconditionally and crashes when
+  # it's undefined ("Cannot read properties of undefined (reading
+  # 'replace')"). The schema accepts dest-less entries but the reporter
+  # cannot render them, so the run aborts at finalization.
+  files:
+    - src: ../../path/to/file
+      dest: file                        # required, even if same as basename
+    - src: ../../path/to/dir/
+      dest: dir/                        # trailing slash for directories
+  # Optional: shell commands to run after files are staged. Each command
+  # must be a STRING, not a YAML map — beware of `:` followed by space in
+  # plain scalars (terminates the scalar). Wrap commands containing `: `
+  # in single-quoted YAML or rephrase the content to avoid the colon.
+  commands:
+    - "echo 'setup complete'"
+    # If your command contains : followed by space, single-quote it:
+    # - 'echo "TODO: something to verify"'
 
 scoring:
   weights:
