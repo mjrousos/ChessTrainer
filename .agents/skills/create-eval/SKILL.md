@@ -180,7 +180,7 @@ environment:
     - src: ../../src/
       dest: src/                          # ✓ explicit dest, trailing slash for dirs
     # NOT:
-    # - src: ../../ChessTrainer.sln       # ✗ omitting dest crashes the reporter
+    # - src: ../../ChessTrainer.slnx      # ✗ omitting dest crashes the reporter
 ```
 
 ### YAML plain scalars terminate at `: ` — quote commands that contain it
