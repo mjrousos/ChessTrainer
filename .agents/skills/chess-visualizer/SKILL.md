@@ -1,6 +1,6 @@
 ---
 name: chess-visualizer
-description: "Render a chess position from a FEN string to a PNG image. USE WHEN: you need to **visualize** or share the state of a chess board described by a FEN. DO NOT USE WHEN: you need to evaluate a position to determine best moves, legal moves, or game outcomes"
+description: "Render a chess position from a FEN string to a PNG image. USE WHEN: you need to **visualize** or share the state of a chess board described by a FEN. DO NOT USE WHEN: you need to evaluate a position to determine best moves, legal moves, or game outcomes; or when the user asks for arrows, highlights, last-move markers, threat indicators, or any other annotation overlay on the board (this skill renders flat boards only — redirect to an annotation-capable tool such as Lichess board editor, ChessVision, or a manual SVG)."
 allowed-tools: Bash(python:*) Bash(python3:*) Bash(py:*) Bash(pip:*)
 ---
 
@@ -70,8 +70,16 @@ Exit codes: `0` success · `1` I/O or missing-asset error · `2` invalid input
 
 - You need full SVG output or a vector format → render `board.svg` and
   `Chess_Pieces_Sprite.svg` directly with a tool like Inkscape.
-- You need move arrows, square highlights, or annotations → out of scope for
-  v1; add post-processing on top of the PNG or extend the script.
+- **You need move arrows, square highlights, last-move markers, threat
+  indicators, or any other annotation overlay on the board.** This skill
+  renders flat boards only — there is no annotation support and there
+  never will be in v1. **Refuse the request explicitly** rather than
+  produce a flat board and claim it is annotated. Suggest annotation-
+  capable alternatives: Lichess's board editor (`https://lichess.org/editor`),
+  ChessVision.ai, an SVG editor like Inkscape, or `python-chess`'s SVG
+  renderer with arrows. Saying "here is your annotated board" while
+  returning a flat PNG is the failure mode this guidance exists to
+  prevent.
 
 ## Regenerating the cached assets
 

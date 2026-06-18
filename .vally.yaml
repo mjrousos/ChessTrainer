@@ -1,0 +1,64 @@
+paths:
+  skills: [.agents/skills]
+  evals: [.agents/evals]
+  results: vally-results/
+  evalFilenames: ["eval.yaml", "eval.yml", "*.eval.yaml", "*.eval.yml"]
+
+# -----------------------------------------------------------------------------
+# Eval suites — named subsets of the eval library for different pipeline
+# stages. Stimulus tags use the convention: tier (smoke|full),
+# area (routing|response-quality|error-handling|configuration),
+# cost (free|llm). See .agents/skills/create-eval/SKILL.md and
+# https://microsoft.github.io/vally/guides/authoring-eval-suites/
+# -----------------------------------------------------------------------------
+suites:
+  # Runs every stimulus across every eval file. Use for nightly / full
+  # validation runs and pre-release checks.
+  #
+  # IMPORTANT: Vally's glob matcher refuses to traverse dot-prefixed
+  # directories (`.agents/...`). All of `.agents/**/*.eval.yaml`,
+  # `**/.agents/**`, `./.agents/**`, and `.agents/evals/**` were tested
+  # and produce "No eval files matched". You MUST list each eval file
+  # explicitly here. Update this list when adding a new eval file.
+  full:
+    description: All stimuli across every eval — full validation (nightly).
+    evals:
+      - ".agents/evals/stockfish-cli.eval.yaml"
+      - ".agents/evals/chess-visualizer.eval.yaml"
+      - ".agents/evals/code-review.eval.yaml"
+      - ".agents/evals/create-eval.eval.yaml"
+      - ".agents/evals/zero-warnings-build.eval.yaml"
+
+  # Quick PR-gate subset: only stimuli tagged tier=smoke. These are routing
+  # checks and quick positive cases — no LLM-judge stimuli.
+  smoke:
+    description: Cheap routing + quick positives (tier=smoke); suitable for PR gate.
+    filter:
+      tier: smoke
+
+  # Alias for smoke — matches the convention used by the Azure Functions
+  # evals at https://github.com/Azure/azure-functions-skills/tree/main/evals.
+  pr:
+    description: Alias for `smoke` — runs on every PR.
+    filter:
+      tier: smoke
+
+  # Skill-activation checks only (negative routing stimuli). Cheap and
+  # high-signal for verifying skill descriptions trigger correctly.
+  routing:
+    description: Skill-invocation / routing checks only (area=routing).
+    filter:
+      area: routing
+
+  # Answer-correctness stimuli only. Slower, may include LLM-judge graders.
+  response-quality:
+    description: Answer-correctness stimuli (area=response-quality).
+    filter:
+      area: response-quality
+
+  # Stimuli that use LLM-judge (prompt) graders. Useful when you want to
+  # specifically exercise / cost the judge.
+  llm:
+    description: Stimuli that use LLM-judge prompt graders (cost=llm).
+    filter:
+      cost: llm

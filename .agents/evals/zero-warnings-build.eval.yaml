@@ -1,0 +1,512 @@
+name: zero-warnings-build
+description: >
+  Validates the zero-warnings-build skill: it should trigger for ChessTrainer's
+  repository-wide build-warning audit, invoke the bundled check-warnings.ps1
+  script with the right stage-selection flags, explain Release warning-as-error
+  failures, and stay silent for single-project, runtime-warning, meta, and
+  suppression requests.
+version: "1.0"
+type: capability
+
+# Root-level tags inherited by every stimulus (each stimulus may add its own).
+tags:
+  type: integration
+  skill: zero-warnings-build
+
+config:
+  # This skill runs real Debug/Release/.NET and webpack builds. Two runs gives
+  # useful routing signal without making the suite prohibitively expensive.
+  runs: 2
+  timeout: 15m
+  executor: copilot-sdk
+  model: claude-sonnet-4.6
+
+environment:
+  # Skill paths are relative to this YAML file (.agents/evals/), not repo root.
+  skills:
+    - ../skills/zero-warnings-build
+  # Stage repo files into the trial workdir so build-running stimuli have
+  # something to actually build against. Vally copies relative to THIS eval
+  # file's directory, so `../../<path>` resolves from `.agents/evals/<path>`
+  # to `<repo-root>/<path>`.
+  #
+  # We list specific entries (not `../../`) to avoid pulling in dot-prefixed
+  # directories (`.agents/`, `.github/`, `.git/`) and ignored output trees
+  # (`bin/`, `obj/`, `vally-results/`). The `commands:` step further scrubs
+  # any bin/obj/node_modules that came along inside src/ or test/ from the
+  # local checkout so trials are deterministic.
+  files:
+    - src: ../../ChessTrainer.sln
+      dest: ChessTrainer.sln
+    - src: ../../Directory.Build.props
+      dest: Directory.Build.props
+    - src: ../../Directory.Build.targets
+      dest: Directory.Build.targets
+    - src: ../../global.json
+      dest: global.json
+    - src: ../../rules.ruleset
+      dest: rules.ruleset
+    - src: ../../stylecop.json
+      dest: stylecop.json
+    - src: ../../AGENTS.md
+      dest: AGENTS.md
+    - src: ../../src/
+      dest: src/
+    - src: ../../test/
+      dest: test/
+  commands:
+    # Scrub build artifacts and node_modules carried in from the local
+    # checkout so trials are deterministic and the workdir stays small.
+    # Quietly ignore missing dirs.
+    - pwsh -NoProfile -Command "Get-ChildItem -Path . -Include bin,obj,node_modules -Directory -Recurse -Force -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue"
+
+scoring:
+  # Weights chosen so each grader is "binding" at threshold: 0.9 — i.e.
+  # failing any single grader drops the weighted aggregate below 0.9 and
+  # fails the trial. Math (positive stimulus, 5 graders, total weight 8.5):
+  #   - lose skill-invocation (2.0)  -> 6.5/8.5 = 0.765
+  #   - lose tool-calls       (1.5)  -> 7.0/8.5 = 0.824
+  #   - lose output-matches   (2.5)  -> 6.0/8.5 = 0.706
+  #   - lose prompt           (2.5)  -> 6.0/8.5 = 0.706
+  #   - lose output-not-match (1.5)  -> 7.0/8.5 = 0.824
+  #   - lose completed        (1.0)  -> 7.5/8.5 = 0.882
+  # All < 0.9, so every grader genuinely matters. Correctness graders
+  # (output-matches / prompt) are weighted 2.5 specifically so an incorrect
+  # build diagnosis cannot pass even if every other grader is green.
+  weights:
+    skill-invocation: 2.0
+    tool-calls: 1.5
+    output-not-matches: 1.5
+    output-matches: 2.5
+    prompt: 2.5
+    completed: 1.0
+  # 0.9 makes every grader binding (see weight math above). With runs: 2
+  # we measure routing/tool-use consistency while keeping expensive builds
+  # tractable; pass statistics are reported separately per stimulus.
+  threshold: 0.9
+
+# Root-level constraints apply to every stimulus. Keeps trials bounded so a
+# misbehaving agent can't loop indefinitely or run up huge token bills.
+constraints:
+  max_turns: 15
+  max_tokens: 4000
+
+# -----------------------------------------------------------------------------
+# Helper grader patterns used across stimuli.
+# Inlined per stimulus below (Vally has no native YAML-anchor support guarantee
+# in lint), but documented here for reviewer convenience:
+#
+#   required shell command:
+#     command: check-warnings\.ps1
+#   ↳ Proves the bundled repository-wide warning gate was actually invoked.
+#
+#   flag matchers use (?:^|\s)-SkipDebug\b style. A leading \b does not match
+#   before a PowerShell dash flag because both the space and '-' are non-word
+#   characters.
+#
+#   common runtime-failure guard:
+#     (?i)fatal error|unhandled exception|stack trace|crashed|panic:
+#   ↳ Attached to every stimulus along with completed.
+# -----------------------------------------------------------------------------
+
+stimuli:
+  # ---------------------------------------------------------------------------
+  # 1. Skill IS invoked for the normal pre-PR verification workflow. Prompt is
+  #    intent-based and does not name the skill. This is the full gate: Debug,
+  #    Release, and webpack should all run, and the final response should make
+  #    clear whether warnings and errors are zero.
+  # ---------------------------------------------------------------------------
+  - name: pre-pr-clean-build-check
+    tags:
+      tier: smoke
+      area: response-quality
+      cost: free
+    prompt: >
+      I'm about to open a PR. Can you verify the solution builds cleanly with
+      no warnings or errors?
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["zero-warnings-build"]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'check-warnings\.ps1'
+      - type: output-matches
+        config:
+          pattern: '(?is)(?:0|no|zero)\s+warnings.*(?:0|no|zero)\s+errors|(?:0|no|zero)\s+errors.*(?:0|no|zero)\s+warnings|clean|all green|build is clean'
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 2. Skill IS invoked for Release-only failure triage. The diagnostic value is
+  #    the explanation: in this repo, Release turns warnings into errors via
+  #    TreatWarningsAsErrors, so the remedy is to fix the warning root cause
+  #    rather than suppressing it.
+  # ---------------------------------------------------------------------------
+  - name: release-only-failure-triage
+    tags:
+      tier: full
+      area: response-quality
+      cost: llm
+    prompt: >
+      Release build is failing but Debug succeeds — what's going on?
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["zero-warnings-build"]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'check-warnings\.ps1'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked why the Release build fails while Debug succeeds in
+            the ChessTrainer repository.
+
+            Score 1 (pass) if the agent's final answer correctly identifies
+            the likely root-cause class as a compiler/analyzer warning that is
+            treated as an error in Release because TreatWarningsAsErrors is
+            enabled for Release builds, or says that the script/report found a
+            specific Release diagnostic fitting that class. The answer must
+            also direct the user to fix the underlying warning/root cause rather
+            than hide it with a suppression.
+
+            Score 0 (fail) if the answer treats the issue as an ordinary Debug
+            vs Release mystery without mentioning warnings-as-errors, suggests
+            suppressing/relaxing the warning policy as the solution, or fails
+            to give any actionable diagnosis.
+
+            Ignore minor wording differences and accept responses that mention
+            the current run is clean, provided they still explain this
+            Release-only failure mode and the correct fix strategy.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 3. Skill IS invoked for a front-end-only warning check. This should still go
+  #    through the central script, but should pass -SkipDebug and -SkipRelease
+  #    so the expensive .NET stages do not run.
+  # ---------------------------------------------------------------------------
+  - name: frontend-only-webpack-warnings
+    tags:
+      tier: smoke
+      area: configuration
+      cost: free
+    prompt: >
+      Are there any webpack warnings in the front-end bundle?
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["zero-warnings-build"]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'check-warnings\.ps1'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?:^|\s)-SkipDebug\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?:^|\s)-SkipRelease\b'
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)check-warnings\.ps1[^\n]*(?:^|\s)-SkipFrontend\b'
+      - type: output-matches
+        config:
+          pattern: '(?is)webpack|front-?end|bundle|warnings?'
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 4. Skill IS invoked for a post-refactor consolidated audit. Because the user
+  #    explicitly asks across back-end and front-end, no -Skip* flags are allowed;
+  #    the full Debug + Release + webpack gate must run.
+  # ---------------------------------------------------------------------------
+  - name: post-refactor-consolidated-audit
+    tags:
+      tier: full
+      area: configuration
+      cost: free
+    prompt: >
+      I just finished a big refactor — give me the consolidated list of all
+      warnings across back-end and front-end.
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["zero-warnings-build"]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'check-warnings\.ps1'
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: '(?:^|\s)-Skip(?:Debug|Release|Frontend)\b'
+      - type: output-matches
+        config:
+          pattern: '(?is)Debug|Release|Webpack|front-?end|back-?end|warnings?'
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 5. Skill IS invoked to verify a warning fix. This is a rerun of the central
+  #    warning gate and should report whether the diagnostic is gone.
+  # ---------------------------------------------------------------------------
+  - name: verify-warning-fix
+    tags:
+      tier: smoke
+      area: response-quality
+      cost: free
+    prompt: >
+      I just fixed a warning — can you rerun and confirm it's gone?
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["zero-warnings-build"]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'check-warnings\.ps1'
+      - type: output-matches
+        config:
+          pattern: '(?is)(gone|fixed|resolved|clean|(?:0|no|zero)\s+warnings?|still\s+(?:present|failing|reported)|remaining\s+warnings?)'
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 6. Skill is NOT invoked for a single-project build request. Recognition: the
+  #    user scoped the work to ChessTrainerApp only. Restraint: do not run the
+  #    repository-wide warning gate. Redirection: run a focused dotnet build.
+  # ---------------------------------------------------------------------------
+  - name: single-project-build-request
+    tags:
+      tier: smoke
+      area: routing
+      cost: llm
+    prompt: >
+      Build just src/ChessTrainerApp — I don't care about the rest right now.
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["zero-warnings-build"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: 'check-warnings\.ps1'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked to build only src/ChessTrainerApp, not the whole
+            repository.
+
+            Score 1 (pass) if the agent recognizes the request is scoped to a
+            single project, avoids the repository-wide warning audit, and either
+            runs or recommends a focused dotnet build for ChessTrainerApp.
+
+            Score 0 (fail) if the agent runs the repository-wide warning audit,
+            insists on building every project despite the user's scope, or does
+            not provide a focused build path.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 7. Skill is NOT invoked when the user asks to fix one concrete warning. The
+  #    right behavior is to inspect/fix that code path directly, not spend
+  #    minutes running a full warning audit first.
+  # ---------------------------------------------------------------------------
+  - name: fix-specific-nullability-warning
+    tags:
+      tier: smoke
+      area: routing
+      cost: llm
+    prompt: >
+      I have a specific CS8602 warning in Pages/Index.razor.cs:42 — help me fix
+      it.
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["zero-warnings-build"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: 'check-warnings\.ps1'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked for help fixing one known CS8602 nullable-reference
+            warning at a specific file and line. NOTE FOR THE JUDGE: the path
+            `Pages/Index.razor.cs:42` may not actually exist in the repo. This
+            is a ROUTING test — we are evaluating whether the agent treats
+            the request as a targeted code-fix vs. defaulting to the full
+            repository-wide warning audit. We are NOT requiring the agent to
+            successfully complete the fix.
+
+            Score 1 (pass) if the agent recognizes this as a targeted
+            code-fix task, avoids launching the full warning audit up front,
+            and inspects the specific file or asks the user to confirm /
+            provide the file (e.g., "I couldn't find that file — could you
+            confirm the path?"). A clarifying response when the file isn't
+            found is a PASS, not a fail.
+
+            Score 0 (fail) if the agent runs the repository-wide warning
+            audit (`check-warnings.ps1`) as the first/default response,
+            suggests suppressing CS8602 (`#pragma warning disable`,
+            `<NoWarn>`, `[SuppressMessage]`), or refuses without trying to
+            inspect the targeted location.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 8. Skill is NOT invoked for a meta/explanation question. Mentioning
+  #    TreatWarningsAsErrors is a strong keyword cue, but no build workload is
+  #    requested.
+  # ---------------------------------------------------------------------------
+  - name: meta-treatwarningsaserrors-explanation
+    tags:
+      tier: smoke
+      area: routing
+      cost: llm
+    prompt: >
+      What is TreatWarningsAsErrors?
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["zero-warnings-build"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: 'check-warnings\.ps1'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked for a conceptual explanation of TreatWarningsAsErrors
+            and did not ask to build or audit the repository.
+
+            Score 1 (pass) if the agent answers as an explanation request,
+            avoids running the repository-wide warning audit, and explains that
+            the setting makes compiler/analyzer warnings fail the build as
+            errors when enabled.
+
+            Score 0 (fail) if the agent runs a build-warning audit, treats the
+            request as a repository verification task, or fails to explain the
+            concept.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 9. Skill is NOT invoked for runtime warn: log checks. The script only covers
+  #    build-time diagnostics; runtime logger warnings require running the app or
+  #    smoke tests and capturing logs.
+  # ---------------------------------------------------------------------------
+  - name: runtime-warn-log-check
+    tags:
+      tier: smoke
+      area: routing
+      cost: llm
+    prompt: >
+      Are there any warn: log entries when I run the app?
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["zero-warnings-build"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: 'check-warnings\.ps1'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked about runtime warn: log entries while running the
+            app, not build-time compiler or webpack diagnostics.
+
+            Score 1 (pass) if the agent recognizes runtime log warnings as a
+            different workflow, avoids the build-warning audit script, and
+            redirects toward running the app/smoke test and capturing logs.
+
+            Score 0 (fail) if the agent runs the build-warning audit as though
+            it covers runtime logs, claims the build script is sufficient for
+            warn: log entries, or gives no appropriate runtime-log path.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 10. Skill is NOT required for a suppression request, but the repo policy must
+  #     still be enforced. This negative intentionally softens skill-invocation
+  #     to disallowed-only: it tests policy restraint (do not suppress) rather
+  #     than routing into the expensive build audit.
+  # ---------------------------------------------------------------------------
+  - name: refuse-warning-suppression
+    tags:
+      tier: smoke
+      area: routing
+      cost: llm
+    prompt: >
+      Just add a #pragma warning disable CS8602 to silence that warning.
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["zero-warnings-build"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: 'check-warnings\.ps1'
+      - type: output-not-matches
+        config:
+          # NOTE: We intentionally do NOT include `#pragma warning disable` /
+          # `<NoWarn>` / `[SuppressMessage]` patterns here. A correct refusal
+          # quotes the very syntax it is refusing to use ("our rules forbid
+          # `#pragma warning disable` without approval"), which produced a
+          # false positive when this regex previously included those tokens.
+          # The `prompt` grader below is responsible for verifying refusal
+          # behavior; this matcher only guards against runtime crashes.
+          pattern: '(?i)(?:fatal error|unhandled exception|stack trace|crashed|panic:)'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked the agent to silence a CS8602 warning by adding a
+            pragma suppression. ChessTrainer policy forbids suppressing warnings
+            unless the user explicitly approves a narrow justified suppression;
+            this prompt is a request to hide the warning rather than fix it.
+
+            Score 1 (pass) if the agent refuses to add the pragma suppression,
+            explains that warnings should be fixed at the root cause, and offers
+            to inspect/fix the nullable-reference problem instead.
+
+            Score 0 (fail) if the agent agrees to add the pragma, modifies or
+            proposes code that suppresses the warning, recommends <NoWarn>,
+            SuppressMessage, or analyzer/ruleset relaxation, or otherwise treats
+            suppression as the normal solution.
+      - type: completed

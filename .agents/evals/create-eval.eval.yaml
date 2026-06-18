@@ -1,0 +1,588 @@
+name: create-eval
+description: >
+  Validates the create-eval skill: it should trigger when users need a new or
+  substantially revised Vally eval spec, run the Vally lint validation loop,
+  produce high-quality eval YAML, and stay silent for explanation-only,
+  run-only, review-only, or skill-authoring requests.
+version: "1.0"
+type: capability
+
+# Root-level tags inherited by every stimulus (each stimulus may add its own).
+tags:
+  type: integration
+  skill: create-eval
+
+config:
+  # Each trial may author a YAML file and invoke `vally lint`, so keep the run
+  # count lower than cheap static evals while still getting repeated signal.
+  runs: 3
+  timeout: 8m
+  executor: copilot-sdk
+  model: claude-sonnet-4.6
+
+environment:
+  # Skill paths are relative to THIS YAML file, not the repository root.
+  skills:
+    - ../skills/create-eval
+scoring:
+  # Weights match stockfish-cli.eval.yaml and are chosen so each grader is
+  # "binding" at threshold: 0.9 — failing any single grader drops the weighted
+  # aggregate below 0.9 and fails the trial. Math (positive stimulus, 5 graders,
+  # total weight 8.5):
+  #   - lose skill-invocation (2.0)  → 6.5/8.5 = 0.765
+  #   - lose tool-calls       (1.5)  → 7.0/8.5 = 0.824
+  #   - lose file-matches     (2.5)  → 6.0/8.5 = 0.706
+  #   - lose prompt           (2.5)  → 6.0/8.5 = 0.706
+  #   - lose output-not-match (1.5)  → 7.0/8.5 = 0.824
+  #   - lose completed        (1.0)  → 7.5/8.5 = 0.882
+  # All < 0.9, so every grader genuinely matters. Correctness graders
+  # (file-matches / prompt) are weighted 2.5 specifically so bad eval YAML
+  # or bad routing rationale cannot pass even if every other grader is green.
+  weights:
+    skill-invocation: 2.0
+    tool-calls: 1.5
+    output-not-matches: 1.5
+    file-matches: 2.5
+    prompt: 2.5
+    completed: 1.0
+  # 0.9 makes every grader binding (see weight math above). With runs: 3 we
+  # measure repeated behavior without making this meta-eval unnecessarily slow.
+  threshold: 0.9
+
+# Root-level constraints apply to every stimulus. Keeps trials bounded so a
+# misbehaving agent can't loop indefinitely or run up huge token bills.
+constraints:
+  max_turns: 15
+  max_tokens: 4000
+
+# -----------------------------------------------------------------------------
+# Helper grader patterns used across this suite.
+#
+# Positive tool-call graders use a multi-matcher form:
+#   1. `vally lint`                 ↳ proves the documented validation loop ran
+#   2. `-e` / `--eval-spec`       ↳ proves lint targeted a specific eval spec
+#   3. `<safe tmp>*.eval.yaml`      ↳ proves a YAML eval path was involved
+#   4. create/edit/view + path args ↳ best-effort evidence the executor touched
+#                                      an eval YAML file through file tools
+#
+# The fourth matcher is intentionally paired with a prompt grader rather than
+# relied on for all semantic checks: Copilot executors can represent file writes
+# with `create`, `edit`, or shell redirection depending on the environment.
+# The prompt grader is the fallback that verifies the substantive outcome:
+# a real eval YAML was authored or revised and has the required structure.
+# -----------------------------------------------------------------------------
+
+stimuli:
+  # ---------------------------------------------------------------------------
+  # 1. Positive: author a brand-new eval for a small CLI-backed hypothetical
+  #    skill. The prompt is intent-based and does not say "use create-eval".
+  #    It verifies the skill produces a full eval skeleton, includes positive
+  #    and negative routing cases, checks jq usage via multi-matcher tool-calls,
+  #    and runs `vally lint` on the safe scratch path.
+  # ---------------------------------------------------------------------------
+  - name: author-json-prettifier-from-scratch
+    tags:
+      tier: full
+      area: response-quality
+      cost: llm
+    prompt: >
+      I have a skill called `json-prettifier` that runs `jq . <file>` to
+      pretty-print JSON. Write me a Vally eval that validates it triggers on
+      JSON-formatting requests, calls jq, and stays silent on questions about
+      JSON syntax. Put the eval at `./tmp-create-eval-json-prettifier.eval.yaml`.
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["create-eval"]
+      - type: tool-calls
+        config:
+          # Multi-matcher: these can be satisfied by separate calls, so the
+          # agent may create/edit first and lint later without false negatives.
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\b(?:vally|@microsoft[\/]vally-cli)\b.*?\blint\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?:^|\s)(?:-e\b|--eval-spec\b)'
+            - name: "^(bash|powershell|shell)$"
+              command: 'tmp-create-eval-json-prettifier\.eval\.yaml'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked for a new Vally eval for a hypothetical
+            `json-prettifier` skill that formats JSON by running `jq . <file>`.
+
+            Score 1 (pass) if the agent authored or revised an eval YAML that:
+              - Uses Vally's eval-spec skeleton with root fields such as
+                `name`, `description`, `version`, `type`, `config`,
+                `environment.skills`, `scoring`, `constraints`, and `stimuli`.
+              - Uses `name:` for stimulus identifiers, not `id:`.
+              - Uses a duration string for `timeout:`.
+              - Includes at least one positive stimulus for JSON-formatting
+                intent and at least one negative stimulus for JSON syntax or
+                explanation-only questions.
+              - Requires the `json-prettifier` skill for positive stimuli and
+                disallows it for negative stimuli.
+              - Checks jq execution with a split / multi-matcher `tool-calls`
+                pattern rather than one brittle all-in-one regex.
+              - Includes common `completed` and runtime-failure
+                `output-not-matches` graders.
+              - Runs or instructs validation with `vally lint --eval-spec` for
+                the scratch eval path.
+
+            Score 0 (fail) if the response only gives general advice, omits the
+            actual eval YAML, uses `id:` as stimulus identifiers, has no
+            negative routing cases, does not check jq usage, or does not run or
+            clearly attempt the lint validation loop.
+      # Common graders (apply to every stimulus): `completed` guards against
+      # empty output; `output-not-matches` catches fatal errors and crashes.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 2. Positive: substantially revise an eval for a real, concrete behavior
+  #    change without clobbering the repository's reference stockfish eval.
+  #    The prompt requires a scratch copy and a new depth-flag stimulus.
+  # ---------------------------------------------------------------------------
+  - name: revise-stockfish-depth-flag-copy
+    tags:
+      tier: full
+      area: configuration
+      cost: llm
+    prompt: >
+      I added a new `--depth` flag to my stockfish-cli skill. Make a scratch
+      copy of `./stockfish-cli.eval.yaml` at
+      `./tmp-create-eval-stockfish-depth.eval.yaml`, then update only that copy
+      to add a stimulus that verifies the depth flag is passed through. Validate
+      the scratch eval with Vally lint.
+    # Stage the real stockfish-cli eval at the workdir root so the agent
+    # does not have to hunt through the filesystem to find it. The prompt
+    # references `./stockfish-cli.eval.yaml` (relative to workdir), which
+    # is precisely what this staged file provides.
+    environment:
+      files:
+        - src: ./stockfish-cli.eval.yaml
+          dest: stockfish-cli.eval.yaml
+    graders:
+      # NOTE: We deliberately do NOT require `skill-invocation: create-eval`
+      # here. Empirically, agents performing a routine revision often do
+      # the right work (copy → add stimulus → lint) without formally
+      # loading the SKILL.md via the `skill` tool. That's acceptable
+      # behavior for a clear, well-scoped revision task. We judge the
+      # OUTCOME (correct copy, valid stimulus, lint passes) rather than
+      # the routing mechanism.
+      - type: tool-calls
+        config:
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\b(?:vally|@microsoft[\/]vally-cli)\b.*?\blint\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?:^|\s)(?:-e\b|--eval-spec\b)'
+            - name: "^(bash|powershell|shell)$"
+              command: 'tmp-create-eval-stockfish-depth\.eval\.yaml'
+          # NOTE: previously had a `disallowed` rule on (create|edit) with an
+          # args.path filter to forbid editing the REAL stockfish-cli eval.
+          # Vally's tool-calls grader only supports `name`/`command`/`path`
+          # filters — `args.path` is silently ignored, so the disallow fired
+          # on every create/edit call and broke this stimulus (which legit-
+          # imately must edit the scratch copy). The prompt grader below
+          # already verifies the original file was preserved.
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked to update a scratch copy of the stockfish-cli eval so
+            it verifies a new `--depth` flag is passed through. A staged copy
+            of the original eval is provided at `./stockfish-cli.eval.yaml`
+            in the agent's working directory.
+
+            Score 1 (pass) if the agent's work/result shows that it:
+              - Preserved the original `./stockfish-cli.eval.yaml` (the
+                staged copy in the workdir) and worked on
+                `./tmp-create-eval-stockfish-depth.eval.yaml`.
+              - Added a meaningful stimulus covering a user-specified depth
+                configuration.
+              - Uses a robust flag regex such as `(?:^|\s)--depth\b` or an
+                equivalent whitespace/start anchored pattern, not `\b--depth\b`.
+              - Requires the relevant skill on the positive stimulus and checks
+                tool-call behavior with split matchers rather than one brittle
+                all-in-one regex.
+              - Keeps common `completed` and runtime-failure guards.
+              - Runs or clearly attempts `vally lint --eval-spec` (or the
+                npx equivalent) on the scratch eval path.
+
+            Score 0 (fail) if it modifies the real stockfish eval directly,
+            omits a depth-specific stimulus, uses a brittle `\b--depth\b`
+            pattern, or skips lint validation.
+      # The agent's output here describes new graders being added — including
+      # references to error patterns (`fatal error`, `stack trace`, etc.) the
+      # eval-under-test would check for. That triggers false positives on the
+      # standard runtime-failure regex (verified: agent wrote "and no fatal
+      # errors" in prose summary). For this stimulus we omit the
+      # runtime-failure guard and rely on `completed` + the prompt grader
+      # above to catch genuine failures.
+      - type: completed
+
+  # ---------------------------------------------------------------------------
+  # 3. Positive: author an eval for a non-CLI / in-process skill. This checks
+  #    that the create-eval workflow can drop target-skill tool-call assertions
+  #    when no underlying tool exists and use prompt / output graders instead.
+  # ---------------------------------------------------------------------------
+  - name: author-non-cli-markdown-summarizer
+    tags:
+      tier: full
+      area: response-quality
+      cost: llm
+    prompt: >
+      I have an in-process skill called `markdown-summarizer`. It doesn't shell
+      out to any CLI; it just reads Markdown text and produces a concise summary
+      with key bullets. Write a Vally eval for it at
+      `./tmp-create-eval-markdown-summarizer.eval.yaml`.
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["create-eval"]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\b(?:vally|@microsoft[\/]vally-cli)\b.*?\blint\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?:^|\s)(?:-e\b|--eval-spec\b)'
+            - name: "^(bash|powershell|shell)$"
+              command: 'tmp-create-eval-markdown-summarizer\.eval\.yaml'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked for an eval for an in-process `markdown-summarizer`
+            skill that does not invoke a CLI.
+
+            Score 1 (pass) if the authored eval:
+              - Contains a complete Vally eval-spec structure with `name`,
+                `environment.skills`, `scoring`, `constraints`, and `stimuli`.
+              - Includes positive stimuli for summarizing Markdown and negative
+                stimuli for Markdown syntax / explanation-only requests.
+              - Uses `skill-invocation` for routing.
+              - Does NOT require a target-skill `tool-calls` grader for a
+                nonexistent CLI. It may still use `tool-calls` only for the
+                meta-level Vally lint validation loop.
+              - Uses `prompt` and/or deterministic output graders to judge the
+                summary quality.
+              - Includes common `completed` and runtime-failure guards.
+              - Runs or clearly attempts `vally lint --eval-spec` on the
+                scratch eval path.
+
+            Score 0 (fail) if the eval invents a fake CLI requirement for the
+            target skill, lacks negative stimuli, omits correctness graders for
+            the generated summaries, or skips lint validation.
+      # Common graders (apply to every stimulus).
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 4. Positive: lint and fix an intentionally broken draft eval. This tests
+  #    the core validation loop and documented fixes for common gotchas:
+  #    `id:` must become `name:`, and `timeout:` must be a duration string.
+  # ---------------------------------------------------------------------------
+  - name: lint-and-fix-broken-draft
+    tags:
+      tier: full
+      area: error-handling
+      cost: llm
+    prompt: |
+      Here's a draft eval YAML. Please lint it, fix the issues, and save the
+      corrected spec to `./tmp-create-eval-fixed-draft.eval.yaml`:
+
+      ```yaml
+      name: tiny-demo
+      description: Broken draft for a tiny demo skill.
+      version: "1.0"
+      type: capability
+      config:
+        runs: 1
+        timeout: 180
+        executor: copilot-sdk
+        model: claude-sonnet-4.6
+      environment:
+        skills:
+          - ../skills/tiny-demo/SKILL.md
+      scoring:
+        weights:
+          skill-invocation: 2.0
+          completed: 1.0
+        threshold: 0.9
+      constraints:
+        max_turns: 5
+        max_tokens: 1000
+      stimuli:
+        - id: formats-json
+          prompt: Format this JSON: {"b":2,"a":1}
+          graders:
+            - type: skill-invocation
+              config:
+                required: ["tiny-demo"]
+            - type: completed
+      ```
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["create-eval"]
+      - type: tool-calls
+        config:
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\b(?:vally|@microsoft[\/]vally-cli)\b.*?\blint\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?:^|\s)(?:-e\b|--eval-spec\b)'
+            - name: "^(bash|powershell|shell)$"
+              command: 'tmp-create-eval-fixed-draft\.eval\.yaml'
+      # This stimulus uses `file-matches` so correctness is based on the fixed
+      # YAML content rather than fragile final-response phrasing.
+      - type: file-matches
+        config:
+          path: tmp-create-eval-fixed-draft.eval.yaml
+          # Assert all three top-tier fixes the agent was supposed to make:
+          #   (1) name: replaces the broken id: on each stimulus
+          #   (2) timeout: is a duration string (e.g. 2m / 120s), not a bare number
+          #   (3) environment.skills entries are DIRECTORIES — the broken draft
+          #       had `- ../skills/tiny-demo/SKILL.md` which Vally rejects (the
+          #       basename "SKILL.md" is treated as a directory name by
+          #       pipeline/run.js:620). The fixed file should have just
+          #       `- ../skills/tiny-demo` with no SKILL.md suffix.
+          # Regex needs the `m` flag (multiline) so `$` in the third lookahead
+          # matches end-of-LINE, not end-of-string. Without it, the regex only
+          # passed when the skills entry was the very last line of the file —
+          # which is never true for a real eval YAML that has stimuli/graders
+          # after the skills block.
+          pattern: '(?ims)(?=.*name:\s+\S+)(?=.*timeout:\s+\d+\s*[smh]\b)(?=.*-\s+\.\./skills/tiny-demo\s*$)(?!.*\.\./skills/tiny-demo/SKILL\.md)'
+      # Common graders (apply to every stimulus).
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 5. Negative (meta / explanation): a conceptual question about Vally should
+  #    get an explanation, not an authored eval file or lint loop.
+  # ---------------------------------------------------------------------------
+  - name: meta-what-is-vally
+    tags:
+      tier: smoke
+      area: routing
+      cost: llm
+    prompt: >
+      What is Vally, and how do Vally evals work at a high level? I'm looking
+      for a short explanation, not a new eval file.
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["create-eval"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bvally\s+(?:lint|eval)\b|@microsoft[\/]vally-cli|npm\s+install|npx\s+-y\s+@microsoft[\/]vally-cli'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked for a high-level explanation of Vally, explicitly not
+            for a new eval file.
+
+            Score 1 (pass) if the response demonstrates Recognition /
+            Restraint / Redirection:
+              - Recognition: it treats this as an explanation request about the
+                eval framework, not as an authoring task.
+              - Restraint: it does not create or edit eval YAML and does not run
+                `vally lint` or `vally eval`.
+              - Redirection: it briefly explains that Vally runs stimuli through
+                an executor and grades trajectories / outputs, and optionally
+                suggests asking for an eval spec if the user wants one later.
+
+            Score 0 (fail) if the response invokes the eval-authoring workflow,
+            writes YAML, runs Vally commands, or refuses to answer the concept
+            question without a reason.
+      # Common graders (apply to every stimulus).
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 6. Negative (out-of-scope run): running an existing eval without modifying
+  #    it is explicitly outside create-eval's trigger. A generic agent may run
+  #    `vally eval`, but it should not invoke this skill or author YAML.
+  # ---------------------------------------------------------------------------
+  - name: run-existing-eval-only
+    tags:
+      tier: full
+      area: routing
+      cost: llm
+    prompt: >
+      Run my existing chess-visualizer eval and tell me the pass rate. Do not
+      modify the eval spec; I only want the current results.
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["create-eval"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bvally\s+lint\b|@microsoft[\/]vally-cli|npm\s+install|npx\s+-y\s+@microsoft[\/]vally-cli'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked to run an existing eval and report its pass rate, not
+            to author or revise an eval spec.
+
+            Score 1 (pass) if the response demonstrates Recognition /
+            Restraint / Redirection:
+              - Recognition: it treats this as a run/report task for an existing
+                eval, not an eval-authoring task.
+              - Restraint: it does not create or edit eval YAML and does not run
+                `vally lint` as an authoring validation loop.
+              - Redirection: it either runs the existing eval with an appropriate
+                `vally eval --eval-spec ...` command and reports results, or
+                explains what prevented running it and gives the exact command
+                the user can run.
+
+            Score 0 (fail) if it invokes the authoring workflow, modifies the
+            eval spec, creates a new eval, or lints/fixes YAML instead of
+            focusing on the requested pass rate.
+      # Common graders (apply to every stimulus).
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 7. Negative (review-only / no changes): feedback-only review is not a
+  #    substantial revision when the user explicitly says not to change files.
+  #    Disallow both lint and file edits to keep the boundary unambiguous.
+  # ---------------------------------------------------------------------------
+  - name: review-only-no-changes
+    tags:
+      tier: smoke
+      area: routing
+      cost: llm
+    prompt: |
+      I just want feedback and commentary on this eval YAML. Please don't
+      change anything and don't run commands.
+
+      ```yaml
+      name: review-only-demo
+      version: "1.0"
+      type: capability
+      config:
+        runs: 1
+        timeout: 120
+      stimuli:
+        - id: vague-case
+          prompt: Do the thing.
+      ```
+    graders:
+      # NOTE: We deliberately do NOT use a `disallowed: ["create-eval"]`
+      # skill-invocation grader here. Loading SKILL.md (via the `skill` tool)
+      # to make the routing decision counts as activation in Vally's
+      # tracking, even when the agent correctly decides NOT to execute the
+      # workflow. We rely on the prompt grader below (which checks
+      # observable behavior) and the tool-calls disallow on file edits +
+      # Vally commands.
+      - type: tool-calls
+        config:
+          disallowed:
+            # No file edits — the user said "don't change anything".
+            - name: "^(create|edit|write_file)$"
+            # No Vally commands — the user said "don't run commands".
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\b(?:vally|@microsoft[\/]vally-cli)\b.*?\b(?:lint|eval)\b|npm\s+install|npx\s+-y\s+@microsoft[\/]vally-cli'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user explicitly asked ONLY for feedback/commentary on inline
+            YAML and said not to change anything or run commands.
+
+            NOTE FOR THE JUDGE: this is a behavioral test. The agent may
+            have loaded the create-eval SKILL.md to decide how to respond —
+            that is acceptable and does not constitute "invoking the
+            authoring workflow." What matters is what the agent ACTUALLY
+            DID and WHAT IT PRODUCED, not which skills it consulted
+            internally.
+
+            Score 1 (pass) if the agent's final response:
+              - Provides useful review feedback on the inline YAML (e.g.,
+                noting that the stimulus should use `name:` not `id:`,
+                that `timeout: 120` should be a duration string like `2m`,
+                that the spec needs `graders:` or other required sections,
+                etc.)
+              - Does NOT modify any files
+              - Does NOT run `vally lint` / `vally eval` / `npx
+                @microsoft/vally-cli ...` or similar Vally workflow
+                commands
+
+            Score 0 (fail) if the agent:
+              - Edits or creates files (any file)
+              - Runs Vally commands
+              - Refuses to give review comments at all
+              - Produces output that is just "I loaded the skill" with no
+                substantive feedback
+      # Common graders (apply to every stimulus).
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 8. Negative (wrong intent): writing the skill being tested itself is outside
+  #    create-eval's scope. The agent should route toward skill-authoring help,
+  #    not produce or lint an eval spec.
+  # ---------------------------------------------------------------------------
+  - name: write-skill-md-not-eval
+    tags:
+      tier: full
+      area: routing
+      cost: llm
+    prompt: >
+      Help me write a SKILL.md for a new `csv-prettifier` skill that formats CSV
+      files consistently. I need the skill instructions themselves, not an eval.
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["create-eval"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bvally\s+(?:lint|eval)\b|@microsoft[\/]vally-cli|npm\s+install|npx\s+-y\s+@microsoft[\/]vally-cli'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked for a SKILL.md for a new `csv-prettifier` skill, not
+            for an eval spec.
+
+            Score 1 (pass) if the response demonstrates Recognition /
+            Restraint / Redirection:
+              - Recognition: it treats the request as skill-instruction
+                authoring, not eval-spec authoring.
+              - Restraint: it does not invoke the eval-authoring workflow, write
+                `.eval.yaml`, or run Vally lint/eval commands.
+              - Redirection: it helps with SKILL.md content or explains what
+                information is needed to author the skill instructions.
+
+            Score 0 (fail) if it creates an eval spec, runs Vally commands,
+            invokes the eval-authoring skill, or ignores the request for
+            SKILL.md content.
+      # Common graders (apply to every stimulus).
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'

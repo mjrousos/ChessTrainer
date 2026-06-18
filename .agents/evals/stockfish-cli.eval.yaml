@@ -1,0 +1,814 @@
+name: stockfish-cli
+description: >
+  Validates the stockfish-cli skill: it should trigger for chess engine analysis
+  (best moves, position evaluation, mate searches), invoke the real stockfish
+  binary with a real UCI search, avoid the unsafe Windows-pipe pattern, and stay
+  silent on general chess Q&A that doesn't require an engine.
+version: "1.0"
+type: capability
+
+# Root-level tags inherited by every stimulus (each stimulus may add its own).
+tags:
+  type: integration
+  skill: stockfish-cli
+
+config:
+  runs: 3
+  timeout: 5m
+  executor: copilot-sdk
+  model: claude-sonnet-4.6
+
+environment:
+  skills:
+    - ../skills/stockfish-cli
+scoring:
+  # Weights chosen so each grader is "binding" at threshold: 0.9 — i.e.
+  # failing any single grader drops the weighted aggregate below 0.9 and
+  # fails the trial. Math (positive stimulus, 5 graders, total weight 8.5):
+  #   - lose skill-invocation (2.0)  → 6.5/8.5 = 0.765
+  #   - lose tool-calls       (1.5)  → 7.0/8.5 = 0.824
+  #   - lose output-matches   (2.5)  → 6.0/8.5 = 0.706
+  #   - lose prompt           (2.5)  → 6.0/8.5 = 0.706
+  #   - lose output-not-match (1.5)  → 7.0/8.5 = 0.824
+  #   - lose completed        (1.0)  → 7.5/8.5 = 0.882
+  # All < 0.9, so every grader genuinely matters. Correctness graders
+  # (output-matches / prompt) are weighted 2.5 specifically so a wrong
+  # chess answer cannot pass even if every other grader is green.
+  weights:
+    skill-invocation: 2.0
+    tool-calls: 1.5
+    output-not-matches: 1.5
+    output-matches: 2.5
+    prompt: 2.5
+    completed: 1.0
+  # 0.9 makes every grader binding (see weight math above). With runs: 3
+  # we measure invocation/correctness rate per trial; this threshold is
+  # per-trial, and pass@3 / pass^3 statistics are reported separately.
+  threshold: 0.9
+
+# Root-level constraints apply to every stimulus. Keeps trials bounded so a
+# misbehaving agent can't loop indefinitely or run up huge token bills.
+constraints:
+  max_turns: 10
+  max_tokens: 2000
+
+# -----------------------------------------------------------------------------
+# Helper grader patterns used across "should invoke" stimuli.
+# Inlined per stimulus below (Vally has no native YAML-anchor support guarantee
+# in lint), but documented here for reviewer convenience:
+#
+#   required tool calls (multi-matcher — each satisfied by ANY single tool call):
+#     1. command: stockfish        ↳ proves the binary was invoked
+#     2. command: \bposition\b     ↳ proves a position was set up
+#     3. command: \bgo\b           ↳ proves a search was actually run
+#   ↳ Together these prove the agent ran a real UCI search. The matchers are
+#     deliberately split so that BOTH invocation styles work:
+#       - single-shell-call: `printf '...uci...position...go...' | stockfish`
+#       - PowerShell co-process: launch stockfish in one call, send UCI
+#         commands across subsequent calls (no single command contains
+#         every keyword, so a single all-in-one regex would false-negative).
+#
+#   disallowed tool call (Windows pipe anti-pattern):
+#     name:    ^powershell$
+#     command: (?i)\|\s*(?:&\s*)?\.?[\\/]?stockfish(?:\.exe)?\b
+#   ↳ The skill explicitly warns that `... | stockfish` on PowerShell can abort
+#     the search at depth 0/1 and return wrong answers (SKILL.md lines 13-17).
+#     The skill must use the co-process pattern, not a pipe. The matcher is
+#     case-insensitive and accepts call-operator / path-prefix variants.
+# -----------------------------------------------------------------------------
+
+stimuli:
+  # ---------------------------------------------------------------------------
+  # 1. Skill IS invoked when asked for the best move from the standard
+  #    starting position. Prompt deliberately does NOT mention an "engine" —
+  #    the skill should naturally trigger from intent alone.
+  # ---------------------------------------------------------------------------
+  - name: best-move-starting-position
+    tags:
+      tier: smoke
+      area: response-quality
+      cost: free
+    prompt: >
+      What is White's strongest opening move from the standard starting
+      position? Answer with a single move in long algebraic notation
+      (e.g. "e2e4").
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["stockfish-cli"]
+      - type: tool-calls
+        config:
+          # Multi-matcher: each `required` entry is satisfied by ANY single
+          # tool call, so this tolerates both bundled-into-one-command and
+          # PowerShell-co-process invocation styles. Together they still
+          # prove: (a) the stockfish binary was used, (b) a position was
+          # set up, (c) a search was actually run.
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'stockfish'
+            - name: "^(bash|powershell|shell)$"
+              command: '\bposition\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '\bgo\b'
+          disallowed:
+            - name: "^powershell$"
+              command: '(?i)\|\s*(?:&\s*)?\.?[\\/]?stockfish(?:\.exe)?\b'
+      # Stockfish's top picks from startpos are well-known main openings.
+      - type: output-matches
+        config:
+          pattern: '\b(e2e4|d2d4|c2c4|g1f3)\b'
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 2. Skill IS invoked for evaluating a specific FEN position. Prompt does
+  #    NOT mention an "engine" — natural intent should trigger the skill.
+  # ---------------------------------------------------------------------------
+  - name: evaluate-italian-game-fen
+    tags:
+      tier: full
+      area: response-quality
+      cost: llm
+    prompt: >
+      In this position, which side is better and by roughly how much (in
+      centipawns or pawns)?
+      r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["stockfish-cli"]
+      - type: tool-calls
+        config:
+          # Multi-matcher: each `required` entry is satisfied by ANY single
+          # tool call, so this tolerates both bundled-into-one-command and
+          # PowerShell-co-process invocation styles. Together they still
+          # prove: (a) the stockfish binary was used, (b) a position was
+          # set up, (c) a search was actually run.
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'stockfish'
+            - name: "^(bash|powershell|shell)$"
+              command: '\bposition\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '\bgo\b'
+          disallowed:
+            - name: "^powershell$"
+              command: '(?i)\|\s*(?:&\s*)?\.?[\\/]?stockfish(?:\.exe)?\b'
+      # Use an LLM judge here — natural-language evaluations vary too much in
+      # wording for a regex to reliably grade. The judge checks that the
+      # response correctly identifies White as having a small advantage (or
+      # the position as roughly equal) consistent with Stockfish's eval.
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked which side is better in this chess position and
+            by roughly how much (in centipawns or pawns):
+
+              FEN: r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4
+
+            This is the Italian Game / Two Knights Defense main line. The
+            objectively correct engine evaluation (Stockfish at reasonable
+            depth) is a very small White advantage, roughly +0.0 to +0.3
+            pawns (about 0 to +30 centipawns) — essentially equal with a
+            slight pull for White.
+
+            Score 1 (pass) if the agent's final answer is consistent with
+            this evaluation. That means the answer must either:
+              - identify White as (slightly / marginally / very mildly)
+                better, OR
+              - describe the position as roughly equal / approximately even
+                / balanced with at most a tiny edge for White, OR
+              - give a numeric evaluation in the range roughly 0.00 to
+                +0.50 pawns (or 0 to +50 centipawns) from White's
+                perspective.
+
+            Score 0 (fail) if the answer:
+              - says Black is better, OR
+              - claims a large advantage for either side (more than ~0.5
+                pawns / 50 cp), OR
+              - gives a numeric evaluation with the wrong sign (i.e.
+                negative from White's perspective), OR
+              - fails to give an evaluation at all.
+
+            Ignore minor wording differences. Focus only on whether the
+            substantive evaluation is correct.
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+      - type: pairwise
+        config:
+          prompt: |
+            Which response better assesses the position?
+
+            This is the Italian Game / Two Knights Defense main line. The
+            objectively correct engine evaluation (Stockfish at reasonable
+            depth) is a very small White advantage, roughly +0.0 to +0.3
+            pawns (about 0 to +30 centipawns) — essentially equal with a
+            slight pull for White.
+
+            The better response will correctly identify White as having a 
+            small advantage or the position as roughly equal, consistent with 
+            engine evaluation. If numeric evaluations are given, the better
+            response will give an evaluation in the range of 0.00 to +0.50 pawns 
+            from White's perspective.
+          # Threshold of 0.5 would prevent regression whereas > 0.5 means the second run needs to be better than the first.
+          threshold: 0.7
+
+  # ---------------------------------------------------------------------------
+  # 3. Skill IS invoked for a mate-in-1 puzzle. Prompt explicitly asks for a
+  #    forced mate — engine search is the natural way to verify it.
+  # ---------------------------------------------------------------------------
+  - name: fools-mate-mate-in-1
+    tags:
+      tier: smoke
+      area: response-quality
+      cost: free
+    prompt: >
+      In the position after 1.g4 e5 2.f3 (Black to move), find Black's forced
+      mate in one. Give the answer in long algebraic notation.
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["stockfish-cli"]
+      - type: tool-calls
+        config:
+          # Multi-matcher: each `required` entry is satisfied by ANY single
+          # tool call, so this tolerates both bundled-into-one-command and
+          # PowerShell-co-process invocation styles. Together they still
+          # prove: (a) the stockfish binary was used, (b) a position was
+          # set up, (c) a search was actually run.
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'stockfish'
+            - name: "^(bash|powershell|shell)$"
+              command: '\bposition\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '\bgo\b'
+          disallowed:
+            - name: "^powershell$"
+              command: '(?i)\|\s*(?:&\s*)?\.?[\\/]?stockfish(?:\.exe)?\b'
+      - type: output-matches
+        config:
+          # Accept multiple SAN forms agents reach for:
+          #   d8h4         — UCI long algebraic (what stockfish emits)
+          #   Qh4          — bare SAN (no disambiguator needed)
+          #   Qd8h4 / Qd8-h4 / Qd8h4# — SAN with disambiguator (Opus/Claude tend to
+          #                              add the source square when explaining)
+          pattern: '(?i)(?:d8[- ]?h4|Q(?:d8[- ]?)?h4#?)'
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 4. Skill IS invoked for a tactical "best move" puzzle from a FEN
+  #    (Scholar's-mate position; only Qxf7# = h5f7 wins). Prompt is intent-
+  #    based ("best move") with no engine hint.
+  # ---------------------------------------------------------------------------
+  - name: scholars-mate-tactic
+    tags:
+      tier: smoke
+      area: response-quality
+      cost: free
+    prompt: >
+      What is the best move for White here? Reply in long algebraic notation:
+      r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["stockfish-cli"]
+      - type: tool-calls
+        config:
+          # Multi-matcher: each `required` entry is satisfied by ANY single
+          # tool call, so this tolerates both bundled-into-one-command and
+          # PowerShell-co-process invocation styles. Together they still
+          # prove: (a) the stockfish binary was used, (b) a position was
+          # set up, (c) a search was actually run.
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'stockfish'
+            - name: "^(bash|powershell|shell)$"
+              command: '\bposition\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '\bgo\b'
+          disallowed:
+            - name: "^powershell$"
+              command: '(?i)\|\s*(?:&\s*)?\.?[\\/]?stockfish(?:\.exe)?\b'
+      - type: output-matches
+        config:
+          pattern: '(?i)(h5f7|Qxf7#?|Qf7#?)'
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+      - type: pairwise
+        config:
+          prompt: |
+            Which response better solves this Scholar's-mate-style tactical puzzle?
+
+            The position has White to move with the queen on h5 and bishop
+            on c4, against Black's defensive setup with knight on f6. The
+            ONLY winning move is `Qxf7#` (UCI: `h5f7`) — checkmate, because
+            f7 is undefended (the knight on f6 attacks h5 but does NOT
+            defend f7) and the king on e8 has no escape squares.
+
+            The better response will name the correct move (h5f7 / Qxf7# /
+            Qf7#) and ideally explain WHY it works (mate, f7 undefended,
+            king has no flight squares). Responses that name a different
+            move, miss the mate, or claim the position has no winning
+            tactic are clearly worse. Among responses that find the mate,
+            prefer ones that show the engine output / depth confirming the
+            verdict (mate score) over ones that assert it from memory.
+          # Threshold of 0.5 would prevent regression whereas > 0.5 means the second run needs to be better than the first.
+          threshold: 0.7            
+
+  # ---------------------------------------------------------------------------
+  # 5. Skill IS invoked when given a PGN move list (not a FEN). The skill
+  #    should feed `position startpos moves ...` to stockfish.
+  # ---------------------------------------------------------------------------
+  - name: best-move-from-pgn
+    tags:
+      tier: smoke
+      area: response-quality
+      cost: free
+    prompt: >
+      Given the moves 1. e4 e5 2. Nf3 Nc6 3. Bb5 (Ruy López), what does the
+      engine consider Black's best reply? Give the move in long algebraic
+      notation.
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["stockfish-cli"]
+      - type: tool-calls
+        config:
+          # Multi-matcher (tolerates split tool calls). The PGN-specific
+          # requirement is the `position startpos moves ...` matcher: that
+          # exact UCI syntax is a single command so it'll always appear in
+          # one shell call regardless of invocation style, and it proves
+          # the agent fed the move list rather than analyzing startpos.
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'stockfish'
+            - name: "^(bash|powershell|shell)$"
+              command: '\bposition\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '\bgo\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bposition\s+startpos\s+moves\b'
+          disallowed:
+            - name: "^powershell$"
+              command: '(?i)\|\s*(?:&\s*)?\.?[\\/]?stockfish(?:\.exe)?\b'
+      # Main-line replies from Stockfish in this position are 3...a6 (a7a6),
+      # 3...Nf6 (g8f6), or 3...Nge7 (g8e7). Any is acceptable.
+      - type: output-matches
+        config:
+          pattern: '(?i)(a7a6|g8f6|g8e7|\bNf6\b|\bNge7\b|\ba6\b)'
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+      - type: pairwise
+        config:
+          prompt: |
+            Which response better answers what Black's best reply is in
+            the Ruy López after 1. e4 e5 2. Nf3 Nc6 3. Bb5?
+
+            Stockfish's main-line replies in this position are 3...a6
+            (UCI: a7a6, the Morphy Defense — overwhelmingly the most
+            common at the master level), 3...Nf6 (g8f6, the Berlin
+            Defense), and 3...Nge7 (g8e7, Cozio Defense, less common but
+            engine-accepted). All three are reasonable; the better
+            response will name one of them clearly and ideally identify
+            it by name (Morphy / Berlin / Cozio).
+
+            Penalize responses that name a non-main-line move (e.g. d6,
+            f5, Bb4) without engine support, that are vague ("there are
+            many options"), or that don't actually answer the question.
+            Among responses that name a correct move, prefer ones that
+            show actual engine output (depth, score, PV) over ones that
+            assert from memory.
+          # Threshold of 0.5 would prevent regression whereas > 0.5 means the second run needs to be better than the first.
+          threshold: 0.7            
+
+  # ---------------------------------------------------------------------------
+  # 6. Skill IS invoked for a "best continuation" / main-line request, where
+  #    the user wants a multi-ply principal variation, not just one move.
+  # ---------------------------------------------------------------------------
+  - name: best-continuation-pv
+    tags:
+      tier: full
+      area: response-quality
+      cost: free
+    prompt: >
+      Show me the engine's main line (principal variation, at least 4 plies)
+      from this position. Give the line in long algebraic notation (e.g.
+      "e2e4 e7e5 g1f3 b8c6"):
+      r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["stockfish-cli"]
+      - type: tool-calls
+        config:
+          # Multi-matcher: each `required` entry is satisfied by ANY single
+          # tool call, so this tolerates both bundled-into-one-command and
+          # PowerShell-co-process invocation styles. Together they still
+          # prove: (a) the stockfish binary was used, (b) a position was
+          # set up, (c) a search was actually run.
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'stockfish'
+            - name: "^(bash|powershell|shell)$"
+              command: '\bposition\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '\bgo\b'
+          disallowed:
+            - name: "^powershell$"
+              command: '(?i)\|\s*(?:&\s*)?\.?[\\/]?stockfish(?:\.exe)?\b'
+      # PV must contain at least 4 long-algebraic moves. Separator class
+      # [\W\d]+ allows digits (move numbers like "1.", "2."), spaces, and
+      # punctuation between moves — so a numbered LAN line like
+      # "1. e2e4 e7e5 2. g1f3 b8c6" still matches.
+      - type: output-matches
+        config:
+          pattern: '(?s)(?:[a-h][1-8][a-h][1-8][qrbn]?[\W\d]+){3,}[a-h][1-8][a-h][1-8][qrbn]?'
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+      - type: pairwise
+        config:
+          prompt: |
+            Which response better gives the engine's main-line principal
+            variation (PV) from this Italian Game / Two Knights position?
+
+            The position is roughly equal with a small White edge (≈ +0.0
+            to +0.3). Common Stockfish PVs from here typically open with
+            White castling (e1g1) or playing d2d3 / b1c3, followed by
+            Black developing pieces (d7d6, f8e7, e8g8 commonly appear).
+
+            The better response will:
+              - Provide an actual multi-ply move list (at least 4 plies)
+                in a recognizable notation (UCI long-algebraic preferred,
+                SAN with proper piece letters acceptable).
+              - Use moves that are legal in the position and consistent
+                with the side-to-move sequence (White, Black, White, Black).
+              - Match a reasonable Stockfish PV — main-line developing
+                moves, not random or losing moves.
+              - Ideally include the score and depth from the engine.
+
+            Penalize responses that provide only one or two moves, give
+            illegal moves, scramble the side-to-move ordering, invent a
+            line that doesn't match any plausible engine output, or
+            answer with prose only.
+          # Threshold of 0.5 would prevent regression whereas > 0.5 means the second run needs to be better than the first.
+          threshold: 0.7            
+
+  # ---------------------------------------------------------------------------
+  # 7. Skill is invoked but recognizes a malformed FEN as invalid rather than
+  #    feeding garbage to Stockfish. The skill explicitly warns (SKILL.md
+  #    pitfall #6) that malformed FENs can crash the engine and that illegal
+  #    moves in `position ... moves ...` are silently truncated. The skill
+  #    must therefore validate FEN structure before invoking the engine, or
+  #    sanity-check the result with `d` and surface the problem to the user.
+  #
+  #    The FEN below is structurally invalid in multiple ways (only 4 ranks,
+  #    nonsense piece-placement, illegal side-to-move). Stockfish 18 either
+  #    crashes outright on input like this or silently snaps to startpos —
+  #    so an LLM judge is the only reliable way to grade "did the agent
+  #    correctly recognize this as invalid?" Note we do NOT require any
+  #    stockfish tool call here: a well-behaved skill may refuse before
+  #    invoking the engine. We DO disallow the unsafe pipe pattern if the
+  #    skill chooses to invoke stockfish at all.
+  # ---------------------------------------------------------------------------
+  - name: invalid-fen-handling
+    tags:
+      tier: full
+      area: error-handling
+      cost: llm
+    prompt: >
+      What is the best move in this position?
+      this/is/not/a/valid fen z !! - - 0 0
+    graders:
+      # Note: no `skill-invocation: required` grader here. The input is so
+      # obviously malformed that the agent can (and often does) reject it
+      # in a single turn without loading the skill or invoking Stockfish.
+      # That's the desired behavior — forcing the skill to load would waste
+      # tokens. The `prompt` grader below enforces the real contract:
+      # don't fabricate a best move on garbage input.
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^powershell$"
+              command: '(?i)\|\s*(?:&\s*)?\.?[\\/]?stockfish(?:\.exe)?\b'
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user supplied this string as a chess position and asked for
+            the best move:
+
+              this/is/not/a/valid fen z !! - - 0 0
+
+            This is not a valid FEN. A valid FEN has 8 ranks separated by
+            slashes (this one has only ~5 fields and contains bare words
+            like "is" and "valid"), the side-to-move field must be `w` or
+            `b` (here it is `z`), and the castling/en-passant/halfmove/
+            fullmove fields are also corrupt. Stockfish will either crash
+            or silently snap to the starting position on input like this.
+
+            Score 1 (pass) if the agent's final response clearly identifies
+            the input as an invalid / malformed / unparseable FEN, or
+            otherwise communicates that it cannot analyze the position
+            because the input isn't a real chess position. Wording can
+            vary — "invalid", "malformed", "not a valid FEN", "I can't
+            parse this", "this isn't a real position", "error in the FEN",
+            etc. all qualify.
+
+            Score 0 (fail) if the agent silently produces a confident
+            "best move" answer (e.g. e2e4) as though the FEN were valid,
+            or if it analyzes the standard starting position without
+            telling the user that the FEN was bad and it had to guess.
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 8. Skill IS invoked for a position that requires loading a FEN and
+  #    advancing it with specified moves before evaluating. Tests the
+  #    `position fen <FEN> moves <m1> <m2> ...` workflow end-to-end.
+  #    After Bb5 (f1b5) and ...Nxd4 (c6d4), White wins a queen with Bxd7
+  #    (b5d7) — engine eval jumps to ~ +7 pawns.
+  # ---------------------------------------------------------------------------
+  - name: load-fen-advance-then-evaluate
+    tags:
+      tier: smoke
+      area: response-quality
+      cost: free
+    prompt: >
+      In this chess position I had the white pieces and played Bb5 and then my
+      opponent played Nxd4. What is my best next move?
+      Starting position: r3k1nr/pppq1pb1/2n4p/3pP1P1/3P1Bb1/2N2N2/PPP3P1/R2QKB1R w KQkq - 3 10
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["stockfish-cli"]
+      - type: tool-calls
+        config:
+          # Multi-matcher (tolerates split tool calls). In addition to the
+          # standard stockfish/position/go checks, we require both played
+          # moves in UCI long-algebraic form to appear in some shell call
+          # (they belong to the same UCI `position` command so they'll
+          # always be in the same call). This proves the agent correctly
+          # transcribed Bb5 → f1b5 and ...Nxd4 → c6d4 from the prompt.
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'stockfish'
+            - name: "^(bash|powershell|shell)$"
+              command: '\bposition\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '\bgo\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?s)(?=.*\bf1b5\b)(?=.*\bc6d4\b)'
+          disallowed:
+            - name: "^powershell$"
+              command: '(?i)\|\s*(?:&\s*)?\.?[\\/]?stockfish(?:\.exe)?\b'
+      # Best move is Bxd7 = b5d7. Accept either notation.
+      - type: output-matches
+        config:
+          pattern: '(?i)(b5d7|Bxd7)'
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 9. Skill IS invoked AND honors a user-specified Threads configuration.
+  #    Exercises the `setoption name Threads value 8` flow documented in
+  #    references/configuration.md. The skill should set Threads BEFORE Hash
+  #    (per SKILL.md "Set Threads before Hash") and run a real search.
+  # ---------------------------------------------------------------------------
+  - name: threads-configuration
+    tags:
+      tier: full
+      area: configuration
+      cost: free
+    prompt: >
+      Please assess this chess position using Stockfish configured to run with
+      8 threads, and tell me what the best move is for White:
+      r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["stockfish-cli"]
+      - type: tool-calls
+        config:
+          # Multi-matcher (tolerates split tool calls). The Threads-8 +
+          # isready requirement is now split into two separate matchers
+          # since either can appear in its own shell call when using the
+          # PowerShell co-process pattern. We lose the strict "isready
+          # AFTER setoption Threads" ordering check, but isready is
+          # standard UCI hygiene and will appear in every well-formed
+          # session.
+          required:
+            - name: "^(bash|powershell|shell)$"
+              command: 'stockfish'
+            - name: "^(bash|powershell|shell)$"
+              command: '\bposition\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '\bgo\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)setoption\s+name\s+Threads\s+value\s+8\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '\bisready\b'
+          disallowed:
+            - name: "^powershell$"
+              command: '(?i)\|\s*(?:&\s*)?\.?[\\/]?stockfish(?:\.exe)?\b'
+      # Italian Game main line — Stockfish 18 top picks include O-O (e1g1),
+      # d2d3, b1c3 (Nc3), and f3g5 (Ng5). The exact pick depends on search
+      # depth / Threads / nondeterministic SMP, so accept any of them.
+      - type: output-matches
+        config:
+          pattern: '(?i)(e1g1|O-O|d2d3|b1c3|\bNc3\b|f3g5|\bNg5\b)'
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 10. Skill is NOT invoked for a general chess rules question — no engine
+  #    analysis is needed to explain en passant.
+  # ---------------------------------------------------------------------------
+  - name: general-rules-en-passant
+    tags:
+      tier: smoke
+      area: routing
+      cost: free
+    prompt: >
+      Can you explain the en passant rule in chess and when it can be used?
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["stockfish-cli"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: 'stockfish'
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 11. Skill is NOT invoked for general chess knowledge / history questions.
+  # ---------------------------------------------------------------------------
+  - name: general-history-question
+    tags:
+      tier: smoke
+      area: routing
+      cost: free
+    prompt: >
+      Who was the first official world chess champion, and in what year did
+      they win the title?
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["stockfish-cli"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: 'stockfish'
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 12. Skill is NOT invoked for conceptual / pedagogical questions where the
+  #     user asks for an explanation rather than engine analysis of a position.
+  # ---------------------------------------------------------------------------
+  - name: general-concept-pin-vs-skewer
+    tags:
+      tier: smoke
+      area: routing
+      cost: free
+    prompt: >
+      What is the difference between a pin and a skewer in chess? Give a short
+      conceptual explanation — I don't need any specific position analyzed.
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["stockfish-cli"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: 'stockfish'
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 13. Skill is NOT invoked when the user asks ABOUT Stockfish itself (a
+  #     meta / definitional question). The keyword "Stockfish" is a strong
+  #     cue but no position analysis is needed.
+  # ---------------------------------------------------------------------------
+  - name: meta-what-is-stockfish
+    tags:
+      tier: smoke
+      area: routing
+      cost: free
+    prompt: >
+      What is the Stockfish chess engine, who develops it, and what makes it
+      so strong compared to other engines? I'm just looking for a short
+      explanation — no need to analyze any positions.
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["stockfish-cli"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: 'stockfish'
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 14. Skill is NOT invoked when the user asks ABOUT FEN notation itself.
+  #     Mentioning "FEN" alone shouldn't trigger engine analysis.
+  # ---------------------------------------------------------------------------
+  - name: meta-what-is-fen
+    tags:
+      tier: smoke
+      area: routing
+      cost: free
+    prompt: >
+      Can you explain what a FEN string is in chess and what each of its
+      fields means? I'm trying to understand the notation — I don't have a
+      specific position I need analyzed.
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["stockfish-cli"]
+      - type: tool-calls
+        config:
+          disallowed:
+            - name: "^(bash|powershell|shell)$"
+              command: 'stockfish'
+      # Common graders (Azure Functions eval convention):
+      # `completed` guards against empty output; `output-not-matches`
+      # catches fatal errors and crashes in the agent output.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'

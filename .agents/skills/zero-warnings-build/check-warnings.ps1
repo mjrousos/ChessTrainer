@@ -40,7 +40,32 @@ param(
 
 $ErrorActionPreference = 'Continue'
 
-$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
+# Find the repo root by walking upward from this script's location until we
+# find ChessTrainer.sln. This works:
+#   - In the canonical layout: .agents/skills/zero-warnings-build/check-warnings.ps1
+#     → walks up to repo root (3 levels).
+#   - In a Vally eval workdir where the skill is staged at <workdir>/zero-warnings-build/
+#     and the solution is staged alongside it at <workdir>/ChessTrainer.sln (1 level).
+#   - Any other staging path that places the .sln on the parent chain.
+# Fails loudly if no marker is found, instead of silently resolving to a
+# wrong directory like the previous hardcoded `..\..\..` did.
+function Find-RepoRoot {
+    param([string]$StartPath = $PSScriptRoot)
+    $current = (Resolve-Path $StartPath).Path
+    while ($current) {
+        if (Test-Path (Join-Path $current 'ChessTrainer.sln')) {
+            return $current
+        }
+        $parent = Split-Path -Parent $current
+        if (-not $parent -or $parent -eq $current) {
+            break
+        }
+        $current = $parent
+    }
+    throw "Repo root not found: walked up from $StartPath without finding ChessTrainer.sln. Run this script from inside a ChessTrainer checkout."
+}
+
+$repoRoot = Find-RepoRoot
 Set-Location $repoRoot
 
 function Parse-DotnetWarnings {

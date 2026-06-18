@@ -1,0 +1,683 @@
+name: code-review
+description: >
+  Validates the code-review orchestration skill: it should trigger for PR and
+  diff review requests, fan out to multiple code-review sub-agents with explicit
+  models, gather PR/diff context, synthesize the review in the required format,
+  and stay silent on explanation or implementation requests that are not reviews.
+version: "1.0"
+type: capability
+
+# Root-level tags inherited by every stimulus (each stimulus may add its own).
+tags:
+  type: integration
+  skill: code-review
+
+config:
+  # Reviews are expensive because the orchestrator fans out to sub-agents. Keep
+  # the trial count lower than stockfish-cli while preserving repeated signal.
+  runs: 3
+  timeout: 10m
+  executor: copilot-sdk
+  model: claude-sonnet-4.6
+
+environment:
+  # Skill paths are relative to THIS eval YAML file.
+  skills:
+    - ../skills/code-review
+  # Stage repo files into the trial workdir so review/diff/edit stimuli have
+  # the actual repository to operate on. Without this, agents declined the
+  # task with "the working directory only contains a SKILL.md file, with no
+  # git repo, no diff..." Vally copies relative to THIS eval file's
+  # directory, so `../../<path>` resolves from `.agents/evals/<path>` to
+  # `<repo-root>/<path>`.
+  #
+  # We list specific entries (not `../../`) to avoid pulling in dot-prefixed
+  # directories (`.agents/`, `.github/`, `.git/`) and ignored output trees
+  # (`bin/`, `obj/`, `vally-results/`). The `commands:` step further scrubs
+  # any bin/obj/node_modules that came along inside src/ or test/ from the
+  # local checkout so trials are deterministic.
+  files:
+    - src: ../../ChessTrainer.sln
+      dest: ChessTrainer.sln
+    - src: ../../Directory.Build.props
+      dest: Directory.Build.props
+    - src: ../../Directory.Build.targets
+      dest: Directory.Build.targets
+    - src: ../../global.json
+      dest: global.json
+    - src: ../../rules.ruleset
+      dest: rules.ruleset
+    - src: ../../stylecop.json
+      dest: stylecop.json
+    - src: ../../AGENTS.md
+      dest: AGENTS.md
+    - src: ../../src/
+      dest: src/
+    - src: ../../test/
+      dest: test/
+  commands:
+    # Scrub build artifacts and node_modules carried in from the local
+    # checkout so trials are deterministic and the workdir stays small.
+    - pwsh -NoProfile -Command "Get-ChildItem -Path . -Include bin,obj,node_modules -Directory -Recurse -Force -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue"
+    # Initialize a minimal git repository so review stimuli that depend on
+    # `git diff` / `git status` / `git diff main` have something to work
+    # against. Without this the agents declined with "the working directory
+    # is not a git repository". We create a baseline `main` branch with all
+    # the staged files committed; stimuli that want a non-empty diff can
+    # then stage/modify files themselves to produce one.
+    - git init --initial-branch=main --quiet
+    - git config user.email "vally-eval@example.com"
+    - git config user.name "Vally Eval"
+    - git add -A
+    - git commit --quiet -m "baseline"
+    # Create a feature branch with one new committed file. This gives
+    # `pre-pr-diff-against-main` a real diff to review when the agent runs
+    # `git diff main` from this branch. The change is small, plain ASCII,
+    # and self-contained (a new file added) so review stimuli have an
+    # unambiguous target.
+    - git checkout -b feature/example-change --quiet
+    - pwsh -NoProfile -Command "New-Item -Path src/ChessTrainerApp/app/example-banner.ts -ItemType File -Force -Value 'export const exampleBanner = `\"Welcome to the puzzle solver!`\";' | Out-Null"
+    - git add src/ChessTrainerApp/app/example-banner.ts
+    - git commit --quiet -m "Add example banner module"
+    # Leave one file with unstaged modifications so `git status` reports
+    # changes for `unstaged-changes-review`. We append a benign comment so
+    # `git diff` shows real content; the file itself remains functional.
+    # Wrapped in single-quoted YAML scalar because the inline content
+    # contains a `: ` (colon-space) sequence which would otherwise get
+    # parsed as a YAML mapping (Vally then fails with "child_process.exec
+    # received Object").
+    - 'pwsh -NoProfile -Command "Add-Content -Path src/ChessTrainerApp/Pages/About.razor -Value ''@* TODO: extend with author bio and contact info *@''"'
+
+scoring:
+  # Weights mirror stockfish-cli and are chosen so each grader is binding at
+  # threshold: 0.9. Positive stimuli use 5 graders with total weight 8.5:
+  #   - lose skill-invocation (2.0)  → 6.5/8.5 = 0.765
+  #   - lose tool-calls       (1.5)  → 7.0/8.5 = 0.824
+  #   - lose output-matches   (2.5)  → 6.0/8.5 = 0.706
+  #   - lose prompt           (2.5)  → 6.0/8.5 = 0.706
+  #   - lose output-not-match (1.5)  → 7.0/8.5 = 0.824
+  #   - lose completed        (1.0)  → 7.5/8.5 = 0.882
+  # All are < 0.9, so any single-grader failure fails the trial. Negative
+  # stimuli use 5 graders as well (skill-invocation, tool-calls, prompt,
+  # output-not-matches, completed), preserving the same binding math.
+  weights:
+    skill-invocation: 2.0
+    tool-calls: 1.5
+    output-not-matches: 1.5
+    output-matches: 2.5
+    prompt: 2.5
+    completed: 1.0
+  threshold: 0.9
+
+# Reviews can require several agent turns: skill activation, parallel fan-out,
+# reading sub-agent results, and synthesis. Bound both turns and tokens so a
+# broken orchestrator cannot loop indefinitely.
+constraints:
+  max_turns: 20
+  max_tokens: 6000
+
+# -----------------------------------------------------------------------------
+# Helper grader patterns used across should-invoke stimuli.
+# Inlined per stimulus below (rather than using YAML anchors) to match the
+# stockfish-cli eval style and keep Vally lint behavior predictable.
+#
+# Orchestration matcher:
+#   required matcher A: task(agent_type=code-review, model=^gpt-)
+#   required matcher B: task(agent_type=code-review, model=^(claude|gemini|mai)-)
+#
+# Vally's tool-calls grader treats each required matcher independently and a
+# required matcher is satisfied by at least one completed call. Requiring one
+# GPT-family reviewer and one non-GPT reviewer statically verifies at least two
+# distinct model-family fan-out calls with explicit model arguments.
+# -----------------------------------------------------------------------------
+
+stimuli:
+  # ---------------------------------------------------------------------------
+  # 1. Standard PR review request. Tests natural routing, multi-model fan-out,
+  #    PR context gathering via gh, and the required synthesized review footer.
+  #    PR #49 exists in this repository and has a substantive UI theming diff.
+  # ---------------------------------------------------------------------------
+  - name: standard-pr-review
+    timeout: 10m
+    tags:
+      tier: full
+      area: response-quality
+      cost: llm
+    prompt: >
+      Please review PR #49 in this repository.
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["code-review"]
+      - type: tool-calls
+        config:
+          required:
+            # NOTE: previously had two ^task$ matchers with args.model filters
+            # (one ^gpt-, one ^(claude|gemini|mai)-) to assert multi-family
+            # fan-out. Vally's tool-calls grader silently ignores args:
+            # (only name/command/path are honored — see tool-call-grader.js:8
+            # ToolArgKeys). Replaced with a single name-only matcher; the
+            # multi-model fan-out check is now done by a prompt LLM-judge
+            # grader on each positive stimulus.
+            - name: "^task$"
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bgh\s+pr\s+view\s+49\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bgh\s+pr\s+diff\s+49\b'
+      - type: output-matches
+        config:
+          pattern: '(?is)(?=.*_Reviewed by:)(?=.*(?:LGTM|Needs Human Review|Needs Changes|Reject|❌|⚠️|💡))'
+      # Multi-model fan-out check (replaces the broken args.model tool-call
+      # matchers — see note on ^task$ above). Verifies the orchestrator
+      # actually launched sub-agents from at least 2 distinct model
+      # families, which is mandatory per code-review/SKILL.md but cannot
+      # be enforced by tool-calls graders alone.
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The agent was asked to perform a code review. Per
+            code-review/SKILL.md, a review is incomplete unless the
+            orchestrator fanned out to >=2 sub-agents from DISTINCT model
+            families (claude, gpt, gemini, mai) via the task tool. The
+            single-model exception only applies if the environment has
+            <2 eligible families — and in that case the agent must say
+            so explicitly in the _Reviewed by: line.
+
+            Inspect the trajectory's task tool calls (look for tool
+            name == "task" with agent_type: code-review). Note the
+            model argument on each.
+
+            Score 1 (pass) if EITHER:
+              - The orchestrator launched at least 2 task calls with
+                models from distinct families (e.g., one claude-* and
+                one gpt-*; or claude + gemini; or gpt + gemini), OR
+              - The orchestrator launched only 1 model AND the final
+                response explicitly states a single-model limitation
+                (e.g., "_Reviewed by: claude-opus-4.7 (single-model: only
+                one eligible family available)._").
+
+            Score 0 (fail) if:
+              - No task calls were made (orchestrator did the review
+                solo without fanning out), OR
+              - Multiple task calls were made but all used the same model
+                family AND the response does not acknowledge the
+                single-family limitation, OR
+              - The trajectory shows fan-out but the final response is
+                missing the _Reviewed by: line entirely.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 2. Self-review before committing. Tests that local uncommitted diff review
+  #    requests trigger the same orchestration shape, but gather context from
+  #    git diff rather than GitHub PR commands.
+  # ---------------------------------------------------------------------------
+  - name: unstaged-changes-review
+    timeout: 10m
+    tags:
+      tier: full
+      area: response-quality
+      cost: llm
+    prompt: >
+      Can you review my unstaged changes before I commit?
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["code-review"]
+      - type: tool-calls
+        config:
+          required:
+            # NOTE: previously had two ^task$ matchers with args.model filters
+            # (one ^gpt-, one ^(claude|gemini|mai)-) to assert multi-family
+            # fan-out. Vally's tool-calls grader silently ignores args:
+            # (only name/command/path are honored — see tool-call-grader.js:8
+            # ToolArgKeys). Replaced with a single name-only matcher; the
+            # multi-model fan-out check is now done by a prompt LLM-judge
+            # grader on each positive stimulus.
+            - name: "^task$"
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bgit\s+(?:--no-pager\s+)?diff\b'
+      - type: output-matches
+        config:
+          pattern: '(?is)(?=.*_Reviewed by:)(?=.*(?:LGTM|Needs Human Review|Needs Changes|Reject|❌|⚠️|💡))'
+      # Multi-model fan-out check (replaces the broken args.model tool-call
+      # matchers — see note on ^task$ above). Verifies the orchestrator
+      # actually launched sub-agents from at least 2 distinct model
+      # families, which is mandatory per code-review/SKILL.md but cannot
+      # be enforced by tool-calls graders alone.
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The agent was asked to perform a code review. Per
+            code-review/SKILL.md, a review is incomplete unless the
+            orchestrator fanned out to >=2 sub-agents from DISTINCT model
+            families (claude, gpt, gemini, mai) via the task tool. The
+            single-model exception only applies if the environment has
+            <2 eligible families — and in that case the agent must say
+            so explicitly in the _Reviewed by: line.
+
+            Inspect the trajectory's task tool calls (look for tool
+            name == "task" with agent_type: code-review). Note the
+            model argument on each.
+
+            Score 1 (pass) if EITHER:
+              - The orchestrator launched at least 2 task calls with
+                models from distinct families (e.g., one claude-* and
+                one gpt-*; or claude + gemini; or gpt + gemini), OR
+              - The orchestrator launched only 1 model AND the final
+                response explicitly states a single-model limitation
+                (e.g., "_Reviewed by: claude-opus-4.7 (single-model: only
+                one eligible family available)._").
+
+            Score 0 (fail) if:
+              - No task calls were made (orchestrator did the review
+                solo without fanning out), OR
+              - Multiple task calls were made but all used the same model
+                family AND the response does not acknowledge the
+                single-family limitation, OR
+              - The trajectory shows fan-out but the final response is
+                missing the _Reviewed by: line entirely.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 3. Slash-command flavor. Tests terse `/review #N` phrasing with no leading
+  #    instruction to use the skill; it should still route and gather PR data.
+  # ---------------------------------------------------------------------------
+  - name: slash-review-pr
+    timeout: 10m
+    tags:
+      tier: full
+      area: routing
+      cost: llm
+    prompt: >
+      /review #49
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["code-review"]
+      - type: tool-calls
+        config:
+          required:
+            # NOTE: previously had two ^task$ matchers with args.model filters
+            # (one ^gpt-, one ^(claude|gemini|mai)-) to assert multi-family
+            # fan-out. Vally's tool-calls grader silently ignores args:
+            # (only name/command/path are honored — see tool-call-grader.js:8
+            # ToolArgKeys). Replaced with a single name-only matcher; the
+            # multi-model fan-out check is now done by a prompt LLM-judge
+            # grader on each positive stimulus.
+            - name: "^task$"
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bgh\s+pr\s+view\s+49\b'
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bgh\s+pr\s+diff\s+49\b'
+      - type: output-matches
+        config:
+          pattern: '(?is)(?=.*_Reviewed by:)(?=.*(?:LGTM|Needs Human Review|Needs Changes|Reject|❌|⚠️|💡))'
+      # Multi-model fan-out check (replaces the broken args.model tool-call
+      # matchers — see note on ^task$ above). Verifies the orchestrator
+      # actually launched sub-agents from at least 2 distinct model
+      # families, which is mandatory per code-review/SKILL.md but cannot
+      # be enforced by tool-calls graders alone.
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The agent was asked to perform a code review. Per
+            code-review/SKILL.md, a review is incomplete unless the
+            orchestrator fanned out to >=2 sub-agents from DISTINCT model
+            families (claude, gpt, gemini, mai) via the task tool. The
+            single-model exception only applies if the environment has
+            <2 eligible families — and in that case the agent must say
+            so explicitly in the _Reviewed by: line.
+
+            Inspect the trajectory's task tool calls (look for tool
+            name == "task" with agent_type: code-review). Note the
+            model argument on each.
+
+            Score 1 (pass) if EITHER:
+              - The orchestrator launched at least 2 task calls with
+                models from distinct families (e.g., one claude-* and
+                one gpt-*; or claude + gemini; or gpt + gemini), OR
+              - The orchestrator launched only 1 model AND the final
+                response explicitly states a single-model limitation
+                (e.g., "_Reviewed by: claude-opus-4.7 (single-model: only
+                one eligible family available)._").
+
+            Score 0 (fail) if:
+              - No task calls were made (orchestrator did the review
+                solo without fanning out), OR
+              - Multiple task calls were made but all used the same model
+                family AND the response does not acknowledge the
+                single-family limitation, OR
+              - The trajectory shows fan-out but the final response is
+                missing the _Reviewed by: line entirely.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 4. Pre-PR sanity check. Tests review intent before a PR exists: the agent
+  #    should compare the working branch against main and orchestrate reviewers.
+  # ---------------------------------------------------------------------------
+  - name: pre-pr-diff-against-main
+    timeout: 10m
+    tags:
+      tier: full
+      area: response-quality
+      cost: llm
+    prompt: >
+      I'm about to open a PR — can you review the diff against main?
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["code-review"]
+      - type: tool-calls
+        config:
+          required:
+            # NOTE: previously had two ^task$ matchers with args.model filters
+            # (one ^gpt-, one ^(claude|gemini|mai)-) to assert multi-family
+            # fan-out. Vally's tool-calls grader silently ignores args:
+            # (only name/command/path are honored — see tool-call-grader.js:8
+            # ToolArgKeys). Replaced with a single name-only matcher; the
+            # multi-model fan-out check is now done by a prompt LLM-judge
+            # grader on each positive stimulus.
+            - name: "^task$"
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bgit\s+(?:--no-pager\s+)?diff\b(?=.*\bmain\b)'
+      - type: output-matches
+        config:
+          pattern: '(?is)(?=.*_Reviewed by:)(?=.*(?:LGTM|Needs Human Review|Needs Changes|Reject|❌|⚠️|💡))'
+      # Multi-model fan-out check (replaces the broken args.model tool-call
+      # matchers — see note on ^task$ above). Verifies the orchestrator
+      # actually launched sub-agents from at least 2 distinct model
+      # families, which is mandatory per code-review/SKILL.md but cannot
+      # be enforced by tool-calls graders alone.
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The agent was asked to perform a code review. Per
+            code-review/SKILL.md, a review is incomplete unless the
+            orchestrator fanned out to >=2 sub-agents from DISTINCT model
+            families (claude, gpt, gemini, mai) via the task tool. The
+            single-model exception only applies if the environment has
+            <2 eligible families — and in that case the agent must say
+            so explicitly in the _Reviewed by: line.
+
+            Inspect the trajectory's task tool calls (look for tool
+            name == "task" with agent_type: code-review). Note the
+            model argument on each.
+
+            Score 1 (pass) if EITHER:
+              - The orchestrator launched at least 2 task calls with
+                models from distinct families (e.g., one claude-* and
+                one gpt-*; or claude + gemini; or gpt + gemini), OR
+              - The orchestrator launched only 1 model AND the final
+                response explicitly states a single-model limitation
+                (e.g., "_Reviewed by: claude-opus-4.7 (single-model: only
+                one eligible family available)._").
+
+            Score 0 (fail) if:
+              - No task calls were made (orchestrator did the review
+                solo without fanning out), OR
+              - Multiple task calls were made but all used the same model
+                family AND the response does not acknowledge the
+                single-family limitation, OR
+              - The trajectory shows fan-out but the final response is
+                missing the _Reviewed by: line entirely.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 5. Natural "look at this change" phrasing. Tests that review/critique
+  #    intent triggers even without the words PR, review command, or GitHub.
+  # ---------------------------------------------------------------------------
+  - name: look-at-this-change
+    timeout: 10m
+    tags:
+      tier: full
+      area: routing
+      cost: llm
+    prompt: >
+      I changed the repository layer and want a second set of eyes on the diff.
+      Please look at this change and tell me if anything should block merging.
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["code-review"]
+      - type: tool-calls
+        config:
+          required:
+            # NOTE: previously had two ^task$ matchers with args.model filters
+            # (one ^gpt-, one ^(claude|gemini|mai)-) to assert multi-family
+            # fan-out. Vally's tool-calls grader silently ignores args:
+            # (only name/command/path are honored — see tool-call-grader.js:8
+            # ToolArgKeys). Replaced with a single name-only matcher; the
+            # multi-model fan-out check is now done by a prompt LLM-judge
+            # grader on each positive stimulus.
+            - name: "^task$"
+            - name: "^(bash|powershell|shell)$"
+              command: '(?i)\bgit\s+(?:--no-pager\s+)?diff\b'
+      - type: output-matches
+        config:
+          pattern: '(?is)(?=.*_Reviewed by:)(?=.*(?:LGTM|Needs Human Review|Needs Changes|Reject|❌|⚠️|💡))'
+      # Multi-model fan-out check (replaces the broken args.model tool-call
+      # matchers — see note on ^task$ above). Verifies the orchestrator
+      # actually launched sub-agents from at least 2 distinct model
+      # families, which is mandatory per code-review/SKILL.md but cannot
+      # be enforced by tool-calls graders alone.
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The agent was asked to perform a code review. Per
+            code-review/SKILL.md, a review is incomplete unless the
+            orchestrator fanned out to >=2 sub-agents from DISTINCT model
+            families (claude, gpt, gemini, mai) via the task tool. The
+            single-model exception only applies if the environment has
+            <2 eligible families — and in that case the agent must say
+            so explicitly in the _Reviewed by: line.
+
+            Inspect the trajectory's task tool calls (look for tool
+            name == "task" with agent_type: code-review). Note the
+            model argument on each.
+
+            Score 1 (pass) if EITHER:
+              - The orchestrator launched at least 2 task calls with
+                models from distinct families (e.g., one claude-* and
+                one gpt-*; or claude + gemini; or gpt + gemini), OR
+              - The orchestrator launched only 1 model AND the final
+                response explicitly states a single-model limitation
+                (e.g., "_Reviewed by: claude-opus-4.7 (single-model: only
+                one eligible family available)._").
+
+            Score 0 (fail) if:
+              - No task calls were made (orchestrator did the review
+                solo without fanning out), OR
+              - Multiple task calls were made but all used the same model
+                family AND the response does not acknowledge the
+                single-family limitation, OR
+              - The trajectory shows fan-out but the final response is
+                missing the _Reviewed by: line entirely.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 6. Negative / meta. Asking what the skill does is an explanation request,
+  #    not a review. Recognition/Restraint/Redirection are enforced by prompt.
+  # ---------------------------------------------------------------------------
+  - name: meta-what-code-review-does
+    timeout: 10m
+    tags:
+      tier: smoke
+      area: routing
+      cost: llm
+    prompt: >
+      What does the code-review skill do?
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["code-review"]
+      - type: tool-calls
+        config:
+          disallowed:
+            # NOTE: previously filtered ^task$ disallow by args.agent_type,
+            # which Vally silently ignores. Now disallows ANY task call,
+            # which is the correct intent for these negative stimuli (the
+            # agent should answer directly, not delegate to sub-agents).
+            - name: "^task$"
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            Score 1 if the agent answers the meta/explanation question or
+            briefly explains that no code review is needed because the user did
+            not ask to review a change. It may describe when review workflows
+            are appropriate. It must not launch code-review sub-agents.
+
+            Score 0 if it starts reviewing files, runs a PR/diff review
+            workflow, calls `task` with `agent_type: code-review`, or refuses
+            to answer the meta question without useful redirection.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 7. Negative / wrong intent: code explanation. The repository term is close
+  #    to a review checklist item, but the user asks to learn what it does.
+  # ---------------------------------------------------------------------------
+  - name: explain-efrepository
+    timeout: 10m
+    tags:
+      tier: smoke
+      area: routing
+      cost: llm
+    prompt: >
+      Can you explain what `EFRepository<TEntity, TPublicModel>` does?
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["code-review"]
+      - type: tool-calls
+        config:
+          disallowed:
+            # NOTE: previously filtered ^task$ disallow by args.agent_type,
+            # which Vally silently ignores. Now disallows ANY task call,
+            # which is the correct intent for these negative stimuli (the
+            # agent should answer directly, not delegate to sub-agents).
+            - name: "^task$"
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            Score 1 if the agent recognizes this as an educational code
+            explanation request, answers or offers to inspect the relevant type,
+            and does not initiate a PR/diff review workflow. It can redirect by
+            saying a review would be appropriate only if the user has a change
+            to evaluate.
+
+            Score 0 if it launches code-review sub-agents, frames the response
+            as a merge-blocking review, or ignores the requested explanation.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 8. Negative / wrong intent: implementation request. The user asks for a
+  #    code change, not review feedback, so the orchestration skill should stand
+  #    down and the agent should proceed with normal coding behavior.
+  # ---------------------------------------------------------------------------
+  - name: implement-repository-method
+    timeout: 10m
+    tags:
+      tier: full
+      area: routing
+      cost: llm
+    prompt: >
+      Add a new method to `TacticsPuzzleRepository` that returns the puzzle
+      count by ELO bucket.
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["code-review"]
+      - type: tool-calls
+        config:
+          disallowed:
+            # NOTE: previously filtered ^task$ disallow by args.agent_type,
+            # which Vally silently ignores. Now disallows ANY task call,
+            # which is the correct intent for these negative stimuli (the
+            # agent should answer directly, not delegate to sub-agents).
+            - name: "^task$"
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            Score 1 if the agent treats this as an implementation task, either
+            starts normal code-editing investigation or explains the coding
+            approach, and does not launch code-review sub-agents. A brief note
+            that review can happen after the change is acceptable redirection.
+
+            Score 0 if it performs a review instead of implementing, calls
+            `task` with `agent_type: code-review`, or provides only review
+            output without addressing the requested code change.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
+
+  # ---------------------------------------------------------------------------
+  # 9. Negative / prerequisite missing. A review request without a diff, PR
+  #    number, snippet, or changed files should not fan out to expensive review
+  #    sub-agents; the useful behavior is to ask for the missing target.
+  # ---------------------------------------------------------------------------
+  - name: vague-review-no-target
+    timeout: 10m
+    tags:
+      tier: full
+      area: error-handling
+      cost: llm
+    prompt: >
+      Can you review it?
+    graders:
+      # NOTE: We deliberately do NOT use a `disallowed: ["code-review"]`
+      # skill-invocation grader here. Loading SKILL.md (via the `skill` tool)
+      # to make the routing decision counts as activation in Vally's
+      # tracking, even when the agent correctly decides NOT to execute the
+      # workflow. The prompt grader below is the right way to verify
+      # behavior — it rewards clarification questions and penalizes actual
+      # review work.
+      - type: prompt
+        config:
+          scoring: binary
+          prompt: |
+            The user asked "Can you review it?" with no PR number, diff,
+            file list, or other context indicating WHAT should be reviewed.
+
+            Score 1 (pass) if the agent recognizes that there is no review
+            target, avoids launching code-review sub-agents, does not invent
+            a target on its own, and asks the user a clarifying question
+            (PR number, diff, file list, snippet, or what "it" refers to)
+            before doing anything else.
+
+            Score 0 (fail) if the agent invents a target, starts reviewing
+            unrelated local changes, launches code-review sub-agents,
+            produces a review of any kind, or fails to tell the user what
+            information is needed next.
+      - type: completed
+      - type: output-not-matches
+        config:
+          pattern: '(?i)fatal error|unhandled exception|stack trace|crashed|panic:'
