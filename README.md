@@ -121,8 +121,8 @@ cd ChessTrainer
 
 # Full build + tests. Webpack runs automatically via an MSBuild target the
 # first time wwwroot/dist is missing.
-dotnet build ChessTrainer.sln -c Release
-dotnet test  ChessTrainer.sln -c Release
+dotnet build ChessTrainer.slnx -c Release
+dotnet test  ChessTrainer.slnx -c Release
 ```
 
 > Use Release at least once before declaring a change done — it flips on
