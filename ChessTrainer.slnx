@@ -1,0 +1,30 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="global.json" />
+    <File Path="LICENSE.txt" />
+    <File Path="README.md" />
+    <File Path="rules.ruleset" />
+    <File Path="stylecop.json" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/ChessTrainer.Common/ChessTrainer.Common.csproj" />
+    <Project Path="src/ChessTrainer.Data/ChessTrainer.Data.csproj" />
+    <Project Path="src/ChessTrainerApp/ChessTrainerApp.csproj" />
+    <Project Path="src/IngestionFunctions/IngestionFunctions.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/ChessTrainer.Data.Test/ChessTrainer.Data.Test.csproj" />
+    <Project Path="test/ChessTrainerApp.Test/ChessTrainerApp.Test.csproj" />
+    <Project Path="test/IngestionFunctions.Test/IngestionFunctions.Test.csproj" />
+  </Folder>
+  <Project Path="src/Engine/Engine.csproj" />
+</Solution>
