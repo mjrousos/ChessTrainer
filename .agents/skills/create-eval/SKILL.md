@@ -175,8 +175,8 @@ explicit `dest:`, even when it's identical to the basename of `src:`.
 ```yaml
 environment:
   files:
-    - src: ../../ChessTrainer.sln
-      dest: ChessTrainer.sln              # ✓ explicit dest
+    - src: ../../ChessTrainer.slnx
+      dest: ChessTrainer.slnx              # ✓ explicit dest
     - src: ../../src/
       dest: src/                          # ✓ explicit dest, trailing slash for dirs
     # NOT:

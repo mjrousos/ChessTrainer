@@ -37,8 +37,8 @@ environment:
   # any bin/obj/node_modules that came along inside src/ or test/ from the
   # local checkout so trials are deterministic.
   files:
-    - src: ../../ChessTrainer.sln
-      dest: ChessTrainer.sln
+    - src: ../../ChessTrainer.slnx
+      dest: ChessTrainer.slnx
     - src: ../../Directory.Build.props
       dest: Directory.Build.props
     - src: ../../Directory.Build.targets
