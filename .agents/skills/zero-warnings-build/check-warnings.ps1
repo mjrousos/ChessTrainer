@@ -4,8 +4,8 @@
 
 .DESCRIPTION
     Runs (in order):
-      1. dotnet build ChessTrainer.sln -c Debug      (warnings are warnings)
-      2. dotnet build ChessTrainer.sln -c Release    (warnings become errors via
+      1. dotnet build ChessTrainer.slnx -c Debug      (warnings are warnings)
+      2. dotnet build ChessTrainer.slnx -c Release    (warnings become errors via
                                                       TreatWarningsAsErrors)
       3. npm run webpack-prod in src/ChessTrainerApp (front-end build)
 
@@ -41,19 +41,19 @@ param(
 $ErrorActionPreference = 'Continue'
 
 # Find the repo root by walking upward from this script's location until we
-# find ChessTrainer.sln. This works:
+# find ChessTrainer.slnx. This works:
 #   - In the canonical layout: .agents/skills/zero-warnings-build/check-warnings.ps1
 #     → walks up to repo root (3 levels).
 #   - In a Vally eval workdir where the skill is staged at <workdir>/zero-warnings-build/
-#     and the solution is staged alongside it at <workdir>/ChessTrainer.sln (1 level).
-#   - Any other staging path that places the .sln on the parent chain.
+#     and the solution is staged alongside it at <workdir>/ChessTrainer.slnx (1 level).
+#   - Any other staging path that places the .slnx on the parent chain.
 # Fails loudly if no marker is found, instead of silently resolving to a
 # wrong directory like the previous hardcoded `..\..\..` did.
 function Find-RepoRoot {
     param([string]$StartPath = $PSScriptRoot)
     $current = (Resolve-Path $StartPath).Path
     while ($current) {
-        if (Test-Path (Join-Path $current 'ChessTrainer.sln')) {
+        if (Test-Path (Join-Path $current 'ChessTrainer.slnx')) {
             return $current
         }
         $parent = Split-Path -Parent $current
@@ -62,7 +62,7 @@ function Find-RepoRoot {
         }
         $current = $parent
     }
-    throw "Repo root not found: walked up from $StartPath without finding ChessTrainer.sln. Run this script from inside a ChessTrainer checkout."
+    throw "Repo root not found: walked up from $StartPath without finding ChessTrainer.slnx. Run this script from inside a ChessTrainer checkout."
 }
 
 $repoRoot = Find-RepoRoot
@@ -171,13 +171,13 @@ function Add-StageResult {
 
 if (-not $SkipDebug) {
     Write-Host '=== Debug build ===' -ForegroundColor Cyan
-    $out = & dotnet build ChessTrainer.sln -c Debug --nologo --verbosity:minimal 2>&1 | Out-String
+    $out = & dotnet build ChessTrainer.slnx -c Debug --nologo --verbosity:minimal 2>&1 | Out-String
     Add-StageResult -Stage 'Debug' -ExitCode $LASTEXITCODE -Items (Parse-DotnetWarnings -Output $out -BuildName 'Debug') -RawOutput $out
 }
 
 if (-not $SkipRelease) {
     Write-Host '=== Release build (TreatWarningsAsErrors=true) ===' -ForegroundColor Cyan
-    $out = & dotnet build ChessTrainer.sln -c Release --nologo --verbosity:minimal 2>&1 | Out-String
+    $out = & dotnet build ChessTrainer.slnx -c Release --nologo --verbosity:minimal 2>&1 | Out-String
     Add-StageResult -Stage 'Release' -ExitCode $LASTEXITCODE -Items (Parse-DotnetWarnings -Output $out -BuildName 'Release') -RawOutput $out
 }
 

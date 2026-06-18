@@ -175,12 +175,12 @@ explicit `dest:`, even when it's identical to the basename of `src:`.
 ```yaml
 environment:
   files:
-    - src: ../../ChessTrainer.sln
-      dest: ChessTrainer.sln              # ✓ explicit dest
+    - src: ../../ChessTrainer.slnx
+      dest: ChessTrainer.slnx              # ✓ explicit dest
     - src: ../../src/
       dest: src/                          # ✓ explicit dest, trailing slash for dirs
     # NOT:
-    # - src: ../../ChessTrainer.sln       # ✗ omitting dest crashes the reporter
+    # - src: ../../ChessTrainer.slnx      # ✗ omitting dest crashes the reporter
 ```
 
 ### YAML plain scalars terminate at `: ` — quote commands that contain it

@@ -76,8 +76,8 @@ This solution works along with the [ChessPuzzleFinder](https://github.com/mjrous
 
 ```powershell
 # Full solution (Release fails on any warning)
-dotnet build ChessTrainer.sln -c Release
-dotnet test  ChessTrainer.sln -c Release
+dotnet build ChessTrainer.slnx -c Release
+dotnet test  ChessTrainer.slnx -c Release
 
 # Run the Blazor app
 dotnet run --project src/ChessTrainerApp

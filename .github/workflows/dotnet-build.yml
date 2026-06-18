@@ -30,8 +30,8 @@ jobs:
       working-directory: src/ChessTrainerApp
       run: npm ci
     - name: Restore dependencies
-      run: dotnet restore ChessTrainer.sln
+      run: dotnet restore ChessTrainer.slnx
     - name: Build
-      run: dotnet build ChessTrainer.sln -c Release --no-restore
+      run: dotnet build ChessTrainer.slnx -c Release --no-restore
     - name: Test
-      run: dotnet test ChessTrainer.sln -c Release --no-build --verbosity normal
+      run: dotnet test ChessTrainer.slnx -c Release --no-build --verbosity normal

@@ -16,7 +16,7 @@ Test projects mirror the `src/` projects they cover; folder name and assembly na
 | `ChessTrainerApp.Test`        | `ChessTrainerApp`      | Blazor component tests via **bUnit**. |
 | `IngestionFunctions.Test`     | `IngestionFunctions`   | Azure Functions ingestion (currently a placeholder). |
 
-Add a new `*.Test` project alongside any new `src/` project and reference it from `ChessTrainer.sln`.
+Add a new `*.Test` project alongside any new `src/` project and reference it from `ChessTrainer.slnx`.
 
 ## Stack & conventions
 
@@ -51,7 +51,7 @@ Always save/restore the original value in a `try`/`finally` (see `WithEnvironmen
 
 ```powershell
 # Whole solution (Release matches CI behavior: zero warnings).
-dotnet test ChessTrainer.sln -c Release
+dotnet test ChessTrainer.slnx -c Release
 
 # A single test project.
 dotnet test test/ChessTrainer.Data.Test
