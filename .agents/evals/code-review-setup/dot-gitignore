@@ -1,0 +1,7 @@
+# Stored under a non-dot filename in the repo (so it shows up in
+# ordinary directory listings) and copied into the trial workdir as
+# `.gitignore` by .agents/evals/code-review.eval.yaml. Its only job is
+# to keep the workspace-setup helper script (.vally-setup/setup.ps1)
+# out of the baseline `git add -A` commit so review stimuli don't see
+# it as a tracked repo file.
+.vally-setup/

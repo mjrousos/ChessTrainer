@@ -55,10 +55,22 @@ environment:
       dest: src/
     - src: ../../test/
       dest: test/
+    # Workspace-setup helper script invoked by `commands:` below. Routed
+    # through `pwsh -NoProfile -File <path>` rather than inline
+    # `pwsh -NoProfile -Command "..."` because Vally executes each
+    # command via `/bin/sh -c` on the Linux runner, and sh mis-parses
+    # embedded pwsh-style escapes (backticks inside double quotes open
+    # legacy command substitution). Staged under `.vally-setup/` and
+    # paired with the `.gitignore` entry below so `git add -A` does not
+    # commit the helper into the baseline review repo.
+    - src: code-review-setup/setup.ps1
+      dest: .vally-setup/setup.ps1
+    - src: code-review-setup/dot-gitignore
+      dest: .gitignore
   commands:
     # Scrub build artifacts and node_modules carried in from the local
     # checkout so trials are deterministic and the workdir stays small.
-    - pwsh -NoProfile -Command "Get-ChildItem -Path . -Include bin,obj,node_modules -Directory -Recurse -Force -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue"
+    - pwsh -NoProfile -File .vally-setup/setup.ps1 -Step Clean
     # Initialize a minimal git repository so review stimuli that depend on
     # `git diff` / `git status` / `git diff main` have something to work
     # against. Without this the agents declined with "the working directory
@@ -76,17 +88,15 @@ environment:
     # and self-contained (a new file added) so review stimuli have an
     # unambiguous target.
     - git checkout -b feature/example-change --quiet
-    - pwsh -NoProfile -Command "New-Item -Path src/ChessTrainerApp/app/example-banner.ts -ItemType File -Force -Value 'export const exampleBanner = `\"Welcome to the puzzle solver!`\";' | Out-Null"
+    - pwsh -NoProfile -File .vally-setup/setup.ps1 -Step AddBanner
     - git add src/ChessTrainerApp/app/example-banner.ts
     - git commit --quiet -m "Add example banner module"
     # Leave one file with unstaged modifications so `git status` reports
-    # changes for `unstaged-changes-review`. We append a benign comment so
-    # `git diff` shows real content; the file itself remains functional.
-    # Wrapped in single-quoted YAML scalar because the inline content
-    # contains a `: ` (colon-space) sequence which would otherwise get
-    # parsed as a YAML mapping (Vally then fails with "child_process.exec
-    # received Object").
-    - 'pwsh -NoProfile -Command "Add-Content -Path src/ChessTrainerApp/Pages/About.razor -Value ''@* TODO: extend with author bio and contact info *@''"'
+    # changes for `unstaged-changes-review`. The actual edit lives in the
+    # `EditAbout` step of .vally-setup/setup.ps1 (see the AddBanner step
+    # for why we route file edits through a script rather than inline
+    # `pwsh -Command "..."`).
+    - pwsh -NoProfile -File .vally-setup/setup.ps1 -Step EditAbout
 
 scoring:
   # Weights mirror stockfish-cli and are chosen so each grader is binding at
