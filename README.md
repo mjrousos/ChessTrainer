@@ -164,6 +164,34 @@ queue) to populate puzzles end-to-end.
 > migration to Microsoft Entra External ID is tracked in
 > [#39](https://github.com/mjrousos/ChessTrainer/issues/39).
 
+### Build and run the Docker image
+
+From the repository root, build the web app image with the Dockerfile in
+`src/ChessTrainerApp/`:
+
+```powershell
+docker build -t chesstrainerapp -f src/ChessTrainerApp/Dockerfile .
+```
+
+Then run the image locally:
+
+```powershell
+docker run --rm -d -p 8080:8080 --name chesstrainerapp chesstrainerapp
+```
+
+Open <http://localhost:8080> to view the app. The image is configured to run
+Kestrel on port 8080 inside the container, so `-p 8080:8080` maps it to your
+host machine. If you need an explicit database connection string, pass it at
+runtime with `ConnectionStrings__PuzzleDatabase`, for example:
+
+```powershell
+docker run --rm -d -p 8080:8080 `
+  -e ConnectionStrings__PuzzleDatabase="Server=your-sql-server;Database=TacticsPuzzles;User Id=...;Password=..." `
+  --name chesstrainerapp chesstrainerapp
+```
+
+Stop and remove the container with `docker rm -f chesstrainerapp`.
+
 ### Run the ingestion functions (optional)
 
 Only needed if you want to populate puzzles end-to-end yourself. The
