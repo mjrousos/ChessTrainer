@@ -34,4 +34,4 @@ Register `AddApplicationInsightsTelemetry()` **only** when `ApplicationInsights:
 - C# `latest`, `Nullable` enabled solution-wide (`Directory.Build.props`).
 - StyleCop.Analyzers is added by `Directory.Build.targets`; rules tuned in `rules.ruleset` and `stylecop.json`: 4-space indent; system `using` directives NOT required first; blank line between using groups; `using` directives outside the namespace; file must end with newline.
 - Razor: `@page` routes in `src/ChessTrainerApp/Pages/`; reusable components in `src/ChessTrainerApp/Components/` and `Shared/`.
-- Static web assets go under `src/ChessTrainerApp/app/` (webpack bundles them into `wwwroot/dist/`, which `Program.cs` serves via `UseWebRoot("wwwroot/dist")`). Don't hand-edit `wwwroot/dist`.
+- Static web assets go under `src/ChessTrainerApp/app/` (webpack bundles them directly into `wwwroot/`, alongside the Blazor framework assets the SDK materializes there). `wwwroot/` is fully generated and `.gitignore`d — don't hand-edit anything under it.
