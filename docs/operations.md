@@ -21,7 +21,7 @@ No database round-trip is made, so this probe is extremely cheap.
 
 Used by load-balancer / Kubernetes readiness probes.
 Returns 200 only when all `ready`-tagged checks pass (currently: SQL Server reachable via `PuzzleDbContext`).
-Returns 503 with a plain-text body listing failing checks when any dependency is unavailable.
+Returns 503 with a plain-text body (`Unhealthy` or `Degraded`) when any dependency is unavailable. The default response writer does not include per-check detail; configure a custom `HealthCheckOptions.ResponseWriter` (e.g. the [AspNetCore.HealthChecks.UI.Client](https://github.com/Xabaril/AspNetCore.Diagnostics.HealthChecks) writer) if you need structured output.
 
 ### Adding new checks
 
