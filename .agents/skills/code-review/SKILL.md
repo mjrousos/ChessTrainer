@@ -144,7 +144,7 @@ Walk the diff against every rule in the **Code review checklist** section of [`A
 - **Connection strings have two names — update both.** `ConnectionStrings:PuzzleDatabase` (app) and `PuzzleDbConnectionString` env var (functions + `PuzzleDbContextFactory`).
 - **Don't depend on Azure AD B2C user-flow IDs.** The configured B2C tenant is dead (issue #39, migrating to Entra External ID).
 - **Application Insights is opt-in.** Only call `AddApplicationInsightsTelemetry()` when a connection string or instrumentation key is configured; use `GetService<TelemetryConfiguration>()`, never `GetRequiredService`.
-- **Respect the code style rules** (file-final newline, 4-space indent, `using` directives outside the namespace, no hand edits to `wwwroot/dist`).
+- **Respect the code style rules** (file-final newline, 4-space indent, `using` directives outside the namespace, no hand edits to anything under `wwwroot/`).
 
 Also check the always-applicable items:
 
@@ -186,7 +186,7 @@ This section captures review-time gotchas specific to ChessTrainer that go beyon
 - **Lifecycle.** `OnInitializedAsync` runs twice in prerendered Server mode; reserve interop and `HttpContext`-bound work for `OnAfterRenderAsync(firstRender)`.
 - **Threading.** State mutations from background threads (timers, `IObservable` callbacks, ingestion notifications) must go through `await InvokeAsync(StateHasChanged)`.
 - **Disposal.** Components that subscribe to engine events or hold `IDisposable` services must implement `IDisposable`/`IAsyncDisposable` and unsubscribe.
-- **Front-end assets.** Source goes in `src/ChessTrainerApp/app/` and is bundled by webpack into `wwwroot/dist/`. Reject hand edits to `wwwroot/dist` (they will be clobbered).
+- **Front-end assets.** Source goes in `src/ChessTrainerApp/app/` and is bundled by webpack directly into `wwwroot/` (which is fully generated and `.gitignore`d). Reject hand edits to anything under `wwwroot/` (they will be clobbered).
 
 ### Engine (`MjrChess.Engine`)
 

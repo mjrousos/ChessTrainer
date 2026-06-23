@@ -14,7 +14,6 @@ namespace MjrChess.Trainer
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseWebRoot("wwwroot/dist");
                     webBuilder.UseStartup<Startup>();
                 });
     }

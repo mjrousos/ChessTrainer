@@ -120,7 +120,7 @@ git clone https://github.com/mjrousos/ChessTrainer.git
 cd ChessTrainer
 
 # Full build + tests. Webpack runs automatically via an MSBuild target the
-# first time wwwroot/dist is missing.
+# first time the bundled outputs in wwwroot/ are missing.
 dotnet build ChessTrainer.slnx -c Release
 dotnet test  ChessTrainer.slnx -c Release
 ```
@@ -209,10 +209,10 @@ Azure Storage account).
 ## Developer notes
 
 - **Front-end assets** live under `src/ChessTrainerApp/app/` (SCSS + JS,
-  built on Material Components Web) and are bundled by webpack into
-  `src/ChessTrainerApp/wwwroot/dist/`. `Program.cs` sets
-  `UseWebRoot("wwwroot/dist")`, so that's where the runtime serves static
-  files from — don't hand-edit `wwwroot/dist`.
+  built on Material Components Web) and are bundled by webpack directly
+  into `src/ChessTrainerApp/wwwroot/`, alongside the Blazor framework
+  assets the SDK materializes there at publish time. `wwwroot/` is fully
+  generated and `.gitignore`d — don't hand-edit anything under it.
 - **Models are duplicated by design.** `ChessTrainer.Data` exposes public
   domain models (`MjrChess.Trainer.Models.*` in `ChessTrainer.Common`)
   while keeping its EF entities (`MjrChess.Trainer.Data.Models.*`)

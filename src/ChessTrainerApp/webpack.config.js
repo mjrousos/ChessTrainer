@@ -2,7 +2,7 @@ const path = require('path');
 const CopyPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
-const outDir = path.resolve(__dirname, 'wwwroot/dist');
+const outDir = path.resolve(__dirname, 'wwwroot');
 
 module.exports = [
     // 1. Styles bundle: app/site.scss -> app.bundle.css (+ static assets)
