@@ -1,6 +1,4 @@
 ﻿using System;
-using Azure.Storage.Queues;
-using HealthChecks.Azure.Storage.Queues;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
@@ -51,24 +49,8 @@ namespace MjrChess.Trainer
                 options.Providers.Add<GzipCompressionProvider>();
                 options.MimeTypes = ResponseCompressionDefaults.MimeTypes;
             });
-            var healthChecks = services.AddHealthChecks()
+            services.AddHealthChecks()
                 .AddDbContextCheck<PuzzleDbContext>(tags: new[] { "ready" });
-
-            // The companion IngestionFunctions project writes games to this queue; if it is
-            // unavailable ChessTrainerApp cannot trigger game ingestion.  The check is opt-in:
-            // supply StorageConnectionString in configuration to enable it.
-            var storageConnectionString = Configuration["StorageConnectionString"];
-            if (!string.IsNullOrWhiteSpace(storageConnectionString))
-            {
-                var gameQueueName = Configuration["GameIngestionQueue"] ?? "games";
-                healthChecks.AddAzureQueueStorage(
-                    clientFactory: _ => new QueueServiceClient(storageConnectionString),
-                    optionsFactory: _ => new AzureQueueStorageHealthCheckOptions { QueueName = gameQueueName },
-                    name: "azure-storage-queue",
-                    failureStatus: null,
-                    tags: new[] { "ready" },
-                    timeout: null);
-            }
 
             services.AddTransient<ChessEngine>();
 
