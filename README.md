@@ -176,16 +176,16 @@ docker build -t chesstrainerapp -f src/ChessTrainerApp/Dockerfile .
 Then run the image locally:
 
 ```powershell
-docker run --rm -d -p 8080:80 --name chesstrainerapp chesstrainerapp
+docker run --rm -d -p 8080:8080 --name chesstrainerapp chesstrainerapp
 ```
 
-Open <http://localhost:8080> to view the app. The container exposes port 80
-inside the image, so `-p 8080:80` maps it to your host machine. If you need
-an explicit database connection string, pass it at runtime with
-`ConnectionStrings__PuzzleDatabase`, for example:
+Open <http://localhost:8080> to view the app. The image is configured to run
+Kestrel on port 8080 inside the container, so `-p 8080:8080` maps it to your
+host machine. If you need an explicit database connection string, pass it at
+runtime with `ConnectionStrings__PuzzleDatabase`, for example:
 
 ```powershell
-docker run --rm -d -p 8080:80 `
+docker run --rm -d -p 8080:8080 `
   -e ConnectionStrings__PuzzleDatabase="Server=your-sql-server;Database=TacticsPuzzles;User Id=...;Password=..." `
   --name chesstrainerapp chesstrainerapp
 ```
