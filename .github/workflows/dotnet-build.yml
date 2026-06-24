@@ -11,6 +11,8 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    env:
+      COVERAGE_MIN_PERCENT: 60
     permissions:
       contents: read
 
@@ -35,3 +37,40 @@ jobs:
       run: dotnet build ChessTrainer.slnx -c Release --no-restore
     - name: Test
       run: dotnet test ChessTrainer.slnx -c Release --no-build --verbosity normal
+    - name: Collect core coverage
+      run: |
+        dotnet test test/ChessTrainer.Data.Test/ChessTrainer.Data.Test.csproj -c Release --no-build --collect:"XPlat Code Coverage" --results-directory TestResults
+        dotnet test test/ChessTrainer.Common.Test/ChessTrainer.Common.Test.csproj -c Release --no-build --collect:"XPlat Code Coverage" --results-directory TestResults
+        dotnet test test/IngestionFunctions.Test/IngestionFunctions.Test.csproj -c Release --no-build --collect:"XPlat Code Coverage" --results-directory TestResults
+    - name: Install ReportGenerator
+      run: dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.*
+    - name: Generate coverage report
+      run: |
+        reportgenerator \
+          "-reports:TestResults/**/coverage.cobertura.xml" \
+          "-targetdir:TestResults/CoverageReport" \
+          "-reporttypes:Cobertura;MarkdownSummaryGithub;TextSummary" \
+          "-classfilters:-MjrChess.Trainer.Data.Migrations.*;-IngestionFunctions.DirectFunctionExecutor;-IngestionFunctions.FunctionExecutorAutoStartup;-IngestionFunctions.FunctionExecutorHostBuilderExtensions;-IngestionFunctions.FunctionMetadataProviderAutoStartup;-IngestionFunctions.GeneratedFunctionMetadataProvider;-IngestionFunctions.WorkerHostBuilderFunctionMetadataProviderExtension"
+    - name: Publish coverage summary
+      run: |
+        cat TestResults/CoverageReport/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        cat TestResults/CoverageReport/Summary.txt >> "$GITHUB_STEP_SUMMARY"
+    - name: Enforce minimum coverage
+      run: |
+        python - <<'PY'
+        import os
+        import xml.etree.ElementTree as ET
+        
+        threshold = float(os.environ["COVERAGE_MIN_PERCENT"])
+        tree = ET.parse("TestResults/CoverageReport/Cobertura.xml")
+        line_rate = float(tree.getroot().attrib["line-rate"]) * 100.0
+        print(f"Line coverage: {line_rate:.2f}% (minimum {threshold:.2f}%)")
+        if line_rate < threshold:
+            raise SystemExit(f"Coverage gate failed: {line_rate:.2f}% < {threshold:.2f}%")
+        PY
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: TestResults/CoverageReport
