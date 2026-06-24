@@ -23,7 +23,7 @@ namespace ChessTrainer.Common.Test
         }
 
         [Fact]
-        public void WhiteToMove_WhenFenIndicatesBlackToMove_ReturnsTrue()
+        public void WhiteToMove_WhenFenIndicatesBlackToMove_ReturnsOppositeSideToMove()
         {
             var puzzle = CreatePuzzle("rnbqk1nr/pppp1ppp/8/2b1p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR b KQkq - 3 3");
 
