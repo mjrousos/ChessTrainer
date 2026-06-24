@@ -36,12 +36,7 @@ jobs:
     - name: Build
       run: dotnet build ChessTrainer.slnx -c Release --no-restore
     - name: Test
-      run: dotnet test ChessTrainer.slnx -c Release --no-build --verbosity normal
-    - name: Collect core coverage
-      run: |
-        dotnet test test/ChessTrainer.Data.Test/ChessTrainer.Data.Test.csproj -c Release --no-build --collect:"XPlat Code Coverage" --results-directory TestResults
-        dotnet test test/ChessTrainer.Common.Test/ChessTrainer.Common.Test.csproj -c Release --no-build --collect:"XPlat Code Coverage" --results-directory TestResults
-        dotnet test test/IngestionFunctions.Test/IngestionFunctions.Test.csproj -c Release --no-build --collect:"XPlat Code Coverage" --results-directory TestResults
+      run: dotnet test ChessTrainer.slnx -c Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory TestResults
     - name: Install ReportGenerator
       run: dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.*
     - name: Generate coverage report
@@ -50,6 +45,7 @@ jobs:
           "-reports:TestResults/**/coverage.cobertura.xml" \
           "-targetdir:TestResults/CoverageReport" \
           "-reporttypes:Cobertura;MarkdownSummaryGithub;TextSummary" \
+          "-assemblyfilters:-*.Test" \
           "-classfilters:-MjrChess.Trainer.Data.Migrations.*;-IngestionFunctions.DirectFunctionExecutor;-IngestionFunctions.FunctionExecutorAutoStartup;-IngestionFunctions.FunctionExecutorHostBuilderExtensions;-IngestionFunctions.FunctionMetadataProviderAutoStartup;-IngestionFunctions.GeneratedFunctionMetadataProvider;-IngestionFunctions.WorkerHostBuilderFunctionMetadataProviderExtension"
     - name: Publish coverage summary
       run: |
