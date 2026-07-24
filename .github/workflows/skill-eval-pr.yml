@@ -190,5 +190,5 @@ jobs:
         with:
           name: vally-results-${{ github.run_id }}-${{ github.run_attempt }}
           path: vally-results/
-          retention-days: 14
+          retention-days: 7
           if-no-files-found: warn
