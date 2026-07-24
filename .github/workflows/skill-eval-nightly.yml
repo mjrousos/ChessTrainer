@@ -167,13 +167,13 @@ jobs:
           vally eval "${ARGS[@]}"
 
       - name: Upload eval results
-        # Always upload (even on failure) — nightly artifacts are kept longer
-        # (60 days) than PR artifacts (14 days) so you can do trend analysis
-        # across recent runs.
+        # Always upload (even on failure). Retained for 7 days to keep the
+        # account-wide Actions artifact-storage footprint low; raise
+        # retention-days if you need a longer nightly trend-history window.
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: vally-results-nightly-${{ github.run_id }}-${{ github.run_attempt }}
           path: vally-results/
-          retention-days: 60
+          retention-days: 7
           if-no-files-found: warn
