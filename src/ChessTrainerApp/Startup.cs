@@ -2,6 +2,7 @@
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Rewrite;
@@ -48,7 +49,8 @@ namespace MjrChess.Trainer
                 options.Providers.Add<GzipCompressionProvider>();
                 options.MimeTypes = ResponseCompressionDefaults.MimeTypes;
             });
-            services.AddHealthChecks();
+            services.AddHealthChecks()
+                .AddDbContextCheck<PuzzleDbContext>(tags: new[] { "ready" });
 
             services.AddTransient<ChessEngine>();
 
@@ -106,7 +108,18 @@ namespace MjrChess.Trainer
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapBlazorHub();
-                endpoints.MapHealthChecks("/hc");
+
+                // Liveness probe — returns 200 as long as the process is responsive.
+                // Predicate = _ => false intentionally skips all registered checks (including the DB
+                // check) so this endpoint is zero-cost and safe for App Service / Kubernetes liveness probes.
+                endpoints.MapHealthChecks("/healthz", new HealthCheckOptions { Predicate = _ => false })
+                    .AllowAnonymous();
+
+                // Readiness probe — returns 200 only when external dependencies (DB, config) are healthy.
+                // Used by load balancers / readiness probes to gate traffic.
+                endpoints.MapHealthChecks("/readyz", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") })
+                    .AllowAnonymous();
+
                 endpoints.MapControllers(); // For signin/signout endpoints
                 endpoints.MapFallbackToPage("/_Host");
             });
