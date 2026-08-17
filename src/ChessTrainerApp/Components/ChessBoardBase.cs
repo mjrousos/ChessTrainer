@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
@@ -13,7 +14,7 @@ namespace MjrChess.Trainer.Components
     /// <summary>
     /// Representation of a chess game.
     /// </summary>
-    public class ChessBoardBase : ComponentBase
+    public class ChessBoardBase : ComponentBase, IDisposable
     {
         [Inject]
         private IJSRuntime JSRuntime { get; set; } = default!;
@@ -32,6 +33,15 @@ namespace MjrChess.Trainer.Components
         protected Move[] LegalMovesForSelectedPiece { get; set; } = new Move[0];
 
         protected Move? LastMove => Game.Moves.LastOrDefault();
+
+        /// <summary>Gets the current announcement text for the aria-live region.</summary>
+        protected string? LastMoveAnnouncement { get; private set; }
+
+        /// <summary>Gets or sets the file of the keyboard-focused board square (0 = a-file).</summary>
+        protected int FocusedFile { get; set; } = 0;
+
+        /// <summary>Gets or sets the rank of the keyboard-focused board square (0 = rank 1).</summary>
+        protected int FocusedRank { get; set; } = 0;
 
         private ChessPiece? _selectedPiece;
 
@@ -56,7 +66,7 @@ namespace MjrChess.Trainer.Components
             }
         }
 
-        protected const string ElementName = "ChessBoard";
+        protected const string AccessibleGridId = "ChessBoardGrid";
 
         // Tracks whether the component is rendered so that we know whether
         // to call StateHasChanged or not.
@@ -67,40 +77,93 @@ namespace MjrChess.Trainer.Components
             Engine = new ChessEngine();
         }
 
-        protected override void OnAfterRender(bool firstRender)
+        protected override void OnParametersSet()
         {
-            base.OnAfterRender(firstRender);
-            _rendered = true;
+            base.OnParametersSet();
+
+            // Subscribe to the game's move event so that we can announce opponent moves.
+            Game.OnMove -= HandleGameMove;
+            Game.OnMove += HandleGameMove;
         }
 
-        public async void HandleMouseDown(MouseEventArgs args)
+        protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            if (SelectedPiece == null)
+            await base.OnAfterRenderAsync(firstRender);
+            _rendered = true;
+
+            if (firstRender)
             {
-                (var file, var rank) = await GetMousePositionAsync(args);
-                SelectPiece(file, rank);
-                Render();
+                // Attach a synchronous JS listener so that arrow-key and Space default
+                // browser actions (page scroll) are suppressed while the board has focus,
+                // without blocking Tab (which is intentionally excluded).
+                await JSRuntime.InvokeVoidAsync("addBoardKeyHandler", AccessibleGridId);
             }
         }
 
-        public async void HandleMouseUp(MouseEventArgs args)
+        /// <summary>
+        /// Handles a click or keyboard activation on a specific board square.
+        /// </summary>
+        /// <param name="file">The file of the activated square.</param>
+        /// <param name="rank">The rank of the activated square.</param>
+        public void HandleCellClick(int file, int rank)
         {
+            FocusedFile = file;
+            FocusedRank = rank;
+
             if (SelectedPiece != null)
             {
-                (var file, var rank) = await GetMousePositionAsync(args);
-                if (SelectedPiece.Position.File == file && SelectedPiece.Position.Rank == rank)
+                var moved = PlacePiece(file, rank);
+                if (!moved)
                 {
-                    // If the mouse button is released on the same square the
-                    // piece was selected from, do nothing. Keep the piece selected since
-                    // this could be the initial click to select it.
-                    return;
-                }
-                else
-                {
-                    PlacePiece(file, rank);
-                    Render();
+                    // Not a legal destination — try selecting a different piece on that square.
+                    SelectPiece(file, rank);
                 }
             }
+            else
+            {
+                SelectPiece(file, rank);
+            }
+
+            Render();
+        }
+
+        /// <summary>
+        /// Handles keyboard events on the accessible board grid.
+        /// Arrow keys move focus; Enter/Space activate the focused square; Escape deselects.
+        /// </summary>
+        /// <param name="args">Keyboard event arguments.</param>
+        public async Task HandleKeyDown(KeyboardEventArgs args)
+        {
+            switch (args.Key)
+            {
+                case "ArrowLeft":
+                    FocusedFile = Math.Max(0, FocusedFile - 1);
+                    break;
+                case "ArrowRight":
+                    FocusedFile = Math.Min(Game.BoardSize - 1, FocusedFile + 1);
+                    break;
+                case "ArrowUp":
+                    FocusedRank = Math.Min(Game.BoardSize - 1, FocusedRank + 1);
+                    break;
+                case "ArrowDown":
+                    FocusedRank = Math.Max(0, FocusedRank - 1);
+                    break;
+                case "Enter":
+                case " ":
+                    HandleCellClick(FocusedFile, FocusedRank);
+                    return;
+                case "Escape":
+                    SelectedPiece = null;
+                    Render();
+                    return;
+                default:
+                    return;
+            }
+
+            Render();
+
+            // Move DOM focus to the newly focused cell after re-render.
+            await JSRuntime.InvokeVoidAsync("focusBoardCell", AccessibleGridId, FocusedFile, FocusedRank);
         }
 
         /// <summary>
@@ -137,6 +200,50 @@ namespace MjrChess.Trainer.Components
         }
 
         /// <summary>
+        /// Returns the ARIA label for a board square, describing its position and any piece it contains.
+        /// </summary>
+        /// <param name="file">File index (0 = a-file).</param>
+        /// <param name="rank">Rank index (0 = rank 1).</param>
+        /// <returns>A human-readable description suitable for an aria-label attribute.</returns>
+        protected string GetSquareAriaLabel(int file, int rank)
+        {
+            var squareName = $"{ChessFormatter.FileToString(file)}{ChessFormatter.RankToString(rank)}";
+            var piece = Game.GetPiece(file, rank);
+
+            if (piece == null)
+            {
+                return squareName;
+            }
+
+            var color = ChessFormatter.IsPieceWhite(piece.PieceType) ? "white" : "black";
+            var pieceName = GetPieceName(piece.PieceType);
+            return $"{squareName}, {color} {pieceName}";
+        }
+
+        /// <summary>
+        /// Returns extra CSS classes for a board cell reflecting selection and legal-move state.
+        /// </summary>
+        /// <param name="file">File index.</param>
+        /// <param name="rank">Rank index.</param>
+        /// <returns>A space-separated CSS class string (may be empty).</returns>
+        protected string GetCellStateClass(int file, int rank)
+        {
+            var classes = new List<string>();
+
+            if (SelectedPiece?.Position.File == file && SelectedPiece?.Position.Rank == rank)
+            {
+                classes.Add("boardCell--selected");
+            }
+
+            if (LegalMovesForSelectedPiece.Any(m => m.FinalPosition.File == file && m.FinalPosition.Rank == rank))
+            {
+                classes.Add("boardCell--legal");
+            }
+
+            return string.Join(" ", classes);
+        }
+
+        /// <summary>
         /// Attempts to place a selected piece. This unselects any selected piece.
         /// </summary>
         /// <param name="file">The file to place the selected piece on.</param>
@@ -160,25 +267,12 @@ namespace MjrChess.Trainer.Components
             }
         }
 
-        private async Task<(int File, int Rank)> GetMousePositionAsync(MouseEventArgs args)
+        /// <summary>Called by the game's OnMove event to update the aria-live announcement.</summary>
+        private void HandleGameMove(ChessGame game, Move move)
         {
-            var boardDimensions = await JSRuntime.InvokeAsync<Rectangle>("getBoundingRectangle", new object[] { ElementName });
-
-            // Account for the rare case where the user clicks on the final pixel of the board
-            if (args.ClientX >= boardDimensions.Right)
-            {
-                args.ClientX--;
-            }
-
-            if (args.ClientY >= boardDimensions.Bottom)
-            {
-                args.ClientY--;
-            }
-
-            var file = ((int)args.ClientX - boardDimensions.X) * Game.BoardSize / boardDimensions.Width;
-            var rank = (Game.BoardSize - 1) - (((int)args.ClientY - boardDimensions.Y) * Game.BoardSize / boardDimensions.Height);
-
-            return (file, rank);
+            var color = ChessFormatter.IsPieceWhite(move.PieceMoved) ? "White" : "Black";
+            LastMoveAnnouncement = $"{color} plays {ChessFormatter.MoveToString(move)}";
+            Render();
         }
 
         /// <summary>
@@ -190,6 +284,24 @@ namespace MjrChess.Trainer.Components
             {
                 StateHasChanged();
             }
+        }
+
+        private static string GetPieceName(ChessPieces piece) => piece switch
+        {
+            ChessPieces.WhiteKing or ChessPieces.BlackKing => "king",
+            ChessPieces.WhiteQueen or ChessPieces.BlackQueen => "queen",
+            ChessPieces.WhiteRook or ChessPieces.BlackRook => "rook",
+            ChessPieces.WhiteBishop or ChessPieces.BlackBishop => "bishop",
+            ChessPieces.WhiteKnight or ChessPieces.BlackKnight => "knight",
+            ChessPieces.WhitePawn or ChessPieces.BlackPawn => "pawn",
+            _ => string.Empty,
+        };
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            // Unsubscribe so the component doesn't receive move notifications after disposal.
+            Game.OnMove -= HandleGameMove;
         }
     }
 }

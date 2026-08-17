@@ -2,11 +2,10 @@
 
 <PlayerStatus WhitePlayer="false" Game="Game" />
 <div class="boardContainer">
-    <img id="@ElementName"
-         class="board"
+    @* Board image is purely decorative — the accessible grid overlay below provides all labels. *@
+    <img class="board"
          src="images/board.svg"
-         @onmousedown="HandleMouseDown"
-         @onmouseup="HandleMouseUp" />
+         alt="" />
     @foreach (var piece in Game.Pieces)
     {
         if (piece.Position == null)
@@ -33,6 +32,38 @@
         var checkedKing = Game.Pieces.Single(p => p.PieceType == (Game.WhiteToMove ? ChessPieces.WhiteKing : ChessPieces.BlackKing));
         <SquareDecorator File="checkedKing.Position.File" Rank="checkedKing.Position.Rank" ImageName="Check" />
     }
+
+    @* Accessible overlay grid: transparent cells cover the visual board and provide
+       keyboard navigation, per-square labels, and click targets. *@
+    <div id="@AccessibleGridId"
+         role="grid"
+         aria-label="Chess board"
+         class="boardGrid"
+         @onkeydown="HandleKeyDown">
+        @for (var boardRank = Game.BoardSize - 1; boardRank >= 0; boardRank--)
+        {
+            var currentRank = boardRank;
+            <div role="row">
+                @for (var boardFile = 0; boardFile < Game.BoardSize; boardFile++)
+                {
+                    var currentFile = boardFile;
+                    <div role="gridcell"
+                         tabindex="@(FocusedFile == currentFile && FocusedRank == currentRank ? 0 : -1)"
+                         aria-label="@GetSquareAriaLabel(currentFile, currentRank)"
+                         aria-selected="@(SelectedPiece?.Position.File == currentFile && SelectedPiece?.Position.Rank == currentRank ? "true" : null)"
+                         data-file="@currentFile"
+                         data-rank="@currentRank"
+                         class="boardCell @GetCellStateClass(currentFile, currentRank)"
+                         @onclick="() => HandleCellClick(currentFile, currentRank)">
+                    </div>
+                }
+            </div>
+        }
+    </div>
 </div>
+
+@* aria-live region announces opponent and system moves to screen readers. *@
+<div role="status" aria-live="polite" aria-atomic="true" class="sr-only">@LastMoveAnnouncement</div>
+
 <PlayerStatus WhitePlayer="true" Game="Game" />
 <GameDetails Game="Game" />

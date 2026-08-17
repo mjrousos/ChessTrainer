@@ -147,3 +147,33 @@ window.setTheme = (theme) => {
 window.toggleTheme = () => {
     return window.setTheme(window.getTheme() === 'dark' ? 'light' : 'dark');
 };
+
+// Board accessibility helpers
+
+// Prevents the browser from scrolling the page when arrow keys or Space are
+// pressed while the board grid (or a cell within it) has focus.  Called once
+// after the board first renders; uses capture-phase so the handler runs before
+// Blazor's own event processing.
+window.addBoardKeyHandler = (gridId) => {
+    const el = document.getElementById(gridId);
+    if (el) {
+        el.addEventListener('keydown', (e) => {
+            // Note: e.key for the spacebar is ' ' (a space character), not 'Space'
+            // (which is e.code). The arrow key names are e.key values too.
+            if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' '].includes(e.key)) {
+                e.preventDefault();
+            }
+        }, { passive: false, capture: true });
+    }
+};
+
+// Moves DOM focus to the grid cell that matches the given file/rank.
+window.focusBoardCell = (gridId, file, rank) => {
+    const grid = document.getElementById(gridId);
+    if (grid) {
+        const cell = grid.querySelector(`[data-file="${file}"][data-rank="${rank}"]`);
+        if (cell) {
+            cell.focus({ preventScroll: true });
+        }
+    }
+};

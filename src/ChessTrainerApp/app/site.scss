@@ -180,6 +180,47 @@ html, body {
     filter: var(--ct-board-filter);
 }
 
+// Accessible overlay grid — 8×8 transparent cells that sit above the visual
+// board and pieces, providing keyboard navigation, click targets, and ARIA labels.
+.boardGrid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(8, 12.5%);
+    grid-template-rows: repeat(8, 12.5%);
+    z-index: 3; // Above pieces (z-index 2)
+}
+
+.boardCell {
+    cursor: pointer;
+    outline: none; // Custom focus ring defined below
+
+    &:focus {
+        outline: 3px solid var(--ct-focus-ring);
+        outline-offset: -3px;
+    }
+
+    // Non-color cue for the selected piece — thick inset border.
+    &.boardCell--selected {
+        box-shadow: inset 0 0 0 4px var(--ct-color-primary);
+    }
+
+    // Non-color cue for legal move targets — dashed border.
+    &.boardCell--legal {
+        box-shadow: inset 0 0 0 3px var(--ct-color-primary);
+    }
+
+    // When a cell is both selected and focused, show both cues.
+    &.boardCell--selected:focus,
+    &.boardCell--legal:focus {
+        outline: 3px solid var(--ct-focus-ring);
+        outline-offset: -3px;
+    }
+}
+
 .boardSquareDecorator {
     pointer-events: none;
     width: 12.5%;
@@ -297,4 +338,19 @@ html, body {
 
 .vertical-form {
     margin-bottom: 8px;
+}
+
+// Visually hidden but fully accessible — used for the aria-live move announcement
+// region and other content that screen readers must reach but that is not shown
+// on screen.  Follows the standard sr-only pattern (Bootstrap / Tailwind).
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
