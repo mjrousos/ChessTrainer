@@ -13,4 +13,8 @@
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\IngestionFunctions\IngestionFunctions.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -22,6 +22,7 @@
     <Project Path="src/IngestionFunctions/IngestionFunctions.csproj" />
   </Folder>
   <Folder Name="/test/">
+    <Project Path="test/ChessTrainer.Common.Test/ChessTrainer.Common.Test.csproj" />
     <Project Path="test/ChessTrainer.Data.Test/ChessTrainer.Data.Test.csproj" />
     <Project Path="test/ChessTrainerApp.Test/ChessTrainerApp.Test.csproj" />
     <Project Path="test/IngestionFunctions.Test/IngestionFunctions.Test.csproj" />

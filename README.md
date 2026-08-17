@@ -129,6 +129,10 @@ dotnet test  ChessTrainer.slnx -c Release
 > `TreatWarningsAsErrors`, so any new warning fails the build. See
 > [`.github/copilot-instructions.md`](.github/copilot-instructions.md) for
 > the project-wide build-hygiene rules.
+>
+> CI also publishes a coverage report on every build and currently enforces a
+> **60% core-logic line-coverage minimum** (with a **75% stretch goal** as test
+> coverage improves).
 
 ### Apply the database schema
 
